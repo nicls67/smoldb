@@ -1,0 +1,9 @@
+[package]
+name = "smoldb"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rustlog = {git = "http://serveur-dev.home/rust-libs/rustlog.git", tag = "0.2.0"}
