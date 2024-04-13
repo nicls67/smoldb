@@ -12,8 +12,8 @@ pub struct DbModel {
 pub struct DbTable {
     /// Table name
     name: String,
-    /// Defines the fields, with name and type
-    fields: Vec<(String, String)>,
+    /// Defines the keys, with name and type
+    keys: Vec<(String, String)>,
     /// Table entries, each entry is a vector of entries
     entries: Vec<DbEntry>,
 }
@@ -59,6 +59,21 @@ impl DbEntry {
             name,
             fields: entry,
         })
+    }
+
+    /// Updates the designated field of the entry
+    pub fn update(&mut self, key_index: u16, value: Option<String>) {
+        *self.fields.get_mut(key_index as usize).unwrap() = value;
+    }
+
+    /// Gets value of the selected field
+    pub fn get(&self, key_index: u16) -> Option<&String> {
+        self.fields.get(key_index as usize).unwrap().as_ref()
+    }
+
+    /// Adds a new field to the entry with the given value (can be `None`)
+    pub fn add_field(&mut self, value: Option<String>) {
+        self.fields.push(value);
     }
 }
 
@@ -114,6 +129,101 @@ mod tests {
                 }
             }
             Err(_) => Err("Result should be Ok".to_string()),
+        }
+    }
+
+    #[test]
+    fn entry_update() -> Result<(), String> {
+        let name = "entry2";
+        let mut some_vec = vec![
+            Some("item1".to_string()),
+            None,
+            Some("item2".to_string()),
+            Some("item3".to_string()),
+        ];
+
+        let new_vec = vec![
+            Some("item1".to_string()),
+            Some("new_item".to_string()),
+            Some("item2_updated".to_string()),
+            Some("item3".to_string()),
+        ];
+
+        let mut entry = DbEntry::new(name.to_string(), 4, Some(&mut some_vec)).unwrap();
+        entry.update(1, Some("new_item".to_string()));
+        entry.update(2, Some("item2_updated".to_string()));
+
+        if entry.fields == new_vec {
+            Ok(())
+        }
+        else {
+            Err(format!(
+                "Entry fields have wrong value : {:?}",
+                entry.fields
+            ))
+        }
+    }
+
+    #[test]
+    fn entry_get() -> Result<(), String> {
+        let name = "entry2";
+        let mut some_vec = vec![
+            Some("item1".to_string()),
+            None,
+            Some("item2".to_string()),
+            Some("item3".to_string()),
+        ];
+
+        let entry = DbEntry::new(name.to_string(), 4, Some(&mut some_vec)).unwrap();
+
+        let val = entry.get(3).unwrap();
+
+        if val.as_str() != "item3" {
+            return Err(format!(
+                "Entry field have wrong value : {:?}",
+                entry.fields
+            ));
+        }
+
+        let val_none = entry.get(1);
+        if val_none.is_some() {
+            return Err("Entry field should be None".to_string());
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn entry_add_field() -> Result<(), String> {
+        let name = "entry2";
+        let mut some_vec = vec![
+            Some("item1".to_string()),
+            None,
+            Some("item2".to_string()),
+            Some("item3".to_string()),
+        ];
+
+        let new_vec = vec![
+            Some("item1".to_string()),
+            None,
+            Some("item2".to_string()),
+            Some("item3".to_string()),
+            Some("item4".to_string()),
+            None
+        ];
+
+        let mut entry = DbEntry::new(name.to_string(), 4, Some(&mut some_vec)).unwrap();
+        entry.add_field(Some("item4".to_string()));
+        entry.add_field(None);
+
+        if entry.fields == new_vec {
+            Ok(())
+        }
+        else {
+            Err(format!(
+                "Entry fields have wrong value : {:?}",
+                entry.fields
+            ))
         }
     }
 }
