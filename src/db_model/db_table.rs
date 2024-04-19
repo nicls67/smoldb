@@ -2,7 +2,7 @@
 //! Database Table definition
 //!
 
-use super::{db_entry::DbEntry, db_types::DbType};
+use super::{db_entry::DbEntry, db_type::DbType};
 
 /// Database table
 #[derive(PartialEq)]
@@ -50,13 +50,18 @@ impl DbTable {
                 ));
             }
             // Check values types
+            let mut db_vals = Vec::new();
             for (i, val) in vals.iter().enumerate() {
                 if let Some(val_str) = val {
-                    self.keys.get(i).unwrap().1.check(val_str)?;
+                    let db_val = self.keys.get(i).unwrap().1.convert(val_str)?;
+                    db_vals.push(Some(db_val));
+                }
+                else {
+                    db_vals.push(None);
                 }
             }
 
-            new_entry = DbEntry::new(name, self.keys.len(), Some(vals))?;
+            new_entry = DbEntry::new(name, self.keys.len(), Some(db_vals.as_mut()))?;
         } else {
             new_entry = DbEntry::new(name, self.keys.len(), None)?;
         }
@@ -96,16 +101,16 @@ mod tests {
     #[test]
     fn new_table_some() -> Result<(), String> {
         let keys = vec![
-            ("key1".to_string(), DbType::Integer),
-            ("key2".to_string(), DbType::String),
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
         ];
         let table = DbTable::new("Table".to_string(), Some(keys));
 
         let expected = DbTable {
             name: "Table".to_string(),
             keys: vec![
-                ("key1".to_string(), DbType::Integer),
-                ("key2".to_string(), DbType::String),
+                ("key1".to_string(), DbType::Integer(0)),
+                ("key2".to_string(), DbType::String(" ".to_string())),
             ],
             entries: Vec::new(),
         };
@@ -120,9 +125,9 @@ mod tests {
     #[test]
     fn add_entry() -> Result<(), String> {
         let keys = vec![
-            ("key1".to_string(), DbType::Integer),
-            ("key2".to_string(), DbType::String),
-            ("key3".to_string(), DbType::Float),
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
@@ -141,9 +146,9 @@ mod tests {
     #[test]
     fn add_entry_bad_type() -> Result<(), String> {
         let keys = vec![
-            ("key1".to_string(), DbType::Integer),
-            ("key2".to_string(), DbType::String),
-            ("key3".to_string(), DbType::Float),
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
         let mut binding = vec![Some("text".to_string()), None, Some("2.23".to_string())];
@@ -169,9 +174,9 @@ mod tests {
     #[test]
     fn add_entry_bad_size() -> Result<(), String> {
         let keys = vec![
-            ("key1".to_string(), DbType::Integer),
-            ("key2".to_string(), DbType::String),
-            ("key3".to_string(), DbType::Float),
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
         let mut binding = vec![Some("value1".to_string()), None];
@@ -197,9 +202,9 @@ mod tests {
     #[test]
     fn add_entry_bad_name() -> Result<(), String> {
         let keys = vec![
-            ("key1".to_string(), DbType::Integer),
-            ("key2".to_string(), DbType::String),
-            ("key3".to_string(), DbType::Float),
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
         let mut binding = vec![Some("2".to_string()), None, None];

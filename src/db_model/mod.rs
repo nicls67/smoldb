@@ -4,9 +4,10 @@
 
 mod db_table;
 mod db_entry;
-mod db_types;
+mod db_type;
 
 pub use db_table::DbTable;
+
 
 /// Database model
 pub struct DbModel {

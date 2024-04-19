@@ -4,13 +4,15 @@
 
 use rustlog::{write_log, LogSeverity};
 
+use super::db_type::DbType;
+
 /// Database entry
 #[derive(PartialEq)]
 pub struct DbEntry {
     /// Entry name
     name: String,
     /// Fields vector has the size of `fields` vector from upper table
-    fields: Vec<Option<String>>,
+    fields: Vec<Option<DbType>>,
 }
 
 impl DbEntry {
@@ -20,10 +22,10 @@ impl DbEntry {
     pub fn new(
         name: String,
         fields_nb: usize,
-        values: Option<&mut Vec<Option<String>>>,
+        values: Option<&mut Vec<Option<DbType>>>,
     ) -> Result<DbEntry, String> {
         // Create new vector
-        let mut entry: Vec<Option<String>> = Vec::new();
+        let mut entry: Vec<Option<DbType>> = Vec::new();
         match values {
             Some(vals) => {
                 // Check sizes coherency
@@ -54,12 +56,12 @@ impl DbEntry {
     }
 
     /// Updates the designated field of the entry
-    pub fn update(&mut self, key_index: u16, value: Option<String>) {
+    pub fn update(&mut self, key_index: u16, value: Option<DbType>) {
         *self.fields.get_mut(key_index as usize).unwrap() = value.clone();
     }
 
     /// Gets value of the selected field
-    pub fn get(&self, key_index: u16) -> Option<&String> {
+    pub fn get(&self, key_index: u16) -> Option<&DbType> {
         self.fields.get(key_index as usize).unwrap().as_ref()
     }
 
@@ -69,13 +71,16 @@ impl DbEntry {
     }
 
     /// Adds a new field to the entry with the given value (can be `None`)
-    pub fn add_field(&mut self, value: Option<String>) {
+    pub fn add_field(&mut self, value: Option<DbType>) {
         self.fields.push(value);
     }
 }
 
 #[cfg(test)]
 mod tests {
+
+    use crate::db_model::db_type::DbType;
+
     use super::DbEntry;
 
     #[test]
@@ -103,10 +108,10 @@ mod tests {
     fn new_entry_not_empty() -> Result<(), String> {
         let name = "entry2";
         let mut some_vec = vec![
-            Some("item1".to_string()),
+            Some(DbType::String("item1".to_string())),
             None,
-            Some("item2".to_string()),
-            Some("item3".to_string()),
+            Some(DbType::Float(3.33)),
+            Some(DbType::Integer(12)),
         ];
         let some_vec2 = some_vec.clone();
 
@@ -133,22 +138,22 @@ mod tests {
     fn entry_update() -> Result<(), String> {
         let name = "entry2";
         let mut some_vec = vec![
-            Some("item1".to_string()),
+            Some(DbType::String("item1".to_string())),
             None,
-            Some("item2".to_string()),
-            Some("item3".to_string()),
+            Some(DbType::Float(3.33)),
+            Some(DbType::Integer(12)),
         ];
 
-        let new_vec = vec![
-            Some("item1".to_string()),
-            Some("new_item".to_string()),
-            Some("item2_updated".to_string()),
-            Some("item3".to_string()),
+        let mut new_vec = vec![
+            Some(DbType::String("item1".to_string())),
+            Some(DbType::String("new_item".to_string())),
+            Some(DbType::UnsignedInt(35)),
+            Some(DbType::Integer(12)),
         ];
 
         let mut entry = DbEntry::new(name.to_string(), 4, Some(&mut some_vec)).unwrap();
-        entry.update(1, Some("new_item".to_string()));
-        entry.update(2, Some("item2_updated".to_string()));
+        entry.update(1, Some(DbType::String("new_item".to_string())));
+        entry.update(2, Some(DbType::UnsignedInt(35)));
 
         if entry.fields == new_vec {
             Ok(())
@@ -164,17 +169,17 @@ mod tests {
     fn entry_get() -> Result<(), String> {
         let name = "entry2";
         let mut some_vec = vec![
-            Some("item1".to_string()),
+            Some(DbType::String("item1".to_string())),
             None,
-            Some("item2".to_string()),
-            Some("item3".to_string()),
+            Some(DbType::Float(3.33)),
+            Some(DbType::Integer(12)),
         ];
 
         let entry = DbEntry::new(name.to_string(), 4, Some(&mut some_vec)).unwrap();
 
-        let val = entry.get(3).unwrap();
+        let val = entry.get(2).unwrap();
 
-        if val.as_str() != "item3" {
+        if *val != DbType::Float(3.33) {
             return Err(format!("Entry field have wrong value : {:?}", entry.fields));
         }
 
@@ -190,23 +195,23 @@ mod tests {
     fn entry_add_field() -> Result<(), String> {
         let name = "entry2";
         let mut some_vec = vec![
-            Some("item1".to_string()),
+            Some(DbType::String("item1".to_string())),
             None,
-            Some("item2".to_string()),
-            Some("item3".to_string()),
+            Some(DbType::Float(3.33)),
+            Some(DbType::Integer(12)),
         ];
 
-        let new_vec = vec![
-            Some("item1".to_string()),
+        let mut new_vec = vec![
+            Some(DbType::String("item1".to_string())),
             None,
-            Some("item2".to_string()),
-            Some("item3".to_string()),
-            Some("item4".to_string()),
+            Some(DbType::Float(3.33)),
+            Some(DbType::Integer(12)),
+            Some(DbType::String("item4".to_string())),
             None,
         ];
 
         let mut entry = DbEntry::new(name.to_string(), 4, Some(&mut some_vec)).unwrap();
-        entry.add_field(Some("item4".to_string()));
+        entry.add_field(Some(DbType::String("item4".to_string())));
         entry.add_field(None);
 
         if entry.fields == new_vec {
