@@ -1,24 +1,11 @@
 //!
-//! Database model
+//! Database Entry definition
 //!
 
-/// Database model
-pub struct DbModel {
-    name: String,
-    version: [u8; 3],
-}
-
-/// Database table
-pub struct DbTable {
-    /// Table name
-    name: String,
-    /// Defines the keys, with name and type
-    keys: Vec<(String, String)>,
-    /// Table entries, each entry is a vector of entries
-    entries: Vec<DbEntry>,
-}
+use rustlog::{write_log, LogSeverity};
 
 /// Database entry
+#[derive(PartialEq)]
 pub struct DbEntry {
     /// Entry name
     name: String,
@@ -32,7 +19,7 @@ impl DbEntry {
     /// or one particular field can be empty (one element of vector is `None`)
     pub fn new(
         name: String,
-        fields_nb: u16,
+        fields_nb: usize,
         values: Option<&mut Vec<Option<String>>>,
     ) -> Result<DbEntry, String> {
         // Create new vector
@@ -40,7 +27,7 @@ impl DbEntry {
         match values {
             Some(vals) => {
                 // Check sizes coherency
-                if fields_nb as usize != vals.len() {
+                if fields_nb != vals.len() {
                     return Err(format!(
                         "Values given for new entry {} does not have the correct size ({})",
                         name, fields_nb
@@ -55,6 +42,11 @@ impl DbEntry {
             }
         }
 
+        write_log(
+            LogSeverity::Info,
+            format!("New entry {name} created"),
+            format!("SmolDB"),
+        );
         Ok(DbEntry {
             name,
             fields: entry,
@@ -63,12 +55,17 @@ impl DbEntry {
 
     /// Updates the designated field of the entry
     pub fn update(&mut self, key_index: u16, value: Option<String>) {
-        *self.fields.get_mut(key_index as usize).unwrap() = value;
+        *self.fields.get_mut(key_index as usize).unwrap() = value.clone();
     }
 
     /// Gets value of the selected field
     pub fn get(&self, key_index: u16) -> Option<&String> {
         self.fields.get(key_index as usize).unwrap().as_ref()
+    }
+
+    /// Gets entry name
+    pub fn name(&self) -> &String {
+        &self.name
     }
 
     /// Adds a new field to the entry with the given value (can be `None`)
@@ -155,8 +152,7 @@ mod tests {
 
         if entry.fields == new_vec {
             Ok(())
-        }
-        else {
+        } else {
             Err(format!(
                 "Entry fields have wrong value : {:?}",
                 entry.fields
@@ -179,10 +175,7 @@ mod tests {
         let val = entry.get(3).unwrap();
 
         if val.as_str() != "item3" {
-            return Err(format!(
-                "Entry field have wrong value : {:?}",
-                entry.fields
-            ));
+            return Err(format!("Entry field have wrong value : {:?}", entry.fields));
         }
 
         let val_none = entry.get(1);
@@ -209,7 +202,7 @@ mod tests {
             Some("item2".to_string()),
             Some("item3".to_string()),
             Some("item4".to_string()),
-            None
+            None,
         ];
 
         let mut entry = DbEntry::new(name.to_string(), 4, Some(&mut some_vec)).unwrap();
@@ -218,8 +211,7 @@ mod tests {
 
         if entry.fields == new_vec {
             Ok(())
-        }
-        else {
+        } else {
             Err(format!(
                 "Entry fields have wrong value : {:?}",
                 entry.fields
