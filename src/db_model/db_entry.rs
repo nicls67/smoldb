@@ -56,13 +56,13 @@ impl DbEntry {
     }
 
     /// Updates the designated field of the entry
-    pub fn update(&mut self, key_index: u16, value: Option<DbType>) {
-        *self.fields.get_mut(key_index as usize).unwrap() = value.clone();
+    pub fn update(&mut self, key_index: usize, value: Option<DbType>) {
+        *self.fields.get_mut(key_index).unwrap() = value.clone();
     }
 
     /// Gets value of the selected field
-    pub fn get(&self, key_index: u16) -> Option<&DbType> {
-        self.fields.get(key_index as usize).unwrap().as_ref()
+    pub fn get(&self, key_index: usize) -> Option<&DbType> {
+        self.fields.get(key_index).unwrap().as_ref()
     }
 
     /// Gets entry name
@@ -144,7 +144,7 @@ mod tests {
             Some(DbType::Integer(12)),
         ];
 
-        let mut new_vec = vec![
+        let new_vec = vec![
             Some(DbType::String("item1".to_string())),
             Some(DbType::String("new_item".to_string())),
             Some(DbType::UnsignedInt(35)),
@@ -201,7 +201,7 @@ mod tests {
             Some(DbType::Integer(12)),
         ];
 
-        let mut new_vec = vec![
+        let new_vec = vec![
             Some(DbType::String("item1".to_string())),
             None,
             Some(DbType::Float(3.33)),
