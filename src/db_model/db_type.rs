@@ -64,6 +64,17 @@ impl DbType {
             DbType::String(_) => Ok(()),
         }
     }
+
+    /// Returns a `DbType` variant with default value according the type name passed as a `String`
+    pub fn default_from_string(type_name: &String) -> Result<DbType, String> {
+        match type_name.as_str() {
+            "Integer" => Ok(DbType::Integer(0)),
+            "UnsignedInt" => Ok(DbType::UnsignedInt(0)),
+            "Float" => Ok(DbType::Float(0.0)),
+            "String" => Ok(DbType::String(String::from(" "))),
+            _ => Err("Unknown database type".to_string())
+        }
+    }
 }
 
 #[cfg(test)]

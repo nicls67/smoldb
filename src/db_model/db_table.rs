@@ -371,6 +371,25 @@ impl DbTable {
         );
         Err(msg)
     }
+
+    /// ## Adds a key to the table
+    /// All entries of the table will get the new key with a default `None` value
+    pub fn add_key(&mut self, key_name: &String, key_type: &String) -> Result<(), String> {
+        self.keys.push(
+            (key_name.clone(), DbType::default_from_string(key_type)?)
+        );
+
+        for entry in self.entries.iter_mut() {
+            entry.add_field(None)
+        }
+
+        write_log(
+            LogSeverity::Info,
+            &format!("ADDED key {} to table {}", key_name, self.name),
+            &env!("CARGO_PKG_NAME").to_string(),
+        );
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -976,5 +995,55 @@ mod tests {
         } else {
             Err(format!("Result should be Err"))
         }
+    }
+
+    #[test]
+    fn add_key_nominal() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry("entry1".to_string(), new_entry)?;
+        table.add_entry("entry2".to_string(), None)?;
+
+        table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
+
+        let value = table.get_entry_value(&"entry1".to_string(), &"key_new".to_string())?;
+        if value.is_some() {
+            return Err("New key value should be None".to_string());
+        }
+
+        let value = table.get_entry_value(&"entry2".to_string(), &"key_new".to_string())?;
+        if value.is_some() {
+            return Err("New key value should be None".to_string());
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn add_key_wrong_name() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry("entry1".to_string(), new_entry)?;
+        table.add_entry("entry2".to_string(), None)?;
+
+        match table.add_key(&"key_new".to_string(), &"RandomType".to_string()) {
+            Ok(_) => Err("Result should be Err".to_string()),
+            Err(_) => Ok(()),
+        }
+
     }
 }
