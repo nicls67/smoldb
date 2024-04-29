@@ -141,7 +141,7 @@ dependencies = [
 [[package]]
 name = "rustlog"
 version = "0.2.0"
-source = "git+http://serveur-dev.home/rust-libs/rustlog.git?tag=0.3.0#444504bc506645d857adffdeadaa49e3bdad7ae7"
+source = "git+http://serveur-dev.home/rust-libs/rustlog.git?tag=1.0.0#e2d5e6545475debbf98fe43c052ef4f6327732c8"
 dependencies = [
  "chrono",
 ]

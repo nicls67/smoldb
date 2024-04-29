@@ -30,10 +30,16 @@ impl DbEntry {
             Some(vals) => {
                 // Check sizes coherency
                 if fields_nb != vals.len() {
-                    return Err(format!(
+                    let msg = format!(
                         "Values given for new entry {} does not have the correct size ({})",
                         name, fields_nb
-                    ));
+                    );
+                    write_log(
+                        LogSeverity::Error,
+                        &msg,
+                        &env!("CARGO_PKG_NAME").to_string(),
+                    );
+                    return Err(msg);
                 }
                 entry.append(vals);
             }
@@ -46,8 +52,8 @@ impl DbEntry {
 
         write_log(
             LogSeverity::Info,
-            format!("New entry {name} created"),
-            format!("SmolDB"),
+            &format!("CREATE new entry {name}"),
+            &env!("CARGO_PKG_NAME").to_string(),
         );
         Ok(DbEntry {
             name,

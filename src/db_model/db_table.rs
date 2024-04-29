@@ -4,6 +4,8 @@
 
 use std::mem::discriminant;
 
+use rustlog::{write_log, LogSeverity};
+
 use super::{db_entry::DbEntry, db_type::DbType};
 
 /// Database table
@@ -40,18 +42,28 @@ impl DbTable {
 
         // Check unicity of entry name
         if self.entry_exists(&name) {
-            return Err(format!(
-                "Cannot create new entry : name {name} already exists in table"
-            ));
+            let msg = format!("Cannot create new entry : name {name} already exists in table");
+            write_log(
+                LogSeverity::Error,
+                &msg,
+                &env!("CARGO_PKG_NAME").to_string(),
+            );
+            return Err(msg);
         }
 
         if let Some(vals) = values {
             // Check vector size
             if vals.len() != self.keys.len() {
-                return Err(format!(
+                let msg = format!(
                     "Cannot create new entry : `values` parameter must have a length of {}",
                     self.keys.len()
-                ));
+                );
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                return Err(msg);
             }
             // Store values after conversion
             let mut db_vals = Vec::new();
@@ -69,12 +81,15 @@ impl DbTable {
             new_entry = DbEntry::new(name, self.keys.len(), None)?;
         }
         self.entries.push(new_entry);
+
         Ok(())
     }
 
     ///
-    /// ## Updates an entry of the table.
-    /// Entry name, key to update and field value must be provided, value can be set to `None`
+    /// ## Updates an entry of the table (String format).
+    /// Entry name, key to update and field value in string format must be provided, value can be set to `None`.
+    ///
+    /// If the given String can't be interpreted as the configured key type, `Err` is returned
     ///
     pub fn update_entry_string(
         &mut self,
@@ -90,12 +105,141 @@ impl DbTable {
     }
 
     ///
-    /// ## Gets an entry value.
+    /// ## Gets an entry value (String format).
+    /// Entry name, key to get must be provided.
+    ///
+    /// If the key is not configured as String, the data is converted into a String
+    ///
+    pub fn get_entry_value_string(&mut self, entry_name: &String, key_name: &String) -> Result<Option<String>, String> {
+        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
+            Ok(Some(value.into_string()))
+        } else {
+            Ok(None)
+        }
+    }
+
+    ///
+    /// ## Updates an entry of the table (Int format).
+    /// Entry name, key to update and field value as integer must be provided, value can be set to `None`
+    ///
+    /// If the selected key is not configured as Integer, `Err` is returned
+    ///
+    pub fn update_entry_integer(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+        new_value: Option<i32>,
+    ) -> Result<(), String> {
+        let mut db_value = None;
+        if let Some(value) = new_value {
+            db_value = Some(DbType::Integer(value));
+        }
+        self.update_entry(entry_name, key_name, db_value)
+    }
+
+    ///
+    /// ## Gets an entry value (Int format).
     /// Entry name, key to get must be provided
     ///
-    pub fn get_entry_value_string(&mut self, entry_name: &String, key_name: &String) -> Result<Option<&String>, String> {
+    /// If the selected key is not configured as Integer, `Err` is returned
+    ///
+    pub fn get_entry_value_integer(&mut self, entry_name: &String, key_name: &String) -> Result<Option<&i32>, String> {
+        // Coherency check
+        match self.find_key(key_name)?.1.check_type(&DbType::Integer(0)) {
+            Ok(_) => (),
+            Err(e) => return Err(e),
+        }
+
         if let Some(value) = self.get_entry_value(entry_name, key_name)? {
-            if let DbType::String(s) = value {
+            if let DbType::Integer(s) = value {
+                Ok(Some(s))
+            } else {
+                // Impossible case
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    ///
+    /// ## Updates an entry of the table (UInt format).
+    /// Entry name, key to update and field value as unsigned integer must be provided, value can be set to `None`
+    ///
+    /// If the selected key is not configured as Unsigned Integer, `Err` is returned
+    ///
+    pub fn update_entry_unsigned_integer(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+        new_value: Option<u32>,
+    ) -> Result<(), String> {
+        let mut db_value = None;
+        if let Some(value) = new_value {
+            db_value = Some(DbType::UnsignedInt(value));
+        }
+        self.update_entry(entry_name, key_name, db_value)
+    }
+
+    ///
+    /// ## Gets an entry value (UInt format).
+    /// Entry name, key to get must be provided
+    ///
+    /// If the selected key is not configured as Unsigned Integer, `Err` is returned
+    ///
+    pub fn get_entry_value_unsigned_integer(&mut self, entry_name: &String, key_name: &String) -> Result<Option<&u32>, String> {
+        // Coherency check
+        match self.find_key(key_name)?.1.check_type(&DbType::UnsignedInt(0)) {
+            Ok(_) => (),
+            Err(e) => return Err(e),
+        }
+
+        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
+            if let DbType::UnsignedInt(s) = value {
+                Ok(Some(s))
+            } else {
+                // Impossible case
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    ///
+    /// ## Updates an entry of the table (Float format).
+    /// Entry name, key to update and field value as float must be provided, value can be set to `None`
+    ///
+    /// If the selected key is not configured as Float, `Err` is returned
+    ///
+    pub fn update_entry_float(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+        new_value: Option<f32>,
+    ) -> Result<(), String> {
+        let mut db_value = None;
+        if let Some(value) = new_value {
+            db_value = Some(DbType::Float(value));
+        }
+        self.update_entry(entry_name, key_name, db_value)
+    }
+
+    ///
+    /// ## Gets an entry value (Float format).
+    /// Entry name, key to get must be provided
+    ///
+    /// If the selected key is not configured as Float, `Err` is returned
+    ///
+    pub fn get_entry_value_float(&mut self, entry_name: &String, key_name: &String) -> Result<Option<&f32>, String> {
+        // Coherency check
+        match self.find_key(key_name)?.1.check_type(&DbType::Float(0.0)) {
+            Ok(_) => (),
+            Err(e) => return Err(e),
+        }
+
+        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
+            if let DbType::Float(s) = value {
                 Ok(Some(s))
             } else {
                 // Impossible case
@@ -115,11 +259,23 @@ impl DbTable {
 
         if let Some(ref db_val) = new_value {
             if discriminant(key.1) != discriminant(db_val) {
-                return Err(format!("Type of key {} is not compatible with given type", key_name));
+                let msg = format!("Type of key {} is not compatible with given type", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                return Err(msg);
             }
         }
 
         self.find_entry(entry_name)?.update(key_index, new_value);
+
+        write_log(
+            LogSeverity::Verbose,
+            &format!("UPDATE entry {} key {}", entry_name, key_name),
+            &env!("CARGO_PKG_NAME").to_string(),
+        );
         Ok(())
     }
 
@@ -128,7 +284,13 @@ impl DbTable {
     /// Private method called by type-specific public methods
     fn get_entry_value(&mut self, entry_name: &String, key_name: &String) -> Result<Option<&DbType>, String> {
         let key_index = self.find_key(key_name)?.0;
-        Ok(self.find_entry(entry_name)?.get(key_index))
+        let val = self.find_entry(entry_name)?.get(key_index);
+        write_log(
+            LogSeverity::Verbose,
+            &format!("GET entry {} key {}", entry_name, key_name),
+            &env!("CARGO_PKG_NAME").to_string(),
+        );
+        Ok(val)
     }
 
     /// Returns entries count in table
@@ -143,10 +305,17 @@ impl DbTable {
                 return Ok(entry);
             }
         }
-        Err(format!(
+
+        let msg = format!(
             "Entry {} does not exists in table {}",
             entry_name, self.name
-        ))
+        );
+        write_log(
+            LogSeverity::Error,
+            &msg,
+            &env!("CARGO_PKG_NAME").to_string(),
+        );
+        Err(msg)
     }
 
     /// Checks if the entry exists or not
@@ -164,10 +333,17 @@ impl DbTable {
                 return Ok((index, &key.1));
             }
         }
-        Err(format!(
+
+        let msg = format!(
             "Key {} does not exists in table {}",
             key_name, self.name
-        ))
+        );
+        write_log(
+            LogSeverity::Error,
+            &msg,
+            &env!("CARGO_PKG_NAME").to_string(),
+        );
+        Err(msg)
     }
 }
 
@@ -534,6 +710,184 @@ mod tests {
             Ok(())
         } else {
             Err(format!("Entry value should be None"))
+        }
+    }
+
+    #[test]
+    fn get_entry_string() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::UnsignedInt(0)),
+            ("key3".to_string(), DbType::Float(0.0)),
+            ("key4".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("-12".to_string()), Some("45".to_string()), Some("2.23".to_string()), None];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry("entry1".to_string(), None)?;
+        table.add_entry("entry2".to_string(), new_entry)?;
+
+        if table.get_entry_value_string(&"entry2".to_string(), &"key1".to_string())? != Some("-12".to_string()) {
+            return Err(format!("Entry value should be -12"));
+        }
+
+        if table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())? != Some("45".to_string()) {
+            return Err(format!("Entry value should be 45"));
+        }
+
+        if table.get_entry_value_string(&"entry2".to_string(), &"key3".to_string())? != Some("2.23".to_string()) {
+            return Err(format!("Entry value should be 2.23"));
+        }
+
+        if table.get_entry_value_string(&"entry2".to_string(), &"key4".to_string())? != None {
+            return Err(format!("Entry value should be None"));
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn update_entry_integer() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry("entry1".to_string(), new_entry)?;
+        table.add_entry("entry2".to_string(), None)?;
+
+        table.update_entry_integer(&"entry1".to_string(), &"key1".to_string(), Some(-66))?;
+
+        if let Some(value) = table.get_entry_value_integer(&"entry1".to_string(), &"key1".to_string())? {
+            if *value == -66 {
+                Ok(())
+            } else {
+                Err(format!("Integer value should be -66"))
+            }
+        } else {
+            Err(format!("Entry value should be Some(-66)"))
+        }
+    }
+
+    #[test]
+    fn get_entry_integer_wrong_type() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry("entry1".to_string(), new_entry)?;
+        table.add_entry("entry2".to_string(), None)?;
+
+        if table.get_entry_value_integer(&"entry1".to_string(), &"key2".to_string()).is_err() {
+            Ok(())
+        } else {
+            Err(format!("Result should be Err"))
+        }
+    }
+
+    #[test]
+    fn update_entry_uinteger() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::UnsignedInt(0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("12".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry("entry1".to_string(), new_entry)?;
+        table.add_entry("entry2".to_string(), None)?;
+
+        table.update_entry_unsigned_integer(&"entry1".to_string(), &"key3".to_string(), Some(66))?;
+
+        if let Some(value) = table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key3".to_string())? {
+            if *value == 66 {
+                Ok(())
+            } else {
+                Err(format!("Integer value should be 66"))
+            }
+        } else {
+            Err(format!("Entry value should be Some(66)"))
+        }
+    }
+
+    #[test]
+    fn get_entry_uinteger_wrong_type() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::UnsignedInt(0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("14".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry("entry1".to_string(), new_entry)?;
+        table.add_entry("entry2".to_string(), None)?;
+
+        if table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key2".to_string()).is_err() {
+            Ok(())
+        } else {
+            Err(format!("Result should be Err"))
+        }
+    }
+
+    #[test]
+    fn update_entry_float() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("12.56".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry("entry1".to_string(), new_entry)?;
+        table.add_entry("entry2".to_string(), None)?;
+
+        table.update_entry_float(&"entry1".to_string(), &"key3".to_string(), Some(66.99))?;
+
+        if let Some(value) = table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())? {
+            if *value == 66.99 {
+                Ok(())
+            } else {
+                Err(format!("Integer value should be 66.99"))
+            }
+        } else {
+            Err(format!("Entry value should be Some(66.99)"))
+        }
+    }
+
+    #[test]
+    fn get_entry_float_wrong_type() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry("entry1".to_string(), new_entry)?;
+        table.add_entry("entry2".to_string(), None)?;
+
+        if table.get_entry_value_float(&"entry1".to_string(), &"key2".to_string()).is_err() {
+            Ok(())
+        } else {
+            Err(format!("Result should be Err"))
         }
     }
 

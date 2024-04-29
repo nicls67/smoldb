@@ -12,7 +12,7 @@ pub enum DbType {
 }
 
 impl DbType {
-    /// Converts a String into the variant contained by ``self, returns `Err` if the string doesn't match the correct type
+    /// Converts a String into the variant contained by `self`, returns `Err` if the string doesn't match the correct type
     pub fn convert(&self, value: &String) -> Result<DbType, String> {
         match &self {
             DbType::Integer(_) => match value.parse::<i32>() {
@@ -31,6 +31,43 @@ impl DbType {
                 Err(_) => Err(format!("{} can't be interpreted as float", value)),
             },
             DbType::String(_) => Ok(DbType::String(value.clone())),
+        }
+    }
+
+    /// Converts the variant conatained by `self` into a String
+    pub fn into_string(&self) -> String {
+        match &self {
+            DbType::Integer(i) => i.to_string(),
+            DbType::UnsignedInt(u) => u.to_string(),
+            DbType::Float(f) => f.to_string(),
+            DbType::String(s) => s.clone(),
+        }
+    }
+
+    /// Checks coherency between variant in `self` and the given type
+    ///
+    /// If `new_type` is String, it is assumed to be coherent with all types
+    pub fn check_type(&self, new_type: &DbType) -> Result<(), String> {
+        match new_type {
+            DbType::Integer(_) => {
+                match &self {
+                    DbType::Integer(_) => Ok(()),
+                    _ => Err(format!("Database type incompatibility"))
+                }
+            },
+            DbType::UnsignedInt(_) => {
+                match &self {
+                    DbType::UnsignedInt(_) => Ok(()),
+                    _ => Err(format!("Database type incompatibility"))
+                }
+            },
+            DbType::Float(_) => {
+                match &self {
+                    DbType::Float(_) => Ok(()),
+                    _ => Err(format!("Database type incompatibility"))
+                }
+            },
+            DbType::String(_) => Ok(()),
         }
     }
 }
