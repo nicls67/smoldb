@@ -110,7 +110,11 @@ impl DbTable {
     ///
     /// If the key is not configured as String, the data is converted into a String
     ///
-    pub fn get_entry_value_string(&mut self, entry_name: &String, key_name: &String) -> Result<Option<String>, String> {
+    pub fn get_entry_value_string(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+    ) -> Result<Option<String>, String> {
         if let Some(value) = self.get_entry_value(entry_name, key_name)? {
             Ok(Some(value.into_string()))
         } else {
@@ -143,7 +147,11 @@ impl DbTable {
     ///
     /// If the selected key is not configured as Integer, `Err` is returned
     ///
-    pub fn get_entry_value_integer(&mut self, entry_name: &String, key_name: &String) -> Result<Option<&i32>, String> {
+    pub fn get_entry_value_integer(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+    ) -> Result<Option<&i32>, String> {
         // Coherency check
         match self.find_key(key_name)?.1.check_type(&DbType::Integer(0)) {
             Ok(_) => (),
@@ -187,9 +195,17 @@ impl DbTable {
     ///
     /// If the selected key is not configured as Unsigned Integer, `Err` is returned
     ///
-    pub fn get_entry_value_unsigned_integer(&mut self, entry_name: &String, key_name: &String) -> Result<Option<&u32>, String> {
+    pub fn get_entry_value_unsigned_integer(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+    ) -> Result<Option<&u32>, String> {
         // Coherency check
-        match self.find_key(key_name)?.1.check_type(&DbType::UnsignedInt(0)) {
+        match self
+            .find_key(key_name)?
+            .1
+            .check_type(&DbType::UnsignedInt(0))
+        {
             Ok(_) => (),
             Err(e) => return Err(e),
         }
@@ -231,7 +247,11 @@ impl DbTable {
     ///
     /// If the selected key is not configured as Float, `Err` is returned
     ///
-    pub fn get_entry_value_float(&mut self, entry_name: &String, key_name: &String) -> Result<Option<&f32>, String> {
+    pub fn get_entry_value_float(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+    ) -> Result<Option<&f32>, String> {
         // Coherency check
         match self.find_key(key_name)?.1.check_type(&DbType::Float(0.0)) {
             Ok(_) => (),
@@ -253,7 +273,12 @@ impl DbTable {
     /// Updates the selected entry
     ///
     /// Private method called by type-specific public methods
-    fn update_entry(&mut self, entry_name: &String, key_name: &String, new_value: Option<DbType>) -> Result<(), String> {
+    fn update_entry(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+        new_value: Option<DbType>,
+    ) -> Result<(), String> {
         let key = self.find_key(key_name)?;
         let key_index = key.0;
 
@@ -282,7 +307,11 @@ impl DbTable {
     /// Gets key value for selected entry
     ///
     /// Private method called by type-specific public methods
-    fn get_entry_value(&mut self, entry_name: &String, key_name: &String) -> Result<Option<&DbType>, String> {
+    fn get_entry_value(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+    ) -> Result<Option<&DbType>, String> {
         let key_index = self.find_key(key_name)?.0;
         let val = self.find_entry(entry_name)?.get(key_index);
         write_log(
@@ -334,10 +363,7 @@ impl DbTable {
             }
         }
 
-        let msg = format!(
-            "Key {} does not exists in table {}",
-            key_name, self.name
-        );
+        let msg = format!("Key {} does not exists in table {}", key_name, self.name);
         write_log(
             LogSeverity::Error,
             &msg,
@@ -508,20 +534,27 @@ mod tests {
         table.add_entry("entry1".to_string(), new_entry)?;
         table.add_entry("entry2".to_string(), None)?;
 
-        table.update_entry(&"entry1".to_string(), &"key3".to_string(), Some(DbType::Float(5.98)))?;
-        table.update_entry(&"entry2".to_string(), &"key2".to_string(), Some(DbType::String("Some value".to_string())))?;
+        table.update_entry(
+            &"entry1".to_string(),
+            &"key3".to_string(),
+            Some(DbType::Float(5.98)),
+        )?;
+        table.update_entry(
+            &"entry2".to_string(),
+            &"key2".to_string(),
+            Some(DbType::String("Some value".to_string())),
+        )?;
 
         if let Some(value) = table.get_entry_value(&"entry1".to_string(), &"key3".to_string())? {
             match value {
                 DbType::Float(f) => {
                     if *f == 5.98 {
                         ()
-                    }
-                    else {
+                    } else {
                         return Err(format!("Entry value should be 5.98"));
                     }
-                },
-                _ => return Err(format!("Entry value should be Float"))
+                }
+                _ => return Err(format!("Entry value should be Float")),
             };
         } else {
             return Err(format!("Entry value should be Some(5.98)"));
@@ -532,12 +565,11 @@ mod tests {
                 DbType::String(s) => {
                     if s == "Some value" {
                         return Ok(());
-                    }
-                    else {
+                    } else {
                         return Err(format!("Entry value should be Some value"));
                     }
-                },
-                _ => return Err(format!("Entry value should be String"))
+                }
+                _ => return Err(format!("Entry value should be String")),
             };
         } else {
             return Err(format!("Entry value should be Some(Some value)"));
@@ -560,7 +592,10 @@ mod tests {
 
         table.update_entry(&"entry1".to_string(), &"key1".to_string(), None)?;
 
-        if table.get_entry_value(&"entry1".to_string(), &"key1".to_string())?.is_none() {
+        if table
+            .get_entry_value(&"entry1".to_string(), &"key1".to_string())?
+            .is_none()
+        {
             Ok(())
         } else {
             Err(format!("Entry value should be None"))
@@ -582,7 +617,9 @@ mod tests {
         table.add_entry("entry2".to_string(), None)?;
 
         match table.update_entry(&"entry5".to_string(), &"key2".to_string(), None) {
-            Ok(_) => Err(format!("Error should be raised because entry name does not exist")),
+            Ok(_) => Err(format!(
+                "Error should be raised because entry name does not exist"
+            )),
             Err(_) => Ok(()),
         }
     }
@@ -602,7 +639,9 @@ mod tests {
         table.add_entry("entry2".to_string(), None)?;
 
         match table.update_entry(&"entry2".to_string(), &"key4".to_string(), None) {
-            Ok(_) => Err(format!("Error should be raised because key name does not exist")),
+            Ok(_) => Err(format!(
+                "Error should be raised because key name does not exist"
+            )),
             Err(_) => Ok(()),
         }
     }
@@ -621,8 +660,14 @@ mod tests {
         table.add_entry("entry1".to_string(), new_entry)?;
         table.add_entry("entry2".to_string(), None)?;
 
-        match table.update_entry(&"entry2".to_string(), &"key1".to_string(), Some(DbType::Float(0.25))) {
-            Ok(_) => Err(format!("Error should be raised because key type is incompatible")),
+        match table.update_entry(
+            &"entry2".to_string(),
+            &"key1".to_string(),
+            Some(DbType::Float(0.25)),
+        ) {
+            Ok(_) => Err(format!(
+                "Error should be raised because key type is incompatible"
+            )),
             Err(_) => Ok(()),
         }
     }
@@ -641,9 +686,15 @@ mod tests {
         table.add_entry("entry1".to_string(), new_entry)?;
         table.add_entry("entry2".to_string(), None)?;
 
-        table.update_entry_string(&"entry1".to_string(), &"key2".to_string(), Some("New value".to_string()))?;
+        table.update_entry_string(
+            &"entry1".to_string(),
+            &"key2".to_string(),
+            Some("New value".to_string()),
+        )?;
 
-        if let Some(value) = table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())? {
+        if let Some(value) =
+            table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?
+        {
             if value == "New value" {
                 Ok(())
             } else {
@@ -668,7 +719,11 @@ mod tests {
         table.add_entry("entry1".to_string(), new_entry)?;
         table.add_entry("entry2".to_string(), None)?;
 
-        match table.update_entry_string(&"entry1".to_string(), &"key1".to_string(), Some("New value".to_string())) {
+        match table.update_entry_string(
+            &"entry1".to_string(),
+            &"key1".to_string(),
+            Some("New value".to_string()),
+        ) {
             Ok(_) => return Err(format!("Update result should be Err")),
             Err(_) => (),
         }
@@ -678,12 +733,11 @@ mod tests {
                 DbType::Integer(i) => {
                     if *i == 1 {
                         return Ok(());
-                    }
-                    else {
+                    } else {
                         return Err(format!("Entry value should be 1"));
                     }
-                },
-                _ => return Err(format!("Entry value should be Integer"))
+                }
+                _ => return Err(format!("Entry value should be Integer")),
             };
         } else {
             return Err(format!("Entry value should be Some"));
@@ -706,7 +760,10 @@ mod tests {
 
         table.update_entry_string(&"entry1".to_string(), &"key2".to_string(), None)?;
 
-        if table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?.is_none() {
+        if table
+            .get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?
+            .is_none()
+        {
             Ok(())
         } else {
             Err(format!("Entry value should be None"))
@@ -722,21 +779,32 @@ mod tests {
             ("key4".to_string(), DbType::Float(0.0)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("-12".to_string()), Some("45".to_string()), Some("2.23".to_string()), None];
+        let mut binding = vec![
+            Some("-12".to_string()),
+            Some("45".to_string()),
+            Some("2.23".to_string()),
+            None,
+        ];
         let new_entry = Some(&mut binding);
 
         table.add_entry("entry1".to_string(), None)?;
         table.add_entry("entry2".to_string(), new_entry)?;
 
-        if table.get_entry_value_string(&"entry2".to_string(), &"key1".to_string())? != Some("-12".to_string()) {
+        if table.get_entry_value_string(&"entry2".to_string(), &"key1".to_string())?
+            != Some("-12".to_string())
+        {
             return Err(format!("Entry value should be -12"));
         }
 
-        if table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())? != Some("45".to_string()) {
+        if table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())?
+            != Some("45".to_string())
+        {
             return Err(format!("Entry value should be 45"));
         }
 
-        if table.get_entry_value_string(&"entry2".to_string(), &"key3".to_string())? != Some("2.23".to_string()) {
+        if table.get_entry_value_string(&"entry2".to_string(), &"key3".to_string())?
+            != Some("2.23".to_string())
+        {
             return Err(format!("Entry value should be 2.23"));
         }
 
@@ -763,7 +831,9 @@ mod tests {
 
         table.update_entry_integer(&"entry1".to_string(), &"key1".to_string(), Some(-66))?;
 
-        if let Some(value) = table.get_entry_value_integer(&"entry1".to_string(), &"key1".to_string())? {
+        if let Some(value) =
+            table.get_entry_value_integer(&"entry1".to_string(), &"key1".to_string())?
+        {
             if *value == -66 {
                 Ok(())
             } else {
@@ -788,7 +858,10 @@ mod tests {
         table.add_entry("entry1".to_string(), new_entry)?;
         table.add_entry("entry2".to_string(), None)?;
 
-        if table.get_entry_value_integer(&"entry1".to_string(), &"key2".to_string()).is_err() {
+        if table
+            .get_entry_value_integer(&"entry1".to_string(), &"key2".to_string())
+            .is_err()
+        {
             Ok(())
         } else {
             Err(format!("Result should be Err"))
@@ -809,9 +882,15 @@ mod tests {
         table.add_entry("entry1".to_string(), new_entry)?;
         table.add_entry("entry2".to_string(), None)?;
 
-        table.update_entry_unsigned_integer(&"entry1".to_string(), &"key3".to_string(), Some(66))?;
+        table.update_entry_unsigned_integer(
+            &"entry1".to_string(),
+            &"key3".to_string(),
+            Some(66),
+        )?;
 
-        if let Some(value) = table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key3".to_string())? {
+        if let Some(value) =
+            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key3".to_string())?
+        {
             if *value == 66 {
                 Ok(())
             } else {
@@ -836,7 +915,10 @@ mod tests {
         table.add_entry("entry1".to_string(), new_entry)?;
         table.add_entry("entry2".to_string(), None)?;
 
-        if table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key2".to_string()).is_err() {
+        if table
+            .get_entry_value_unsigned_integer(&"entry1".to_string(), &"key2".to_string())
+            .is_err()
+        {
             Ok(())
         } else {
             Err(format!("Result should be Err"))
@@ -859,7 +941,9 @@ mod tests {
 
         table.update_entry_float(&"entry1".to_string(), &"key3".to_string(), Some(66.99))?;
 
-        if let Some(value) = table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())? {
+        if let Some(value) =
+            table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?
+        {
             if *value == 66.99 {
                 Ok(())
             } else {
@@ -884,11 +968,13 @@ mod tests {
         table.add_entry("entry1".to_string(), new_entry)?;
         table.add_entry("entry2".to_string(), None)?;
 
-        if table.get_entry_value_float(&"entry1".to_string(), &"key2".to_string()).is_err() {
+        if table
+            .get_entry_value_float(&"entry1".to_string(), &"key2".to_string())
+            .is_err()
+        {
             Ok(())
         } else {
             Err(format!("Result should be Err"))
         }
     }
-
 }
