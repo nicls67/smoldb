@@ -2,6 +2,8 @@
 //! Database types definition
 //!
 
+use rustlog::{write_log, LogSeverity};
+
 /// Field type definition
 #[derive(PartialEq, Clone, Debug)]
 pub enum DbType {
@@ -34,7 +36,7 @@ impl DbType {
         }
     }
 
-    /// Converts the variant conatained by `self` into a String
+    /// Converts the variant contained by `self` into a String
     pub fn into_string(&self) -> String {
         match &self {
             DbType::Integer(i) => i.to_string(),
@@ -72,7 +74,15 @@ impl DbType {
             "UnsignedInt" => Ok(DbType::UnsignedInt(0)),
             "Float" => Ok(DbType::Float(0.0)),
             "String" => Ok(DbType::String(String::from(" "))),
-            _ => Err("Unknown database type".to_string())
+            _ => {
+                let msg = format!("Unknown database type : {}", type_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
         }
     }
 }

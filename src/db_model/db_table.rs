@@ -31,11 +31,11 @@ impl DbTable {
 
     ///
     /// ## Adds a new entry to table.
-    /// Entry name and fields values must be provided, values can be set to `None`
+    /// Entry name and fields values in String format must be provided, values can be set to `None` globally
     ///
     pub fn add_entry(
         &mut self,
-        name: String,
+        name: &String,
         values: Option<&mut Vec<Option<String>>>,
     ) -> Result<(), String> {
         let new_entry;
@@ -390,6 +390,11 @@ impl DbTable {
         );
         Ok(())
     }
+
+    /// Returns table name
+    pub fn name(&self) -> &String {
+        &self.name
+    }
 }
 
 #[cfg(test)]
@@ -448,8 +453,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         if table.entries_count() == 2 {
             Ok(())
@@ -469,11 +474,11 @@ mod tests {
         let mut binding = vec![Some("text".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        match table.add_entry("entry1".to_string(), new_entry) {
+        match table.add_entry(&"entry1".to_string(), new_entry) {
             Ok(_) => return Err(format!("Error should be raised because of wrong type")),
             Err(_) => (),
         };
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         if table.entries_count() == 1 {
             Ok(())
@@ -493,7 +498,7 @@ mod tests {
         let mut binding = vec![Some("value1".to_string()), None];
         let new_entry = Some(&mut binding);
 
-        match table.add_entry("entry1".to_string(), new_entry) {
+        match table.add_entry(&"entry1".to_string(), new_entry) {
             Ok(_) => {
                 return Err(format!(
                     "Error should be raised because of wrong vector size"
@@ -501,7 +506,7 @@ mod tests {
             }
             Err(_) => (),
         };
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         if table.entries_count() == 1 {
             Ok(())
@@ -521,9 +526,9 @@ mod tests {
         let mut binding = vec![Some("2".to_string()), None, None];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
 
-        match table.add_entry("entry1".to_string(), None) {
+        match table.add_entry(&"entry1".to_string(), None) {
             Ok(_) => {
                 return Err(format!(
                     "Error should be raised because entry name already exists"
@@ -550,8 +555,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         table.update_entry(
             &"entry1".to_string(),
@@ -606,8 +611,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         table.update_entry(&"entry1".to_string(), &"key1".to_string(), None)?;
 
@@ -632,8 +637,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         match table.update_entry(&"entry5".to_string(), &"key2".to_string(), None) {
             Ok(_) => Err(format!(
@@ -654,8 +659,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         match table.update_entry(&"entry2".to_string(), &"key4".to_string(), None) {
             Ok(_) => Err(format!(
@@ -676,8 +681,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         match table.update_entry(
             &"entry2".to_string(),
@@ -702,8 +707,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         table.update_entry_string(
             &"entry1".to_string(),
@@ -735,8 +740,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         match table.update_entry_string(
             &"entry1".to_string(),
@@ -774,8 +779,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         table.update_entry_string(&"entry1".to_string(), &"key2".to_string(), None)?;
 
@@ -806,8 +811,8 @@ mod tests {
         ];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), None)?;
-        table.add_entry("entry2".to_string(), new_entry)?;
+        table.add_entry(&"entry1".to_string(), None)?;
+        table.add_entry(&"entry2".to_string(), new_entry)?;
 
         if table.get_entry_value_string(&"entry2".to_string(), &"key1".to_string())?
             != Some("-12".to_string())
@@ -845,8 +850,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         table.update_entry_integer(&"entry1".to_string(), &"key1".to_string(), Some(-66))?;
 
@@ -874,8 +879,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         if table
             .get_entry_value_integer(&"entry1".to_string(), &"key2".to_string())
@@ -898,8 +903,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("12".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         table.update_entry_unsigned_integer(
             &"entry1".to_string(),
@@ -931,8 +936,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("14".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         if table
             .get_entry_value_unsigned_integer(&"entry1".to_string(), &"key2".to_string())
@@ -955,8 +960,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("12.56".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         table.update_entry_float(&"entry1".to_string(), &"key3".to_string(), Some(66.99))?;
 
@@ -984,8 +989,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         if table
             .get_entry_value_float(&"entry1".to_string(), &"key2".to_string())
@@ -1008,8 +1013,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
 
@@ -1037,8 +1042,8 @@ mod tests {
         let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
         let new_entry = Some(&mut binding);
 
-        table.add_entry("entry1".to_string(), new_entry)?;
-        table.add_entry("entry2".to_string(), None)?;
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
 
         match table.add_key(&"key_new".to_string(), &"RandomType".to_string()) {
             Ok(_) => Err("Result should be Err".to_string()),

@@ -20,7 +20,7 @@ impl DbEntry {
     /// Fields values can be globally empty (parameter `values` equal to `None`)
     /// or one particular field can be empty (one element of vector is `None`)
     pub fn new(
-        name: String,
+        name: &String,
         fields_nb: usize,
         values: Option<&mut Vec<Option<DbType>>>,
     ) -> Result<DbEntry, String> {
@@ -56,7 +56,7 @@ impl DbEntry {
             &env!("CARGO_PKG_NAME").to_string(),
         );
         Ok(DbEntry {
-            name,
+            name: name.clone(),
             fields: entry,
         })
     }
@@ -94,7 +94,7 @@ mod tests {
         let name = "entry";
         let none_vec = vec![None, None, None, None];
 
-        match DbEntry::new(name.to_string(), 4, None) {
+        match DbEntry::new(&name.to_string(), 4, None) {
             Ok(entry) => {
                 if entry.name.as_str() != name {
                     Err(format!("Entry name should be {name}"))
@@ -121,7 +121,7 @@ mod tests {
         ];
         let some_vec2 = some_vec.clone();
 
-        match DbEntry::new(name.to_string(), 4, Some(&mut some_vec)) {
+        match DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)) {
             Ok(entry) => {
                 if entry.name.as_str() != name {
                     Err(format!("Entry name should be {name}"))
@@ -157,7 +157,7 @@ mod tests {
             Some(DbType::Integer(12)),
         ];
 
-        let mut entry = DbEntry::new(name.to_string(), 4, Some(&mut some_vec)).unwrap();
+        let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)).unwrap();
         entry.update(1, Some(DbType::String("new_item".to_string())));
         entry.update(2, Some(DbType::UnsignedInt(35)));
 
@@ -181,7 +181,7 @@ mod tests {
             Some(DbType::Integer(12)),
         ];
 
-        let entry = DbEntry::new(name.to_string(), 4, Some(&mut some_vec)).unwrap();
+        let entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)).unwrap();
 
         let val = entry.get(2).unwrap();
 
@@ -216,7 +216,7 @@ mod tests {
             None,
         ];
 
-        let mut entry = DbEntry::new(name.to_string(), 4, Some(&mut some_vec)).unwrap();
+        let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)).unwrap();
         entry.add_field(Some(DbType::String("item4".to_string())));
         entry.add_field(None);
 
