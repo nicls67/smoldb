@@ -270,6 +270,13 @@ impl DbTable {
         }
     }
 
+    /// Removes the selected entry from the table
+    pub fn remove_entry(&mut self, entry_name: &String) -> Result<(), String> {
+        let index = self.find_entry(entry_name)?.1;
+        self.entries.swap_remove(index);
+        Ok(())
+    }
+
     /// Updates the selected entry
     ///
     /// Private method called by type-specific public methods
@@ -294,7 +301,7 @@ impl DbTable {
             }
         }
 
-        self.find_entry(entry_name)?.update(key_index, new_value);
+        self.find_entry(entry_name)?.0.update(key_index, new_value);
 
         write_log(
             LogSeverity::Verbose,
@@ -313,7 +320,7 @@ impl DbTable {
         key_name: &String,
     ) -> Result<Option<&DbType>, String> {
         let key_index = self.find_key(key_name)?.0;
-        let val = self.find_entry(entry_name)?.get(key_index);
+        let val = self.find_entry(entry_name)?.0.get(key_index);
         write_log(
             LogSeverity::Verbose,
             &format!("GET entry {} key {}", entry_name, key_name),
@@ -328,10 +335,10 @@ impl DbTable {
     }
 
     /// Search for an entry and returns `Ok` with a reference to it, or `Err` if the entry does not exist
-    fn find_entry(&mut self, entry_name: &String) -> Result<&mut DbEntry, String> {
-        for entry in self.entries.iter_mut() {
+    fn find_entry(&mut self, entry_name: &String) -> Result<(&mut DbEntry, usize), String> {
+        for (index, entry) in self.entries.iter_mut().enumerate() {
             if entry.name() == entry_name {
-                return Ok(entry);
+                return Ok((entry, index));
             }
         }
 
@@ -375,9 +382,8 @@ impl DbTable {
     /// ## Adds a key to the table
     /// All entries of the table will get the new key with a default `None` value
     pub fn add_key(&mut self, key_name: &String, key_type: &String) -> Result<(), String> {
-        self.keys.push(
-            (key_name.clone(), DbType::default_from_string(key_type)?)
-        );
+        self.keys
+            .push((key_name.clone(), DbType::default_from_string(key_type)?));
 
         for entry in self.entries.iter_mut() {
             entry.add_field(None)
@@ -1049,6 +1055,56 @@ mod tests {
             Ok(_) => Err("Result should be Err".to_string()),
             Err(_) => Ok(()),
         }
+    }
 
+    #[test]
+    fn remove_entry() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let new_entry = Some(&mut binding);
+        let mut binding2 = vec![Some("3".to_string()), None, Some("32".to_string())];
+        let new_entry2 = Some(&mut binding2);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+
+        table.remove_entry(&"entry2".to_string())?;
+
+        match table.entries_count() {
+            2 => Ok(()),
+            _ => Err(format!("Table should have 2 elements")),
+        }
+    }
+
+    #[test]
+    fn remove_entry_wrong_name() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let new_entry = Some(&mut binding);
+        let mut binding2 = vec![Some("3".to_string()), None, Some("32".to_string())];
+        let new_entry2 = Some(&mut binding2);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+
+        match table.remove_entry(&"entry4".to_string()) {
+            Ok(_) => Err(format!("Result should be Err")),
+            Err(_) => match table.entries_count() {
+                3 => Ok(()),
+                _ => Err(format!("Table should have 3 elements")),
+            },
+        }
     }
 }
