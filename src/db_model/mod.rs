@@ -80,8 +80,23 @@ impl DbModel {
 
     /// Returns a reference to the selected table
     pub fn table(&mut self, name: &String) -> Result<&mut DbTable, String> {
-        for table in self.tables.iter_mut() {
-            if table.name() == name {
+        match self.find_table(name) {
+            Ok(table) => Ok(table.1),
+            Err(s) => Err(s),
+        }
+    }
+
+    /// Removes the selected table
+    pub fn delete_table(&mut self, name: &String) -> Result<(), String> {
+        let index = self.find_table(name)?.0;
+        self.tables.swap_remove(index);
+        Ok(())
+    }
+
+    /// Find the selected table, returns reference to the table and its index in vector
+    fn find_table(&mut self, name: &String) -> Result<(usize, &mut DbTable), String> {
+        for table in self.tables.iter_mut().enumerate() {
+            if table.1.name() == name {
                 return Ok(table);
             }
         }
@@ -93,6 +108,11 @@ impl DbModel {
             &env!("CARGO_PKG_NAME").to_string(),
         );
         Err(msg)
+    }
+
+    /// Returns current number of tables inside the database
+    pub fn tables_count(&self) -> usize {
+        self.tables.len()
     }
 }
 
@@ -223,5 +243,74 @@ mod tests {
         }
 
 
+    }
+
+    #[test]
+    fn delete_table() -> Result<(), String> {
+        let mut model = DbModel::new("ModelName".to_string());
+
+        model.create_table(
+            &"NewTable".to_string(),
+            Some(vec![
+                ("key1".to_string(), "String".to_string()),
+                ("key2".to_string(), "Integer".to_string()),
+            ]),
+        )?;
+        model.create_table(
+            &"OtherTable".to_string(),
+            Some(vec![
+                ("key3".to_string(), "Float".to_string()),
+                ("key4".to_string(), "UnsignedInt".to_string()),
+            ]),
+        )?;
+        model.create_table(
+            &"ThirdTable".to_string(),
+            Some(vec![
+                ("key5".to_string(), "Integer".to_string()),
+                ("key6".to_string(), "Float".to_string()),
+            ]),
+        )?;
+
+        model.delete_table(&"OtherTable".to_string())?;
+
+        match model.tables_count() {
+            2 => Ok(()),
+            _ => Err(format!("Tables count should be 2"))
+        }
+    }
+
+    #[test]
+    fn delete_table_wrong_name() -> Result<(), String> {
+        let mut model = DbModel::new("ModelName".to_string());
+
+        model.create_table(
+            &"NewTable".to_string(),
+            Some(vec![
+                ("key1".to_string(), "String".to_string()),
+                ("key2".to_string(), "Integer".to_string()),
+            ]),
+        )?;
+        model.create_table(
+            &"OtherTable".to_string(),
+            Some(vec![
+                ("key3".to_string(), "Float".to_string()),
+                ("key4".to_string(), "UnsignedInt".to_string()),
+            ]),
+        )?;
+        model.create_table(
+            &"ThirdTable".to_string(),
+            Some(vec![
+                ("key5".to_string(), "Integer".to_string()),
+                ("key6".to_string(), "Float".to_string()),
+            ]),
+        )?;
+
+        match model.delete_table(&"StupidName".to_string()) {
+            Ok(_) => Err(format!("Result should be Err")),
+            Err(_) => match model.tables_count() {
+                3 => Ok(()),
+                _ => Err(format!("Tables count should be 3"))
+            },
+        }
     }
 }

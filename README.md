@@ -31,7 +31,7 @@ use smoldb::SmolDb;
 let db = SmolDb::init("Database name".to_string());
 ```
 
-### Create a new table
+### Table management
 
 ```rust
 use smoldb::SmolDb;
@@ -46,6 +46,9 @@ db.get_database().create_table(&"Table name".to_string(), keys).unwrap();
 
 // Keys can also be left empty
 db.get_database().create_table(&"Table name 2".to_string(), None).unwrap();
+
+// Delete the table
+db.get_database().delete_table(&"Table name".to_string()).unwrap();
 ```
 
 ### Basic table usage
@@ -91,4 +94,7 @@ let count = table.entries_count();
 
 // Add a new key to a table ()existing entries will get a None value for this key)
 table.add_key(&"new_key".to_string(), &"Integer".to_string()).unwrap();
+
+// Remove an entry from the table
+table.remove_entry(&"entry1".to_string()).unwrap();
 ```
