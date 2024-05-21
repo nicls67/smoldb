@@ -80,6 +80,11 @@ impl DbEntry {
     pub fn add_field(&mut self, value: Option<DbType>) {
         self.fields.push(value);
     }
+
+    /// Rename entry
+    pub fn rename(&mut self, new_name: &String) {
+        self.name = new_name.clone();
+    }
 }
 
 #[cfg(test)]
@@ -227,6 +232,26 @@ mod tests {
                 "Entry fields have wrong value : {:?}",
                 entry.fields
             ))
+        }
+    }
+
+    #[test]
+    fn entry_rename() -> Result<(), String> {
+        let name = "entry2";
+        let mut some_vec = vec![
+            Some(DbType::String("item1".to_string())),
+            None,
+            Some(DbType::Float(3.33)),
+            Some(DbType::Integer(12)),
+        ];
+
+        let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)).unwrap();
+        entry.rename(&"new_name".to_string());
+
+        if entry.name() == "new_name" {
+            Ok(())
+        } else {
+            Err(format!("Entry name should be new_name"))
         }
     }
 }

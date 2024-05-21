@@ -103,6 +103,15 @@ fn basic_ops_1() -> Result<(), String> {
         return Err(format!("Entries count should be 1"));
     }
 
+    // Rename entry
+    table.rename_entry(&"entry2".to_string(), &"new_entry_name".to_string())?;
+
+    // Get entry None value
+    match table.get_entry_value_string(&"new_entry_name".to_string(), &"key1".to_string())? {
+        Some(_) => return Err(format!("Entry value should be None")),
+        None => (),
+    }
+
     // Get table count
     if db.get_database().tables_count() != 1 {
         return Err(format!("Tables count should be 1"));

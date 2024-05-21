@@ -97,4 +97,7 @@ table.add_key(&"new_key".to_string(), &"Integer".to_string()).unwrap();
 
 // Remove an entry from the table
 table.remove_entry(&"entry1".to_string()).unwrap();
+
+// Rename an entry
+table.rename_entry(&"entry2".to_string(), &"new_name".to_string()).unwrap();
 ```

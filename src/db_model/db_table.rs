@@ -401,6 +401,12 @@ impl DbTable {
     pub fn name(&self) -> &String {
         &self.name
     }
+
+    /// Rename the selected entry
+    pub fn rename_entry(&mut self, entry_name: &String, new_name: &String) -> Result<(), String> {
+        self.find_entry(entry_name)?.0.rename(new_name);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -1105,6 +1111,38 @@ mod tests {
                 3 => Ok(()),
                 _ => Err(format!("Table should have 3 elements")),
             },
+        }
+    }
+
+    #[test]
+    fn rename_entry() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+
+        match table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()) {
+            Ok(_) => (),
+            Err(_) => return Err(format!("Result should be Ok")),
+        }
+
+        table.rename_entry(&"entry1".to_string(), &"entry99".to_string())?;
+
+        match table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()) {
+            Ok(_) => return Err(format!("Result should be Err")),
+            Err(_) => (),
+        }
+
+        match table.get_entry_value_string(&"entry99".to_string(), &"key1".to_string()) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(format!("Result should be Ok")),
         }
     }
 }
