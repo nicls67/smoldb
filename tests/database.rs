@@ -10,7 +10,7 @@ fn basic_ops_1() -> Result<(), String> {
     let mut db = SmolDb::init("Database test".to_string());
 
     // Get table count
-    if db.get_database().tables_count() != 0 {
+    if db.database().tables_count() != 0 {
         return Err(format!("Tables count should be 0"));
     }
 
@@ -20,9 +20,9 @@ fn basic_ops_1() -> Result<(), String> {
         ("key2".to_string(), "Integer".to_string()),
         ("key3".to_string(), "Float".to_string()),
     ]);
-    db.get_database().create_table(&"Table test 1".to_string(), keys)?;
+    db.database().create_table(&"Table test 1".to_string(), keys)?;
 
-    let table = db.get_database().table(&"Table test 1".to_string())?;
+    let table = db.database().table(&"Table test 1".to_string())?;
 
     // Add entries, 2nd has all keys set to None
     let mut values = vec![Some("hey".to_string()), None, Some("2.23".to_string())];
@@ -113,7 +113,7 @@ fn basic_ops_1() -> Result<(), String> {
     }
 
     // Get table count
-    if db.get_database().tables_count() != 1 {
+    if db.database().tables_count() != 1 {
         return Err(format!("Tables count should be 1"));
     }
 
@@ -126,7 +126,7 @@ fn error_ops_1() -> Result<(), String> {
     let mut db = SmolDb::init("Database test".to_string());
 
     // Unknown table
-    match db.get_database().table(&"Table test 1".to_string()) {
+    match db.database().table(&"Table test 1".to_string()) {
         Ok(_) => return Err(format!("Result should be Err")),
         Err(_) => (),
     }
@@ -137,9 +137,9 @@ fn error_ops_1() -> Result<(), String> {
         ("key2".to_string(), "Integer".to_string()),
         ("key3".to_string(), "Float".to_string()),
     ]);
-    db.get_database().create_table(&"Table test 1".to_string(), keys)?;
+    db.database().create_table(&"Table test 1".to_string(), keys)?;
 
-    let table = db.get_database().table(&"Table test 1".to_string())?;
+    let table = db.database().table(&"Table test 1".to_string())?;
 
     // Add entries, 2nd has all keys set to None
     let mut values = vec![Some("hey".to_string()), None, Some("2.23".to_string())];

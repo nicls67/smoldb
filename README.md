@@ -42,13 +42,13 @@ let keys = Some(vec![
                 ("key1".to_string(), "String".to_string()),
                 ("key2".to_string(), "Integer".to_string()),
             ]);
-db.get_database().create_table(&"Table name".to_string(), keys).unwrap();
+db.database().create_table(&"Table name".to_string(), keys).unwrap();
 
 // Keys can also be left empty
-db.get_database().create_table(&"Table name 2".to_string(), None).unwrap();
+db.database().create_table(&"Table name 2".to_string(), None).unwrap();
 
 // Delete the table
-db.get_database().delete_table(&"Table name".to_string()).unwrap();
+db.database().delete_table(&"Table name".to_string()).unwrap();
 ```
 
 ### Basic table usage
@@ -63,10 +63,10 @@ let keys = Some(vec![
                 ("key2".to_string(), "Integer".to_string()),
                 ("key3".to_string(), "Float".to_string()),
             ]);
-db.get_database().create_table(&"Table name".to_string(), keys).unwrap();
+db.database().create_table(&"Table name".to_string(), keys).unwrap();
 
 // Get table reference
-let mut table = db.get_database().table(&"Table name".to_string()).unwrap();
+let mut table = db.database().table(&"Table name".to_string()).unwrap();
 
 // Add a new entry to the table with values
 // Values for the new entry must be provided as String, conversion will be done by the database

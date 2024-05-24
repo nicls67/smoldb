@@ -17,7 +17,7 @@ impl SmolDb {
     }
 
     /// Returns reference to database model
-    pub fn get_database(&mut self) -> &mut DbModel {
+    pub fn database(&mut self) -> &mut DbModel {
         &mut self.model
     }
 }
