@@ -4,7 +4,7 @@ A small database library written in Rust
 
 ## Principle
 
-This library is meant to be used inside a Rust binary application. Database is stored inside a `.smoldb` file (or any other extension) which is opened or created during library loading.
+This library is meant to be used inside a Rust binary application. Database is stored inside a JSON file (the extension can be anything else than `.json`).
 
 **SmolDB** only requires a few accesses to disk as database file is loaded once during initialization, and then all requests are handled from RAM (read and write accesses). The database file on disk is updated when `save` method is called.
 
@@ -23,12 +23,27 @@ To get or update an entry value, either call the method corresponding to the dat
 
 ## Usage
 
-### Create new database
+### Database creation, saving and loading
+
+When an empty database is created, no JSON file is associated, it must be configured manually using `set_database_file` before any save attempt.
+
+When an existing database is loaded, the JSON file is linked to the database, thus any `save` call will write to the original file. The linked file can be updated using `set_database_file`.
 
 ```rust
 use smoldb::SmolDb;
+use std::path::Path;
 
-let db = SmolDb::init("Database name".to_string());
+// Create new empty database
+let mut db = SmolDb::init("Database name".to_string());
+
+// Configure database file
+db.set_database_file(Path::new("file.json"));
+
+// Save database to file
+db.save().unwrap();
+
+// Load existing database
+let new_db = SmolDb::load(Path::new("file.json")).unwrap();
 ```
 
 ### Table management

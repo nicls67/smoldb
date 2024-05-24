@@ -5,11 +5,12 @@
 use std::mem::discriminant;
 
 use rustlog::{write_log, LogSeverity};
+use serde_derive::{Deserialize, Serialize};
 
 use super::{db_entry::DbEntry, db_type::DbType};
 
 /// Database table
-#[derive(PartialEq)]
+#[derive(PartialEq, Serialize, Deserialize)]
 pub struct DbTable {
     /// Table name
     name: String,

@@ -3,9 +3,10 @@
 //!
 
 use rustlog::{write_log, LogSeverity};
+use serde_derive::{Deserialize, Serialize};
 
 /// Field type definition
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub enum DbType {
     Integer(i32),
     UnsignedInt(u32),

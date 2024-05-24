@@ -3,11 +3,12 @@
 //!
 
 use rustlog::{write_log, LogSeverity};
+use serde_derive::{Deserialize, Serialize};
 
 use super::db_type::DbType;
 
 /// Database entry
-#[derive(PartialEq)]
+#[derive(PartialEq, Serialize, Deserialize)]
 pub struct DbEntry {
     /// Entry name
     name: String,

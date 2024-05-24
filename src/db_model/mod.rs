@@ -8,10 +8,12 @@ mod db_type;
 
 pub use db_table::DbTable;
 use rustlog::{write_log, LogSeverity};
+use serde_derive::{Deserialize, Serialize};
 
 use self::db_type::DbType;
 
 /// Database model
+#[derive(Deserialize, Serialize, PartialEq)]
 pub struct DbModel {
     name: String,
     version: Vec<u8>,
