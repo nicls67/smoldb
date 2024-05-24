@@ -274,6 +274,12 @@ impl DbTable {
     pub fn remove_entry(&mut self, entry_name: &String) -> Result<(), String> {
         let index = self.find_entry(entry_name)?.1;
         self.entries.swap_remove(index);
+
+        write_log(
+            LogSeverity::Info,
+            &format!("DELETE entry {entry_name}"),
+            &env!("CARGO_PKG_NAME").to_string(),
+        );
         Ok(())
     }
 

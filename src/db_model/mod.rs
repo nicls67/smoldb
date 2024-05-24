@@ -90,6 +90,12 @@ impl DbModel {
     pub fn delete_table(&mut self, name: &String) -> Result<(), String> {
         let index = self.find_table(name)?.0;
         self.tables.swap_remove(index);
+
+        write_log(
+            LogSeverity::Info,
+            &format!("DELETE table {}", name),
+            &env!("CARGO_PKG_NAME").to_string(),
+        );
         Ok(())
     }
 

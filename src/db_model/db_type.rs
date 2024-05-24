@@ -50,20 +50,32 @@ impl DbType {
     ///
     /// If `new_type` is String, it is assumed to be coherent with all types
     pub fn check_type(&self, new_type: &DbType) -> Result<(), String> {
-        match new_type {
+        let res = match new_type {
             DbType::Integer(_) => match &self {
-                DbType::Integer(_) => Ok(()),
-                _ => Err(format!("Database type incompatibility")),
+                DbType::Integer(_) => true,
+                _ => false,
             },
             DbType::UnsignedInt(_) => match &self {
-                DbType::UnsignedInt(_) => Ok(()),
-                _ => Err(format!("Database type incompatibility")),
+                DbType::UnsignedInt(_) => true,
+                _ => false,
             },
             DbType::Float(_) => match &self {
-                DbType::Float(_) => Ok(()),
-                _ => Err(format!("Database type incompatibility")),
+                DbType::Float(_) => true,
+                _ => false,
             },
-            DbType::String(_) => Ok(()),
+            DbType::String(_) => true,
+        };
+
+        if res {
+            Ok(())
+        } else {
+            let msg = format!("Database type incompatibility");
+            write_log(
+                LogSeverity::Error,
+                &msg,
+                &env!("CARGO_PKG_NAME").to_string(),
+            );
+            Err(msg)
         }
     }
 
