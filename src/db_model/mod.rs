@@ -13,7 +13,7 @@ use serde_derive::{Deserialize, Serialize};
 use self::db_type::DbType;
 
 /// Database model
-#[derive(Deserialize, Serialize, PartialEq)]
+#[derive(Deserialize, Serialize, PartialEq, Debug)]
 pub struct DbModel {
     name: String,
     version: Vec<u8>,

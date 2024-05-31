@@ -10,7 +10,7 @@ use serde_derive::{Deserialize, Serialize};
 use super::{db_entry::DbEntry, db_type::DbType};
 
 /// Database table
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct DbTable {
     /// Table name
     name: String,
@@ -318,7 +318,7 @@ impl DbTable {
         Ok(())
     }
 
-    /// Gets key value for selected entry
+    /// Gets key value for selected entry.
     ///
     /// Private method called by type-specific public methods
     fn get_entry_value(
@@ -335,6 +335,8 @@ impl DbTable {
         );
         Ok(val)
     }
+
+
 
     /// Returns entries count in table
     pub fn entries_count(&self) -> usize {

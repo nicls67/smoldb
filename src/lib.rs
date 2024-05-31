@@ -6,7 +6,7 @@ use std::{fs, path::Path};
 pub use db_model::{DbModel, DbTable};
 use rustlog::write_log;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct SmolDb {
     model: DbModel,
     db_file: Option<&'static Path>,
@@ -115,16 +115,16 @@ impl SmolDb {
 mod tests {
     use std::{fs::remove_file, path::Path};
 
+    use rusttests::{check_result, check_struct, CheckType};
+
     use crate::SmolDb;
 
     #[test]
     fn save_no_file() -> Result<(), String> {
         let db = SmolDb::init("db_name".to_string());
 
-        match db.save() {
-            Ok(_) => Err(format!("Result should be Err")),
-            Err(_) => Ok(()),
-        }
+        check_result((1,1),db.save(), false)?;
+        Ok(())
     }
 
     #[test]
@@ -133,20 +133,13 @@ mod tests {
 
         db.set_database_file(Path::new("test.json"));
 
-        match db.save() {
-            Ok(_) => (),
-            Err(_) => return Err(format!("Result should be Ok")),
-        };
+        check_result((1,1), db.save(), true)?;
 
         let new_db = SmolDb::load(Path::new("test.json"))?;
 
         remove_file("test.json").unwrap_or(());
 
-        if db == new_db {
-            Ok(())
-        } else {
-            Err(format!("Loaded database should be equal to intial database"))
-        }
+        check_struct((2,1), &new_db, &db, CheckType::Equal)
 
     }
 }

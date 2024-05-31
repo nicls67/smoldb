@@ -8,7 +8,7 @@ use serde_derive::{Deserialize, Serialize};
 use super::db_type::DbType;
 
 /// Database entry
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct DbEntry {
     /// Entry name
     name: String,
