@@ -155,6 +155,7 @@ dependencies = [
 [[package]]
 name = "rusttests"
 version = "0.1.0"
+source = "git+http://serveur-dev.home/rust-libs/rusttests.git?tag=1.0.0#c2901ab323544352af2551941a84a66dd6926ac6"
 
 [[package]]
 name = "ryu"
