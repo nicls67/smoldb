@@ -103,92 +103,87 @@ impl DbType {
 #[cfg(test)]
 mod tests {
 
+    use rusttests::{check_result, check_struct};
+
     use super::DbType;
 
     #[test]
     fn check_string() -> Result<(), String> {
         let type_string = DbType::String("a".to_string());
-        match type_string.convert(&"text".to_string()) {
-            Ok(t) => {
-                if t == DbType::String("text".to_string()) {
-                    Ok(())
-                } else {
-                    Err(format!("Wrong string returned"))
-                }
-            }
-            Err(_) => Err("String input should return Ok".to_string()),
-        }
+
+        let val = check_result((1, 1), type_string.convert(&"text".to_string()), true)?.unwrap();
+        check_struct(
+            (1, 2),
+            &val,
+            &DbType::String("text".to_string()),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
     fn check_float_ok() -> Result<(), String> {
         let type_float = DbType::Float(0.0);
-        match type_float.convert(&"1.23".to_string()) {
-            Ok(t) => {
-                if t == DbType::Float(1.23) {
-                    Ok(())
-                } else {
-                    Err(format!("Wrong float returned"))
-                }
-            }
-            Err(_) => Err("Float input should return Ok".to_string()),
-        }
+
+        let val = check_result((1, 1), type_float.convert(&"1.23".to_string()), true)?.unwrap();
+        check_struct(
+            (1, 2),
+            &val,
+            &DbType::Float(1.23),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
     fn check_float_ko() -> Result<(), String> {
         let type_float = DbType::Float(0.0);
-        match type_float.convert(&"text".to_string()) {
-            Ok(_) => Err("Not float input should return Err".to_string()),
-            Err(_) => Ok(()),
-        }
+
+        check_result((1, 1), type_float.convert(&"text".to_string()), false)?;
+        Ok(())
     }
 
     #[test]
     fn check_int_ok() -> Result<(), String> {
         let type_int = DbType::Integer(0);
-        match type_int.convert(&"-14".to_string()) {
-            Ok(t) => {
-                if t == DbType::Integer(-14) {
-                    Ok(())
-                } else {
-                    Err(format!("Wrong integer returned"))
-                }
-            }
-            Err(_) => Err("Integer input should return Ok".to_string()),
-        }
+
+        let val = check_result((1, 1), type_int.convert(&"-14".to_string()), true)?.unwrap();
+        check_struct(
+            (1, 2),
+            &val,
+            &DbType::Integer(-14),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
     fn check_int_ko() -> Result<(), String> {
         let type_int = DbType::Integer(0);
-        match type_int.convert(&"12.5".to_string()) {
-            Ok(_) => Err("Not integer input should return Err".to_string()),
-            Err(_) => Ok(()),
-        }
+
+        check_result((1, 1), type_int.convert(&"12.5".to_string()), false)?;
+        Ok(())
     }
 
     #[test]
     fn check_uint_ok() -> Result<(), String> {
         let type_uint = DbType::UnsignedInt(0);
-        match type_uint.convert(&"27".to_string()) {
-            Ok(t) => {
-                if t == DbType::UnsignedInt(27) {
-                    Ok(())
-                } else {
-                    Err(format!("Wrong unsigned integer returned"))
-                }
-            }
-            Err(_) => Err("Unsigned integer input should return Ok".to_string()),
-        }
+
+        let val = check_result((1, 1), type_uint.convert(&"27".to_string()), true)?.unwrap();
+        check_struct(
+            (1, 2),
+            &val,
+            &DbType::UnsignedInt(27),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
     fn check_uint_ko() -> Result<(), String> {
         let type_uint = DbType::UnsignedInt(0);
-        match type_uint.convert(&"-4".to_string()) {
-            Ok(_) => Err("Not unsigned integer input should return Err".to_string()),
-            Err(_) => Ok(()),
-        }
+
+        check_result((1, 1), type_uint.convert(&"-4".to_string()), false)?;
+        Ok(())
     }
 }

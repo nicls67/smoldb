@@ -336,8 +336,6 @@ impl DbTable {
         Ok(val)
     }
 
-
-
     /// Returns entries count in table
     pub fn entries_count(&self) -> usize {
         self.entries.len()
@@ -420,6 +418,8 @@ impl DbTable {
 
 #[cfg(test)]
 mod tests {
+    use rusttests::{check_option, check_result, check_struct, check_value};
+
     use super::{DbTable, DbType};
 
     #[test]
@@ -432,11 +432,8 @@ mod tests {
             entries: Vec::new(),
         };
 
-        if table == expected {
-            Ok(())
-        } else {
-            Err("New table doesn't match the expected".to_string())
-        }
+        check_struct((1, 1), &table, &expected, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -456,11 +453,8 @@ mod tests {
             entries: Vec::new(),
         };
 
-        if table == expected {
-            Ok(())
-        } else {
-            Err("New table doesn't match the expected".to_string())
-        }
+        check_struct((1, 1), &table, &expected, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -477,11 +471,13 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        if table.entries_count() == 2 {
-            Ok(())
-        } else {
-            Err("Table should have 2 entries".to_string())
-        }
+        check_value(
+            (1, 1),
+            &table.entries_count(),
+            &2,
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -495,17 +491,21 @@ mod tests {
         let mut binding = vec![Some("text".to_string()), None, Some("2.23".to_string())];
         let new_entry = Some(&mut binding);
 
-        match table.add_entry(&"entry1".to_string(), new_entry) {
-            Ok(_) => return Err(format!("Error should be raised because of wrong type")),
-            Err(_) => (),
-        };
+        check_result(
+            (1, 1),
+            table.add_entry(&"entry1".to_string(), new_entry),
+            false,
+        )?;
+
         table.add_entry(&"entry2".to_string(), None)?;
 
-        if table.entries_count() == 1 {
-            Ok(())
-        } else {
-            Err("Table should have 1 entry".to_string())
-        }
+        check_value(
+            (1, 2),
+            &table.entries_count(),
+            &1,
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -519,21 +519,21 @@ mod tests {
         let mut binding = vec![Some("value1".to_string()), None];
         let new_entry = Some(&mut binding);
 
-        match table.add_entry(&"entry1".to_string(), new_entry) {
-            Ok(_) => {
-                return Err(format!(
-                    "Error should be raised because of wrong vector size"
-                ))
-            }
-            Err(_) => (),
-        };
+        check_result(
+            (1, 1),
+            table.add_entry(&"entry1".to_string(), new_entry),
+            false,
+        )?;
+
         table.add_entry(&"entry2".to_string(), None)?;
 
-        if table.entries_count() == 1 {
-            Ok(())
-        } else {
-            Err("Table should have 1 entry".to_string())
-        }
+        check_value(
+            (1, 2),
+            &table.entries_count(),
+            &1,
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -549,20 +549,14 @@ mod tests {
 
         table.add_entry(&"entry1".to_string(), new_entry)?;
 
-        match table.add_entry(&"entry1".to_string(), None) {
-            Ok(_) => {
-                return Err(format!(
-                    "Error should be raised because entry name already exists"
-                ))
-            }
-            Err(_) => (),
-        }
-
-        if table.entries_count() == 1 {
-            Ok(())
-        } else {
-            Err("Table should have 1 entry".to_string())
-        }
+        check_result((1, 1), table.add_entry(&"entry1".to_string(), None), false)?;
+        check_value(
+            (1, 2),
+            &table.entries_count(),
+            &1,
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -590,35 +584,32 @@ mod tests {
             Some(DbType::String("Some value".to_string())),
         )?;
 
-        if let Some(value) = table.get_entry_value(&"entry1".to_string(), &"key3".to_string())? {
-            match value {
-                DbType::Float(f) => {
-                    if *f == 5.98 {
-                        ()
-                    } else {
-                        return Err(format!("Entry value should be 5.98"));
-                    }
-                }
-                _ => return Err(format!("Entry value should be Float")),
-            };
-        } else {
-            return Err(format!("Entry value should be Some(5.98)"));
-        }
+        let val = check_option(
+            (1, 1),
+            table.get_entry_value(&"entry1".to_string(), &"key3".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (1, 2),
+            val,
+            &DbType::Float(5.98),
+            rusttests::CheckType::Equal,
+        )?;
 
-        if let Some(value) = table.get_entry_value(&"entry2".to_string(), &"key2".to_string())? {
-            match value {
-                DbType::String(s) => {
-                    if s == "Some value" {
-                        return Ok(());
-                    } else {
-                        return Err(format!("Entry value should be Some value"));
-                    }
-                }
-                _ => return Err(format!("Entry value should be String")),
-            };
-        } else {
-            return Err(format!("Entry value should be Some(Some value)"));
-        }
+        let val = check_option(
+            (2, 1),
+            table.get_entry_value(&"entry2".to_string(), &"key2".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (2, 2),
+            val,
+            &DbType::String("Some value".to_string()),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -637,14 +628,12 @@ mod tests {
 
         table.update_entry(&"entry1".to_string(), &"key1".to_string(), None)?;
 
-        if table
-            .get_entry_value(&"entry1".to_string(), &"key1".to_string())?
-            .is_none()
-        {
-            Ok(())
-        } else {
-            Err(format!("Entry value should be None"))
-        }
+        check_option(
+            (1, 1),
+            table.get_entry_value(&"entry1".to_string(), &"key1".to_string())?,
+            false,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -661,12 +650,12 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        match table.update_entry(&"entry5".to_string(), &"key2".to_string(), None) {
-            Ok(_) => Err(format!(
-                "Error should be raised because entry name does not exist"
-            )),
-            Err(_) => Ok(()),
-        }
+        check_result(
+            (1, 1),
+            table.update_entry(&"entry5".to_string(), &"key2".to_string(), None),
+            false,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -683,12 +672,12 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        match table.update_entry(&"entry2".to_string(), &"key4".to_string(), None) {
-            Ok(_) => Err(format!(
-                "Error should be raised because key name does not exist"
-            )),
-            Err(_) => Ok(()),
-        }
+        check_result(
+            (1, 1),
+            table.update_entry(&"entry2".to_string(), &"key4".to_string(), None),
+            false,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -705,16 +694,16 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        match table.update_entry(
-            &"entry2".to_string(),
-            &"key1".to_string(),
-            Some(DbType::Float(0.25)),
-        ) {
-            Ok(_) => Err(format!(
-                "Error should be raised because key type is incompatible"
-            )),
-            Err(_) => Ok(()),
-        }
+        check_result(
+            (1, 1),
+            table.update_entry(
+                &"entry2".to_string(),
+                &"key1".to_string(),
+                Some(DbType::Float(0.25)),
+            ),
+            false,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -737,17 +726,19 @@ mod tests {
             Some("New value".to_string()),
         )?;
 
-        if let Some(value) =
-            table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?
-        {
-            if value == "New value" {
-                Ok(())
-            } else {
-                Err(format!("String value should be New value"))
-            }
-        } else {
-            Err(format!("Entry value should be Some(New value)"))
-        }
+        let val = check_option(
+            (1, 1),
+            table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_value(
+            (1, 2),
+            &val,
+            &"New value".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -764,29 +755,29 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        match table.update_entry_string(
-            &"entry1".to_string(),
-            &"key1".to_string(),
-            Some("New value".to_string()),
-        ) {
-            Ok(_) => return Err(format!("Update result should be Err")),
-            Err(_) => (),
-        }
+        check_result(
+            (1, 1),
+            table.update_entry_string(
+                &"entry1".to_string(),
+                &"key1".to_string(),
+                Some("New value".to_string()),
+            ),
+            false,
+        )?;
 
-        if let Some(value) = table.get_entry_value(&"entry1".to_string(), &"key1".to_string())? {
-            match value {
-                DbType::Integer(i) => {
-                    if *i == 1 {
-                        return Ok(());
-                    } else {
-                        return Err(format!("Entry value should be 1"));
-                    }
-                }
-                _ => return Err(format!("Entry value should be Integer")),
-            };
-        } else {
-            return Err(format!("Entry value should be Some"));
-        }
+        let val = check_option(
+            (2, 1),
+            table.get_entry_value(&"entry1".to_string(), &"key1".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (2, 2),
+            val,
+            &DbType::Integer(1),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -805,14 +796,12 @@ mod tests {
 
         table.update_entry_string(&"entry1".to_string(), &"key2".to_string(), None)?;
 
-        if table
-            .get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?
-            .is_none()
-        {
-            Ok(())
-        } else {
-            Err(format!("Entry value should be None"))
-        }
+        check_option(
+            (1, 1),
+            table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?,
+            false,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -835,28 +824,45 @@ mod tests {
         table.add_entry(&"entry1".to_string(), None)?;
         table.add_entry(&"entry2".to_string(), new_entry)?;
 
-        if table.get_entry_value_string(&"entry2".to_string(), &"key1".to_string())?
-            != Some("-12".to_string())
-        {
-            return Err(format!("Entry value should be -12"));
-        }
+        let val = check_option(
+            (1, 1),
+            table.get_entry_value_string(&"entry2".to_string(), &"key1".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_value(
+            (1, 2),
+            &val,
+            &"-12".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
-        if table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())?
-            != Some("45".to_string())
-        {
-            return Err(format!("Entry value should be 45"));
-        }
+        let val = check_option(
+            (2, 1),
+            table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_value((2, 2), &val, &"45".to_string(), rusttests::CheckType::Equal)?;
 
-        if table.get_entry_value_string(&"entry2".to_string(), &"key3".to_string())?
-            != Some("2.23".to_string())
-        {
-            return Err(format!("Entry value should be 2.23"));
-        }
+        let val = check_option(
+            (3, 1),
+            table.get_entry_value_string(&"entry2".to_string(), &"key3".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_value(
+            (3, 2),
+            &val,
+            &"2.23".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
-        if table.get_entry_value_string(&"entry2".to_string(), &"key4".to_string())? != None {
-            return Err(format!("Entry value should be None"));
-        }
-
+        check_option(
+            (4, 1),
+            table.get_entry_value_string(&"entry2".to_string(), &"key4".to_string())?,
+            false,
+        )?;
         Ok(())
     }
 
@@ -876,17 +882,14 @@ mod tests {
 
         table.update_entry_integer(&"entry1".to_string(), &"key1".to_string(), Some(-66))?;
 
-        if let Some(value) =
-            table.get_entry_value_integer(&"entry1".to_string(), &"key1".to_string())?
-        {
-            if *value == -66 {
-                Ok(())
-            } else {
-                Err(format!("Integer value should be -66"))
-            }
-        } else {
-            Err(format!("Entry value should be Some(-66)"))
-        }
+        let val = check_option(
+            (1, 1),
+            table.get_entry_value_integer(&"entry1".to_string(), &"key1".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_value((1, 2), val, &-66, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -903,14 +906,12 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        if table
-            .get_entry_value_integer(&"entry1".to_string(), &"key2".to_string())
-            .is_err()
-        {
-            Ok(())
-        } else {
-            Err(format!("Result should be Err"))
-        }
+        check_result(
+            (1, 1),
+            table.get_entry_value_integer(&"entry1".to_string(), &"key2".to_string()),
+            false,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -933,17 +934,14 @@ mod tests {
             Some(66),
         )?;
 
-        if let Some(value) =
-            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key3".to_string())?
-        {
-            if *value == 66 {
-                Ok(())
-            } else {
-                Err(format!("Integer value should be 66"))
-            }
-        } else {
-            Err(format!("Entry value should be Some(66)"))
-        }
+        let val = check_option(
+            (1, 1),
+            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key3".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_value((1, 2), val, &66, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -960,14 +958,12 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        if table
-            .get_entry_value_unsigned_integer(&"entry1".to_string(), &"key2".to_string())
-            .is_err()
-        {
-            Ok(())
-        } else {
-            Err(format!("Result should be Err"))
-        }
+        check_result(
+            (1, 1),
+            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key2".to_string()),
+            false,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -986,17 +982,14 @@ mod tests {
 
         table.update_entry_float(&"entry1".to_string(), &"key3".to_string(), Some(66.99))?;
 
-        if let Some(value) =
-            table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?
-        {
-            if *value == 66.99 {
-                Ok(())
-            } else {
-                Err(format!("Integer value should be 66.99"))
-            }
-        } else {
-            Err(format!("Entry value should be Some(66.99)"))
-        }
+        let val = check_option(
+            (1, 1),
+            table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_value((1, 2), val, &66.99, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -1013,14 +1006,12 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        if table
-            .get_entry_value_float(&"entry1".to_string(), &"key2".to_string())
-            .is_err()
-        {
-            Ok(())
-        } else {
-            Err(format!("Result should be Err"))
-        }
+        check_result(
+            (1, 1),
+            table.get_entry_value_float(&"entry1".to_string(), &"key2".to_string()),
+            false,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -1039,16 +1030,8 @@ mod tests {
 
         table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
 
-        let value = table.get_entry_value(&"entry1".to_string(), &"key_new".to_string())?;
-        if value.is_some() {
-            return Err("New key value should be None".to_string());
-        }
-
-        let value = table.get_entry_value(&"entry2".to_string(), &"key_new".to_string())?;
-        if value.is_some() {
-            return Err("New key value should be None".to_string());
-        }
-
+        check_option((1,1), table.get_entry_value(&"entry1".to_string(), &"key_new".to_string())?, false)?;
+        check_option((1,2), table.get_entry_value(&"entry2".to_string(), &"key_new".to_string())?, false)?;
         Ok(())
     }
 
@@ -1066,10 +1049,8 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        match table.add_key(&"key_new".to_string(), &"RandomType".to_string()) {
-            Ok(_) => Err("Result should be Err".to_string()),
-            Err(_) => Ok(()),
-        }
+        check_result((1,1), table.add_key(&"key_new".to_string(), &"RandomType".to_string()), false)?;
+        Ok(())
     }
 
     #[test]
@@ -1091,10 +1072,8 @@ mod tests {
 
         table.remove_entry(&"entry2".to_string())?;
 
-        match table.entries_count() {
-            2 => Ok(()),
-            _ => Err(format!("Table should have 2 elements")),
-        }
+        check_value((1,1), &table.entries_count(), &2, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -1114,13 +1093,9 @@ mod tests {
         table.add_entry(&"entry2".to_string(), None)?;
         table.add_entry(&"entry3".to_string(), new_entry2)?;
 
-        match table.remove_entry(&"entry4".to_string()) {
-            Ok(_) => Err(format!("Result should be Err")),
-            Err(_) => match table.entries_count() {
-                3 => Ok(()),
-                _ => Err(format!("Table should have 3 elements")),
-            },
-        }
+        check_result((1,1), table.remove_entry(&"entry4".to_string()), false)?;
+        check_value((1,2), &table.entries_count(), &3, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -1136,22 +1111,12 @@ mod tests {
 
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
-
-        match table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()) {
-            Ok(_) => (),
-            Err(_) => return Err(format!("Result should be Ok")),
-        }
+        check_result((1,1), table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()), true)?;
 
         table.rename_entry(&"entry1".to_string(), &"entry99".to_string())?;
+        check_result((1,2), table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()), false)?;
+        check_result((1,3), table.get_entry_value_string(&"entry99".to_string(), &"key1".to_string()), true)?;
 
-        match table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()) {
-            Ok(_) => return Err(format!("Result should be Err")),
-            Err(_) => (),
-        }
-
-        match table.get_entry_value_string(&"entry99".to_string(), &"key1".to_string()) {
-            Ok(_) => Ok(()),
-            Err(_) => Err(format!("Result should be Ok")),
-        }
+        Ok(())
     }
 }

@@ -126,18 +126,21 @@ impl DbModel {
 
 #[cfg(test)]
 mod tests {
+    use rusttests::{check_result, check_value};
+
     use crate::DbModel;
 
     #[test]
     fn new_model() -> Result<(), String> {
         let model = DbModel::new("ModelName".to_string());
 
-        if model.name != "ModelName" {
-            return Err("Database name should be ModelName".to_string());
-        }
-        if model.tables.len() != 0 {
-            return Err("Tables length should be 0".to_string());
-        }
+        check_value(
+            (1, 1),
+            &model.name,
+            &"ModelName".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
+        check_value((1, 2), &model.tables.len(), &0, rusttests::CheckType::Equal)?;
 
         Ok(())
     }
@@ -154,15 +157,11 @@ mod tests {
             ]),
         )?;
 
-        if model.tables.len() != 1 {
-            return Err("There should be 1 table".to_string());
-        }
+        check_value((1, 1), &model.tables.len(), &1, rusttests::CheckType::Equal)?;
 
         model.create_table(&"NewTable".to_string(), None)?;
 
-        if model.tables.len() != 2 {
-            return Err("There should be 2 tables".to_string());
-        }
+        check_value((1, 1), &model.tables.len(), &2, rusttests::CheckType::Equal)?;
 
         Ok(())
     }
@@ -171,16 +170,18 @@ mod tests {
     fn new_table_key_error() -> Result<(), String> {
         let mut model = DbModel::new("ModelName".to_string());
 
-        match model.create_table(
-            &"NewTable".to_string(),
-            Some(vec![
-                ("key1".to_string(), "String".to_string()),
-                ("key2".to_string(), "RandomType".to_string()),
-            ]),
-        ) {
-            Ok(_) => Err("Result should be Err".to_string()),
-            Err(_) => Ok(()),
-        }
+        check_result(
+            (1, 1),
+            model.create_table(
+                &"NewTable".to_string(),
+                Some(vec![
+                    ("key1".to_string(), "String".to_string()),
+                    ("key2".to_string(), "RandomType".to_string()),
+                ]),
+            ),
+            false,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -191,11 +192,13 @@ mod tests {
         model.version[1] = 2;
         model.version[2] = 3;
 
-        if model.version().as_str() == "1.2.3" {
-            Ok(())
-        } else {
-            Err("Database version should be 1.2.3".to_string())
-        }
+        check_value(
+            (1, 1),
+            &model.version(),
+            &"1.2.3".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -219,11 +222,13 @@ mod tests {
 
         let table = model.table(&"NewTable".to_string())?;
 
-        if table.name() == "NewTable" {
-            Ok(())
-        } else {
-            Err("Table name should be NewTable".to_string())
-        }
+        check_value(
+            (1, 1),
+            table.name(),
+            &"NewTable".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -245,12 +250,8 @@ mod tests {
             ]),
         )?;
 
-        match model.table(&"Another table".to_string()) {
-            Ok(_) => Err(format!("Result should be Err")),
-            Err(_) => Ok(()),
-        }
-
-
+        check_result((1, 1), model.table(&"Another table".to_string()), false)?;
+        Ok(())
     }
 
     #[test]
@@ -281,10 +282,13 @@ mod tests {
 
         model.delete_table(&"OtherTable".to_string())?;
 
-        match model.tables_count() {
-            2 => Ok(()),
-            _ => Err(format!("Tables count should be 2"))
-        }
+        check_value(
+            (1, 1),
+            &model.tables_count(),
+            &2,
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -313,12 +317,13 @@ mod tests {
             ]),
         )?;
 
-        match model.delete_table(&"StupidName".to_string()) {
-            Ok(_) => Err(format!("Result should be Err")),
-            Err(_) => match model.tables_count() {
-                3 => Ok(()),
-                _ => Err(format!("Tables count should be 3"))
-            },
-        }
+        check_result((1, 1), model.delete_table(&"StupidName".to_string()), false)?;
+        check_value(
+            (1, 2),
+            &model.tables_count(),
+            &3,
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 }

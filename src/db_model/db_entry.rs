@@ -91,6 +91,8 @@ impl DbEntry {
 #[cfg(test)]
 mod tests {
 
+    use rusttests::{check_option, check_result, check_struct, check_value};
+
     use crate::db_model::db_type::DbType;
 
     use super::DbEntry;
@@ -100,20 +102,15 @@ mod tests {
         let name = "entry";
         let none_vec = vec![None, None, None, None];
 
-        match DbEntry::new(&name.to_string(), 4, None) {
-            Ok(entry) => {
-                if entry.name.as_str() != name {
-                    Err(format!("Entry name should be {name}"))
-                } else {
-                    if entry.fields != none_vec {
-                        Err("Entry fields should all be None".to_string())
-                    } else {
-                        Ok(())
-                    }
-                }
-            }
-            Err(_) => Err("Result should be Ok".to_string()),
-        }
+        let val = check_result((1, 1), DbEntry::new(&name.to_string(), 4, None), true)?.unwrap();
+        check_value(
+            (1, 2),
+            &val.name,
+            &name.to_string(),
+            rusttests::CheckType::Equal,
+        )?;
+        check_struct((1, 3), &val.fields, &none_vec, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -127,23 +124,20 @@ mod tests {
         ];
         let some_vec2 = some_vec.clone();
 
-        match DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)) {
-            Ok(entry) => {
-                if entry.name.as_str() != name {
-                    Err(format!("Entry name should be {name}"))
-                } else {
-                    if entry.fields != some_vec2 {
-                        Err(format!(
-                            "Entry fields have wrong value : {:?}",
-                            entry.fields
-                        ))
-                    } else {
-                        Ok(())
-                    }
-                }
-            }
-            Err(_) => Err("Result should be Ok".to_string()),
-        }
+        let val = check_result(
+            (1, 1),
+            DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)),
+            true,
+        )?
+        .unwrap();
+        check_value(
+            (1, 2),
+            &val.name,
+            &name.to_string(),
+            rusttests::CheckType::Equal,
+        )?;
+        check_struct((1, 3), &val.fields, &some_vec2, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -167,14 +161,8 @@ mod tests {
         entry.update(1, Some(DbType::String("new_item".to_string())));
         entry.update(2, Some(DbType::UnsignedInt(35)));
 
-        if entry.fields == new_vec {
-            Ok(())
-        } else {
-            Err(format!(
-                "Entry fields have wrong value : {:?}",
-                entry.fields
-            ))
-        }
+        check_struct((1, 1), &entry.fields, &new_vec, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -194,11 +182,18 @@ mod tests {
         if *val != DbType::Float(3.33) {
             return Err(format!("Entry field have wrong value : {:?}", entry.fields));
         }
+        check_struct(
+            (1, 1),
+            val,
+            &DbType::Float(3.33),
+            rusttests::CheckType::Equal,
+        )?;
 
         let val_none = entry.get(1);
         if val_none.is_some() {
             return Err("Entry field should be None".to_string());
         }
+        check_option((1, 2), val_none, false)?;
 
         Ok(())
     }
@@ -226,14 +221,8 @@ mod tests {
         entry.add_field(Some(DbType::String("item4".to_string())));
         entry.add_field(None);
 
-        if entry.fields == new_vec {
-            Ok(())
-        } else {
-            Err(format!(
-                "Entry fields have wrong value : {:?}",
-                entry.fields
-            ))
-        }
+        check_struct((1, 1), &entry.fields, &new_vec, rusttests::CheckType::Equal)?;
+        Ok(())
     }
 
     #[test]
@@ -249,10 +238,12 @@ mod tests {
         let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)).unwrap();
         entry.rename(&"new_name".to_string());
 
-        if entry.name() == "new_name" {
-            Ok(())
-        } else {
-            Err(format!("Entry name should be new_name"))
-        }
+        check_struct(
+            (1, 1),
+            entry.name(),
+            &"new_name".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
     }
 }

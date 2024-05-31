@@ -4,6 +4,7 @@
 
 use std::{fs::remove_file, path::Path};
 
+use rusttests::{check_option, check_value};
 use smoldb::SmolDb;
 
 /// Create a database, save it and load values from file
@@ -35,18 +36,10 @@ fn file_ops_1() -> Result<(), String> {
     let mut new_db = SmolDb::load(Path::new("test.json"))?;
 
     remove_file("test.json").unwrap_or(());
-    
-    let value = new_db.database().table(&"Table test 1".to_string())?.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?.unwrap();
 
-    if *value != 2.23 {
-        return Err(format!("Read value should be 2.23"))
-    }
+    check_value((1,1), new_db.database().table(&"Table test 1".to_string())?.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?.unwrap(), &2.23, rusttests::CheckType::Equal)?;
 
-    let value = new_db.database().table(&"Table test 1".to_string())?.get_entry_value_integer(&"entry2".to_string(), &"key2".to_string())?;
+    check_option((1,2), new_db.database().table(&"Table test 1".to_string())?.get_entry_value_integer(&"entry2".to_string(), &"key2".to_string())?, false)?;
 
-    if value.is_none() {
-        Ok(())
-    } else {
-        Err(format!("Read value should be None"))
-    }
+    Ok(())
 }
