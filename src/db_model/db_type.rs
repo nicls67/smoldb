@@ -13,7 +13,8 @@ pub enum DbType {
     UnsignedInt(u32),
     Float(f32),
     String(String),
-    Date(NaiveDate)
+    Date(NaiveDate),
+    Bool(bool)
 }
 
 impl DbType {
@@ -41,6 +42,10 @@ impl DbType {
                 Ok(d) => Ok(DbType::Date(d)),
                 Err(_) => Err(format!("{} can't be interpreted as a date", value)),
             },
+            DbType::Bool(_) => match value.parse::<bool>() {
+                Ok(b) => Ok(DbType::Bool(b)),
+                Err(_) => Err(format!("{} can't be interpreted as a boolean", value)),
+            },
         }
     }
 
@@ -52,6 +57,7 @@ impl DbType {
             DbType::Float(f) => f.to_string(),
             DbType::String(s) => s.clone(),
             DbType::Date(d) => d.format("%d/%m/%Y").to_string(),
+            DbType::Bool(b) => b.to_string(),
         }
     }
 
@@ -77,6 +83,10 @@ impl DbType {
                 DbType::Date(_) => true,
                 _ => false
             },
+            DbType::Bool(_) => match &self {
+                DbType::Bool(_) => true,
+                _ => false
+            },
         };
 
         if res {
@@ -98,6 +108,7 @@ impl DbType {
             "Integer" => Ok(DbType::Integer(0)),
             "UnsignedInt" => Ok(DbType::UnsignedInt(0)),
             "Float" => Ok(DbType::Float(0.0)),
+            "Bool" => Ok(DbType::Bool(false)),
             "String" => Ok(DbType::String(String::from(" "))),
             "Date" => Ok(DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap())),
             _ => {
@@ -220,6 +231,35 @@ mod tests {
         let type_date = DbType::default_from_string(&"Date".to_string()).unwrap();
 
         check_result((1, 1), type_date.convert(&"text".to_string()), false)?;
+        Ok(())
+    }
+
+    #[test]
+    fn check_bool_ok() -> Result<(), String> {
+        let type_bool = DbType::default_from_string(&"Bool".to_string()).unwrap();
+
+        let val = check_result((1, 1), type_bool.convert(&"true".to_string()), true)?.unwrap();
+        check_struct(
+            (1, 2),
+            &val,
+            &DbType::Bool(true),
+            rusttests::CheckType::Equal,
+        )?;
+        let val = check_result((2, 1), type_bool.convert(&"false".to_string()), true)?.unwrap();
+        check_struct(
+            (2, 2),
+            &val,
+            &DbType::Bool(false),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn check_bool_ko() -> Result<(), String> {
+        let type_bool = DbType::default_from_string(&"Bool".to_string()).unwrap();
+
+        check_result((1, 1), type_bool.convert(&"text".to_string()), false)?;
         Ok(())
     }
 }

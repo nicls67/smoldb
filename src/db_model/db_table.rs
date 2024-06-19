@@ -273,6 +273,54 @@ impl DbTable {
     }
 
     ///
+    /// ## Updates an entry of the table (Bool format).
+    /// Entry name, key to update and field value as float must be provided, value can be set to `None`
+    ///
+    /// If the selected key is not configured as Bool, `Err` is returned
+    ///
+    pub fn update_entry_bool(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+        new_value: Option<bool>,
+    ) -> Result<(), String> {
+        let mut db_value = None;
+        if let Some(value) = new_value {
+            db_value = Some(DbType::Bool(value));
+        }
+        self.update_entry(entry_name, key_name, db_value)
+    }
+
+    ///
+    /// ## Gets an entry value (Bool format).
+    /// Entry name, key to get must be provided
+    ///
+    /// If the selected key is not configured as Bool, `Err` is returned
+    ///
+    pub fn get_entry_value_bool(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+    ) -> Result<Option<&bool>, String> {
+        // Coherency check
+        match self.find_key(key_name)?.1.check_type(&DbType::Bool(false)) {
+            Ok(_) => (),
+            Err(e) => return Err(e),
+        }
+
+        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
+            if let DbType::Bool(b) = value {
+                Ok(Some(b))
+            } else {
+                // Impossible case
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    ///
     /// ## Updates an entry of the table (Date format).
     /// Entry name, key to update and field value as float must be provided, value can be set to `None`
     ///
@@ -1076,6 +1124,54 @@ mod tests {
         check_result(
             (1, 1),
             table.get_entry_value_float(&"entry1".to_string(), &"key2".to_string()),
+            false,
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn update_entry_bool() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Bool(false)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("false".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+
+        table.update_entry_bool(&"entry1".to_string(), &"key3".to_string(), Some(true))?;
+
+        let val = check_option(
+            (1, 1),
+            table.get_entry_value_bool(&"entry1".to_string(), &"key3".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_value((1, 2), val, &true, rusttests::CheckType::Equal)?;
+        Ok(())
+    }
+
+    #[test]
+    fn get_entry_bool_wrong_type() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Bool(false)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("true".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+
+        check_result(
+            (1, 1),
+            table.get_entry_value_bool(&"entry1".to_string(), &"key2".to_string()),
             false,
         )?;
         Ok(())

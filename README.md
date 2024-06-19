@@ -13,6 +13,7 @@ A database contains one or many tables, each tables containing one or many datab
 * Integer
 * Unsigned Integer
 * Float
+* Boolean
 * String
 * Date
 
