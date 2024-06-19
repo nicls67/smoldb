@@ -69,26 +69,36 @@ fn basic_ops_1() -> Result<(), String> {
     let val = check_option((3,4), table.get_entry_value_integer(&"entry1".to_string(), &"key2".to_string())?, true)?.unwrap();
     check_value((3,5), val, &-115, rusttests::CheckType::Equal)?;
 
+    // Add a 3rd entry
+    let mut values = vec![Some("what".to_string()), None, Some("-102.56".to_string())];
+    table.add_entry(&"entry3".to_string(), Some(&mut values))?;
+
+    // Get entries count
+    check_value((4,1), &table.entries_count(), &3, rusttests::CheckType::Equal)?;
+
+    // Get entries name
+    check_value((4,2), &table.get_all_entries(), &Some(vec![&"entry1".to_string(), &"entry2".to_string(), &"entry3".to_string()]), rusttests::CheckType::Equal)?;
+
     // Remove an entry from the table
     table.remove_entry(&"entry1".to_string())?;
 
     // Get value from deleted entry
-    check_result((4,1), table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string()), false)?;
+    check_result((5,1), table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string()), false)?;
 
     // Get entries count
-    check_value((4,2), &table.entries_count(), &1, rusttests::CheckType::Equal)?;
+    check_value((5,2), &table.entries_count(), &2, rusttests::CheckType::Equal)?;
 
     // Rename entry
     table.rename_entry(&"entry2".to_string(), &"new_entry_name".to_string())?;
 
     // Get entry None value
-    check_option((5,1), table.get_entry_value_string(&"new_entry_name".to_string(), &"key1".to_string())?, false)?;
+    check_option((6,1), table.get_entry_value_string(&"new_entry_name".to_string(), &"key1".to_string())?, false)?;
 
     // Get table count
     if db.database().tables_count() != 1 {
         return Err(format!("Tables count should be 1"));
     }
-    check_value((6,1), &db.database().tables_count(), &1, rusttests::CheckType::Equal)?;
+    check_value((7,1), &db.database().tables_count(), &1, rusttests::CheckType::Equal)?;
 
     Ok(())
 }

@@ -467,6 +467,19 @@ impl DbTable {
         self.find_entry(entry_name)?.0.rename(new_name);
         Ok(())
     }
+
+    /// Returns all table's entries name as a vector, or `None` if the table is empty
+    pub fn get_all_entries(&self) -> Option<Vec<&String>> {
+        if self.entries_count() > 0 {
+            let mut vect = Vec::new();
+            for entry in self.entries.iter() {
+                vect.push(entry.name())
+            }
+            Some(vect)
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]
@@ -1254,5 +1267,40 @@ mod tests {
         )?;
 
         Ok(())
+    }
+
+    #[test]
+    fn get_all_entries() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry5".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_value((1,1), &table.get_all_entries(), &Some(vec![&"entry1".to_string(), &"entry2".to_string(), &"entry5".to_string(), &"entry4".to_string()]), rusttests::CheckType::Equal)
+    }
+
+    #[test]
+    fn get_all_entries_empty() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let table = DbTable::new("Table".to_string(), Some(keys));
+
+        check_value((1,1), &table.get_all_entries(), &None, rusttests::CheckType::Equal)
     }
 }

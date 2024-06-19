@@ -22,6 +22,8 @@ It is possible to add tables and/or keys after initialization, when a key is add
 
 To get or update an entry value, either call the method corresponding to the data type, like `update_entry_integer` or `get_entry_value_float`, or call `update_entry_string` or `get_entry_value_string` to use strings instead. Please note that `update_entry_string` will return `Err` if the passed string doesn't match the data type.
 
+To get names of all entries inside a table, use `get_all_entries` method.
+
 ## Usage
 
 ### Database creation, saving and loading
@@ -107,6 +109,9 @@ let value: Option<&f32> = table.get_entry_value_float(&"entry1".to_string(), &"k
 
 // Get entries count inside a table
 let count = table.entries_count();
+
+// Get vector with all entries names
+let entries: Option<Vec<&String>> = table.get_all_entries();
 
 // Add a new key to a table ()existing entries will get a None value for this key)
 table.add_key(&"new_key".to_string(), &"Integer".to_string()).unwrap();
