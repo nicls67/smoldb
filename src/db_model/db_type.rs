@@ -2,6 +2,7 @@
 //! Database types definition
 //!
 
+use chrono::NaiveDate;
 use rustlog::{write_log, LogSeverity};
 use serde_derive::{Deserialize, Serialize};
 
@@ -12,10 +13,12 @@ pub enum DbType {
     UnsignedInt(u32),
     Float(f32),
     String(String),
+    Date(NaiveDate)
 }
 
 impl DbType {
-    /// Converts a String into the variant contained by `self`, returns `Err` if the string doesn't match the correct type
+    /// Converts a String into the variant contained by `self`, returns `Err` if the string doesn't match the correct type.
+    /// If the variant is `Date`, date shall be supplied in format `DD/MM/YYYY`
     pub fn convert(&self, value: &String) -> Result<DbType, String> {
         match &self {
             DbType::Integer(_) => match value.parse::<i32>() {
@@ -34,6 +37,10 @@ impl DbType {
                 Err(_) => Err(format!("{} can't be interpreted as float", value)),
             },
             DbType::String(_) => Ok(DbType::String(value.clone())),
+            DbType::Date(_) => match NaiveDate::parse_from_str(value, "%d/%m/%Y") {
+                Ok(d) => Ok(DbType::Date(d)),
+                Err(_) => Err(format!("{} can't be interpreted as a date", value)),
+            },
         }
     }
 
@@ -44,6 +51,7 @@ impl DbType {
             DbType::UnsignedInt(u) => u.to_string(),
             DbType::Float(f) => f.to_string(),
             DbType::String(s) => s.clone(),
+            DbType::Date(d) => d.format("%d/%m/%Y").to_string(),
         }
     }
 
@@ -65,6 +73,10 @@ impl DbType {
                 _ => false,
             },
             DbType::String(_) => true,
+            DbType::Date(_) => match &self {
+                DbType::Date(_) => true,
+                _ => false
+            },
         };
 
         if res {
@@ -87,6 +99,7 @@ impl DbType {
             "UnsignedInt" => Ok(DbType::UnsignedInt(0)),
             "Float" => Ok(DbType::Float(0.0)),
             "String" => Ok(DbType::String(String::from(" "))),
+            "Date" => Ok(DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap())),
             _ => {
                 let msg = format!("Unknown database type : {}", type_name);
                 write_log(
@@ -103,6 +116,7 @@ impl DbType {
 #[cfg(test)]
 mod tests {
 
+    use chrono::NaiveDate;
     use rusttests::{check_result, check_struct};
 
     use super::DbType;
@@ -184,6 +198,28 @@ mod tests {
         let type_uint = DbType::UnsignedInt(0);
 
         check_result((1, 1), type_uint.convert(&"-4".to_string()), false)?;
+        Ok(())
+    }
+
+    #[test]
+    fn check_date_ok() -> Result<(), String> {
+        let type_date = DbType::default_from_string(&"Date".to_string()).unwrap();
+
+        let val = check_result((1, 1), type_date.convert(&"12/07/1998".to_string()), true)?.unwrap();
+        check_struct(
+            (1, 2),
+            &val,
+            &DbType::Date(NaiveDate::from_ymd_opt(1998, 7, 12).unwrap()),
+            rusttests::CheckType::Equal,
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn check_date_ko() -> Result<(), String> {
+        let type_date = DbType::default_from_string(&"Date".to_string()).unwrap();
+
+        check_result((1, 1), type_date.convert(&"text".to_string()), false)?;
         Ok(())
     }
 }

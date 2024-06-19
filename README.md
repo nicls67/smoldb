@@ -14,6 +14,7 @@ A database contains one or many tables, each tables containing one or many datab
 * Unsigned Integer
 * Float
 * String
+* Date
 
 A database entry is linked to a table and has its fields filled with a value. It is possible to leave a field empty.
 

@@ -4,6 +4,7 @@
 
 use std::mem::discriminant;
 
+use chrono::NaiveDate;
 use rustlog::{write_log, LogSeverity};
 use serde_derive::{Deserialize, Serialize};
 
@@ -271,6 +272,58 @@ impl DbTable {
         }
     }
 
+    ///
+    /// ## Updates an entry of the table (Date format).
+    /// Entry name, key to update and field value as float must be provided, value can be set to `None`
+    ///
+    /// If the selected key is not configured as Date, `Err` is returned
+    ///
+    pub fn update_entry_date(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+        new_value: Option<NaiveDate>,
+    ) -> Result<(), String> {
+        let mut db_value = None;
+        if let Some(value) = new_value {
+            db_value = Some(DbType::Date(value));
+        }
+        self.update_entry(entry_name, key_name, db_value)
+    }
+
+    ///
+    /// ## Gets an entry value (Date format).
+    /// Entry name, key to get must be provided
+    ///
+    /// If the selected key is not configured as Date, `Err` is returned
+    ///
+    pub fn get_entry_value_date(
+        &mut self,
+        entry_name: &String,
+        key_name: &String,
+    ) -> Result<Option<&NaiveDate>, String> {
+        // Coherency check
+        match self
+            .find_key(key_name)?
+            .1
+            .check_type(&DbType::default_from_string(&"Date".to_string()).unwrap())
+        {
+            Ok(_) => (),
+            Err(e) => return Err(e),
+        }
+
+        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
+            if let DbType::Date(d) = value {
+                Ok(Some(d))
+            } else {
+                // Impossible case
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
     /// Removes the selected entry from the table
     pub fn remove_entry(&mut self, entry_name: &String) -> Result<(), String> {
         let index = self.find_entry(entry_name)?.1;
@@ -418,6 +471,7 @@ impl DbTable {
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
     use rusttests::{check_option, check_result, check_struct, check_value};
 
     use super::{DbTable, DbType};
@@ -1015,6 +1069,54 @@ mod tests {
     }
 
     #[test]
+    fn update_entry_date() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::default_from_string(&"Date".to_string()).unwrap()),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("15/08/2016".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+
+        table.update_entry_date(&"entry1".to_string(), &"key3".to_string(), Some(NaiveDate::from_ymd_opt(1789, 7, 14).unwrap()))?;
+
+        let val = check_option(
+            (1, 1),
+            table.get_entry_value_date(&"entry1".to_string(), &"key3".to_string())?,
+            true,
+        )?
+        .unwrap();
+        check_value((1, 2), val, &NaiveDate::from_ymd_opt(1789, 7, 14).unwrap(), rusttests::CheckType::Equal)?;
+        Ok(())
+    }
+
+    #[test]
+    fn get_entry_date_wrong_type() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::default_from_string(&"Date".to_string()).unwrap()),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("15/08/2016".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+
+        check_result(
+            (1, 1),
+            table.get_entry_value_date(&"entry1".to_string(), &"key2".to_string()),
+            false,
+        )?;
+        Ok(())
+    }
+
+    #[test]
     fn add_key_nominal() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
@@ -1030,8 +1132,16 @@ mod tests {
 
         table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
 
-        check_option((1,1), table.get_entry_value(&"entry1".to_string(), &"key_new".to_string())?, false)?;
-        check_option((1,2), table.get_entry_value(&"entry2".to_string(), &"key_new".to_string())?, false)?;
+        check_option(
+            (1, 1),
+            table.get_entry_value(&"entry1".to_string(), &"key_new".to_string())?,
+            false,
+        )?;
+        check_option(
+            (1, 2),
+            table.get_entry_value(&"entry2".to_string(), &"key_new".to_string())?,
+            false,
+        )?;
         Ok(())
     }
 
@@ -1049,7 +1159,11 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        check_result((1,1), table.add_key(&"key_new".to_string(), &"RandomType".to_string()), false)?;
+        check_result(
+            (1, 1),
+            table.add_key(&"key_new".to_string(), &"RandomType".to_string()),
+            false,
+        )?;
         Ok(())
     }
 
@@ -1072,7 +1186,12 @@ mod tests {
 
         table.remove_entry(&"entry2".to_string())?;
 
-        check_value((1,1), &table.entries_count(), &2, rusttests::CheckType::Equal)?;
+        check_value(
+            (1, 1),
+            &table.entries_count(),
+            &2,
+            rusttests::CheckType::Equal,
+        )?;
         Ok(())
     }
 
@@ -1093,8 +1212,13 @@ mod tests {
         table.add_entry(&"entry2".to_string(), None)?;
         table.add_entry(&"entry3".to_string(), new_entry2)?;
 
-        check_result((1,1), table.remove_entry(&"entry4".to_string()), false)?;
-        check_value((1,2), &table.entries_count(), &3, rusttests::CheckType::Equal)?;
+        check_result((1, 1), table.remove_entry(&"entry4".to_string()), false)?;
+        check_value(
+            (1, 2),
+            &table.entries_count(),
+            &3,
+            rusttests::CheckType::Equal,
+        )?;
         Ok(())
     }
 
@@ -1111,11 +1235,23 @@ mod tests {
 
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
-        check_result((1,1), table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()), true)?;
+        check_result(
+            (1, 1),
+            table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()),
+            true,
+        )?;
 
         table.rename_entry(&"entry1".to_string(), &"entry99".to_string())?;
-        check_result((1,2), table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()), false)?;
-        check_result((1,3), table.get_entry_value_string(&"entry99".to_string(), &"key1".to_string()), true)?;
+        check_result(
+            (1, 2),
+            table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()),
+            false,
+        )?;
+        check_result(
+            (1, 3),
+            table.get_entry_value_string(&"entry99".to_string(), &"key1".to_string()),
+            true,
+        )?;
 
         Ok(())
     }
