@@ -38,7 +38,7 @@ impl DbModel {
     /// ### Inputs
     /// * Table name
     /// * Keys name and type as a tuple : first item is key name, second is key type among the following :
-    /// `Integer`, `UnsignedInt`, `Float`, `String`
+    /// `Integer`, `UnsignedInt`, `Float`, `Date`, `Bool`, `String`
     ///
     /// ### Returns
     /// * `Ok` if the table is created

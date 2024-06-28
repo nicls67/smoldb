@@ -44,19 +44,19 @@ original file. The linked file can be updated using `set_database_file`.
 
 ```rust
 use smoldb::SmolDb;
-use std::path::Path;
+use std::path::PathBuf;
 
 // Create new empty database
 let mut db = SmolDb::init("Database name".to_string());
 
 // Configure database file
-db.set_database_file(Path::new("file.json"));
+db.set_database_file(PathBuf::from("file.json"));
 
 // Save database to file
 db.save().unwrap();
 
 // Load existing database
-let new_db = SmolDb::load(Path::new("file.json")).unwrap();
+let new_db = SmolDb::load(PathBuf::from("file.json")).unwrap();
 ```
 
 ### Table management
