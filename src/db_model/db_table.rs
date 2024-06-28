@@ -517,11 +517,11 @@ impl DbTable {
     }
 
     /// Returns all table's entries name as a vector, or `None` if the table is empty
-    pub fn get_all_entries(&self) -> Option<Vec<&String>> {
+    pub fn get_all_entries(&self) -> Option<Vec<String>> {
         if self.entries_count() > 0 {
             let mut vect = Vec::new();
             for entry in self.entries.iter() {
-                vect.push(entry.name())
+                vect.push(entry.name().clone())
             }
             Some(vect)
         } else {
@@ -1385,7 +1385,7 @@ mod tests {
         table.add_entry(&"entry5".to_string(), new_entry2)?;
         table.add_entry(&"entry4".to_string(), new_entry3)?;
 
-        check_value((1,1), &table.get_all_entries(), &Some(vec![&"entry1".to_string(), &"entry2".to_string(), &"entry5".to_string(), &"entry4".to_string()]), rusttests::CheckType::Equal)
+        check_value((1,1), &table.get_all_entries(), &Some(vec!["entry1".to_string(), "entry2".to_string(), "entry5".to_string(), "entry4".to_string()]), rusttests::CheckType::Equal)
     }
 
     #[test]

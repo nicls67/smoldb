@@ -77,7 +77,7 @@ fn basic_ops_1() -> Result<(), String> {
     check_value((4,1), &table.entries_count(), &3, rusttests::CheckType::Equal)?;
 
     // Get entries name
-    check_value((4,2), &table.get_all_entries(), &Some(vec![&"entry1".to_string(), &"entry2".to_string(), &"entry3".to_string()]), rusttests::CheckType::Equal)?;
+    check_value((4,2), &table.get_all_entries(), &Some(vec!["entry1".to_string(), "entry2".to_string(), "entry3".to_string()]), rusttests::CheckType::Equal)?;
 
     // Remove an entry from the table
     table.remove_entry(&"entry1".to_string())?;
