@@ -121,7 +121,7 @@ let value: Option< & f32> = table.get_entry_value_float( & "entry1".to_string(),
 let count = table.entries_count();
 
 // Get vector with all entries names
-let entries: Option<Vec< & String> > = table.get_all_entries();
+let entries: Option<Vec<String> > = table.get_all_entries();
 
 // Add a new key to a table ()existing entries will get a None value for this key)
 table.add_key( & "new_key".to_string(), & "Integer".to_string()).unwrap();
