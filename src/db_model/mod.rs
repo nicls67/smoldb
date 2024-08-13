@@ -2,15 +2,18 @@
 //! Database Model definition
 //!
 
-mod db_entry;
-mod db_table;
-mod db_type;
-
-pub use db_table::DbTable;
-use rustlog::{write_log, LogSeverity};
+use rustlog::{LogSeverity, write_log};
 use serde_derive::{Deserialize, Serialize};
 
+pub use db_table::DbTable;
+pub use db_table::MatchingCriteria;
+
 use self::db_type::DbType;
+
+mod db_entry;
+mod db_table;
+
+mod db_type;
 
 /// Database model
 #[derive(Deserialize, Serialize, PartialEq, Debug)]

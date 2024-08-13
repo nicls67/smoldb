@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use rustlog::write_log;
 
 pub use db_model::{DbModel, DbTable};
+pub use db_model::MatchingCriteria;
 
 #[doc = include_str!("../README.md")]
 mod db_model;
