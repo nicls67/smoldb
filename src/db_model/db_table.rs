@@ -553,7 +553,7 @@ impl DbTable {
     ///
     /// ### Returns
     /// * `Err` if there is any error during processing or wrong parameters are given
-    /// * `Ok(None)` if no entry matches the selected criteria
+    /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
     /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
     pub fn get_matching_entries_date(&self, key_name: &String, criteria: MatchingCriteria, date1: NaiveDate, date2: Option<NaiveDate>) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() > 0 {
@@ -643,7 +643,62 @@ impl DbTable {
             Ok(None)
         }
     }
+
+    /// Returns all entries with `None` value on the selected key
+    ///
+    /// ### Returns
+    /// * `Err` if the selected key does not exist
+    /// * `Ok(None)` if the key exists but no entry has a `None` value or if the table is empty
+    /// * `Ok(Some(xxx))` if the key exists with xxx a vector containing entry names with a `None` value
+    pub fn get_entries_none(&self, key_name: &String) -> Result<Option<Vec<String>>, String> {
+        if self.entries_count() > 0 {
+            let key = self.find_key(key_name)?;
+            let mut output = Vec::new();
+
+            for entry in self.entries.iter() {
+                if entry.get(key.0).is_none() {
+                    output.push(entry.name().clone())
+                }
+            }
+
+            if output.len() == 0 {
+                Ok(None)
+            } else {
+                Ok(Some(output))
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Returns all entries with `Some` value on the selected key
+    ///
+    /// ### Returns
+    /// * `Err` if the selected key does not exist
+    /// * `Ok(None)` if the key exists but no entry has a `Some` value or if the table is empty
+    /// * `Ok(Some(xxx))` if the key exists with xxx a vector containing entry names with a `Some` value
+    pub fn get_entries_some(&self, key_name: &String) -> Result<Option<Vec<String>>, String> {
+        if self.entries_count() > 0 {
+            let key = self.find_key(key_name)?;
+            let mut output = Vec::new();
+
+            for entry in self.entries.iter() {
+                if entry.get(key.0).is_some() {
+                    output.push(entry.name().clone())
+                }
+            }
+
+            if output.len() == 0 {
+                Ok(None)
+            } else {
+                Ok(Some(output))
+            }
+        } else {
+            Ok(None)
+        }
+    }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -1604,6 +1659,58 @@ mod tests {
         let res = check_result((6, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Between, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), Some(NaiveDate::from_ymd_opt(2014, 3, 15).unwrap())), true)?.unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_none() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap())),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("13/03/2014".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("14/03/2014".to_string()), None, None];
+        let mut binding3 = vec![Some("13/08/2024".to_string()), None, Some("-0.27".to_string())];
+        let mut binding4 = vec![Some("13/03/2014".to_string()), None, None];
+        let mut binding5 = vec![Some("10/03/2014".to_string()), None, Some("-0.27".to_string())];
+        let mut binding6 = vec![Some("15/03/2014".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+        let new_entry5 = Some(&mut binding5);
+        let new_entry6 = Some(&mut binding6);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        table.add_entry(&"entry5".to_string(), new_entry5)?;
+        table.add_entry(&"entry6".to_string(), new_entry6)?;
+
+
+        // None
+        let expected_vec = vec!["entry2".to_string(), "entry4".to_string()];
+        let res = check_result((1, 1), table.get_entries_none(&"key3".to_string()), true)?.unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Some
+        let expected_vec = vec!["entry1".to_string(), "entry3".to_string(), "entry5".to_string(), "entry6".to_string()];
+        let res = check_result((2, 1), table.get_entries_some(&"key3".to_string()), true)?.unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // No Some
+        let res = check_result((3, 1), table.get_entries_some(&"key2".to_string()), true)?.unwrap();
+        check_option((3, 2), res, false)?;
+
+        // No None
+        let res = check_result((4, 1), table.get_entries_none(&"key1".to_string()), true)?.unwrap();
+        check_option((4, 2), res, false)?;
 
         Ok(())
     }
