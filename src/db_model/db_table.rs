@@ -2,13 +2,27 @@
 //! Database Table definition
 //!
 
+use std::cmp::PartialEq;
 use std::mem::discriminant;
 
 use chrono::NaiveDate;
-use rustlog::{write_log, LogSeverity};
+use rustlog::{LogSeverity, write_log};
 use serde_derive::{Deserialize, Serialize};
 
 use super::{db_entry::DbEntry, db_type::DbType};
+
+/// Keys values matching criteria
+///
+/// * `IsMore` and `IsLess` apply to date as "after" and "before" the reference date
+/// * Only `Equal` and `Different` can be applied to `String` and `Boolean` types
+#[derive(PartialEq, Debug)]
+pub enum MatchingCriteria {
+    IsMore,
+    IsLess,
+    Equal,
+    Different,
+    Between,
+}
 
 /// Database table
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
@@ -528,14 +542,115 @@ impl DbTable {
             None
         }
     }
+
+    /// Returns all entries matching the selected date criteria
+    ///
+    /// ### Inputs
+    /// * `key_name`: key to use for comparison
+    /// * `criteria`: Comparison criteria
+    /// * `date1`: Reference date for comparison
+    /// * `date2`: second reference date, used for `Between` comparison only, can be set to `None` for other criteria. `date2` must be after `date1`
+    ///
+    /// ### Returns
+    /// * `Err` if there is any error during processing or wrong parameters are given
+    /// * `Ok(None)` if no entry matches the selected criteria
+    /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
+    pub fn get_matching_entries_date(&self, key_name: &String, criteria: MatchingCriteria, date1: NaiveDate, date2: Option<NaiveDate>) -> Result<Option<Vec<String>>, String> {
+        if self.entries_count() > 0 {
+            // Check input compatibility
+            if criteria == MatchingCriteria::Between {
+                if date2.is_none() {
+                    let msg = "Second reference date not defined for Between date comparison".to_string();
+                    write_log(
+                        LogSeverity::Error,
+                        &msg,
+                        &env!("CARGO_PKG_NAME").to_string(),
+                    );
+                    return Err(msg);
+                }
+                if let Some(date) = date2 {
+                    let delta = date - date1;
+                    if delta.num_days() <= 0 {
+                        let msg = "Second reference date is not after first reference date".to_string();
+                        write_log(
+                            LogSeverity::Error,
+                            &msg,
+                            &env!("CARGO_PKG_NAME").to_string(),
+                        );
+                        return Err(msg);
+                    }
+                }
+            }
+
+            // Check selected key has a date type
+            let key = self.find_key(key_name)?;
+            match key.1 {
+                DbType::Date(_) => {
+                    let mut output = Vec::new();
+                    for entry in self.entries.iter() {
+                        if let Some(entry_date_wrapped) = entry.get(key.0) {
+                            if let DbType::Date(entry_date) = entry_date_wrapped {
+                                let delta = *entry_date - date1;
+                                match criteria {
+                                    MatchingCriteria::IsMore => {
+                                        if delta.num_days() > 0 {
+                                            output.push(entry.name().clone());
+                                        }
+                                    }
+                                    MatchingCriteria::IsLess => {
+                                        if delta.num_days() < 0 {
+                                            output.push(entry.name().clone());
+                                        }
+                                    }
+                                    MatchingCriteria::Equal => {
+                                        if delta.num_days() == 0 {
+                                            output.push(entry.name().clone());
+                                        }
+                                    }
+                                    MatchingCriteria::Different => {
+                                        if delta.num_days() != 0 {
+                                            output.push(entry.name().clone());
+                                        }
+                                    }
+                                    MatchingCriteria::Between => {
+                                        let delta2 = *entry_date - date2.unwrap();
+                                        if delta.num_days() >= 0 && delta2.num_days() <= 0 {
+                                            output.push(entry.name().clone());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if output.len() == 0 {
+                        Ok(None)
+                    } else {
+                        Ok(Some(output))
+                    }
+                }
+                _ => {
+                    let msg = format!("Key {} is not a date", key_name);
+                    write_log(
+                        LogSeverity::Error,
+                        &msg,
+                        &env!("CARGO_PKG_NAME").to_string(),
+                    );
+                    Err(msg)
+                }
+            }
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;
-    use rusttests::{check_option, check_result, check_struct, check_value};
+    use rusttests::{check_option, check_result, check_struct, check_value, CheckType};
 
-    use super::{DbTable, DbType};
+    use super::{DbTable, DbType, MatchingCriteria};
 
     #[test]
     fn new_table_none() -> Result<(), String> {
@@ -704,7 +819,7 @@ mod tests {
             table.get_entry_value(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_struct(
             (1, 2),
             val,
@@ -717,7 +832,7 @@ mod tests {
             table.get_entry_value(&"entry2".to_string(), &"key2".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_struct(
             (2, 2),
             val,
@@ -846,7 +961,7 @@ mod tests {
             table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_value(
             (1, 2),
             &val,
@@ -885,7 +1000,7 @@ mod tests {
             table.get_entry_value(&"entry1".to_string(), &"key1".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_struct(
             (2, 2),
             val,
@@ -944,7 +1059,7 @@ mod tests {
             table.get_entry_value_string(&"entry2".to_string(), &"key1".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_value(
             (1, 2),
             &val,
@@ -957,7 +1072,7 @@ mod tests {
             table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_value((2, 2), &val, &"45".to_string(), rusttests::CheckType::Equal)?;
 
         let val = check_option(
@@ -965,7 +1080,7 @@ mod tests {
             table.get_entry_value_string(&"entry2".to_string(), &"key3".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_value(
             (3, 2),
             &val,
@@ -1002,7 +1117,7 @@ mod tests {
             table.get_entry_value_integer(&"entry1".to_string(), &"key1".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_value((1, 2), val, &-66, rusttests::CheckType::Equal)?;
         Ok(())
     }
@@ -1054,7 +1169,7 @@ mod tests {
             table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_value((1, 2), val, &66, rusttests::CheckType::Equal)?;
         Ok(())
     }
@@ -1102,7 +1217,7 @@ mod tests {
             table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_value((1, 2), val, &66.99, rusttests::CheckType::Equal)?;
         Ok(())
     }
@@ -1150,7 +1265,7 @@ mod tests {
             table.get_entry_value_bool(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_value((1, 2), val, &true, rusttests::CheckType::Equal)?;
         Ok(())
     }
@@ -1198,7 +1313,7 @@ mod tests {
             table.get_entry_value_date(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_value((1, 2), val, &NaiveDate::from_ymd_opt(1789, 7, 14).unwrap(), rusttests::CheckType::Equal)?;
         Ok(())
     }
@@ -1385,7 +1500,7 @@ mod tests {
         table.add_entry(&"entry5".to_string(), new_entry2)?;
         table.add_entry(&"entry4".to_string(), new_entry3)?;
 
-        check_value((1,1), &table.get_all_entries(), &Some(vec!["entry1".to_string(), "entry2".to_string(), "entry5".to_string(), "entry4".to_string()]), rusttests::CheckType::Equal)
+        check_value((1, 1), &table.get_all_entries(), &Some(vec!["entry1".to_string(), "entry2".to_string(), "entry5".to_string(), "entry4".to_string()]), rusttests::CheckType::Equal)
     }
 
     #[test]
@@ -1397,6 +1512,99 @@ mod tests {
         ];
         let table = DbTable::new("Table".to_string(), Some(keys));
 
-        check_value((1,1), &table.get_all_entries(), &None, rusttests::CheckType::Equal)
+        check_value((1, 1), &table.get_all_entries(), &None, rusttests::CheckType::Equal)
+    }
+
+    #[test]
+    fn get_entries_matching_date_error() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap())),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("13/03/2014".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("14/03/2014".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("13/08/2024".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result((1, 1), table.get_matching_entries_date(&"key2".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(), None), false)?;
+        check_result((2, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Between, NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(), None), false)?;
+        check_result((3, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Between, NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(), Some(NaiveDate::from_ymd_opt(2000, 12, 31).unwrap())), false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_matching_date() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap())),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("13/03/2014".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("14/03/2014".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("13/08/2024".to_string()), None, Some("-0.27".to_string())];
+        let mut binding4 = vec![Some("13/03/2014".to_string()), None, Some("-0.27".to_string())];
+        let mut binding5 = vec![Some("10/03/2014".to_string()), None, Some("-0.27".to_string())];
+        let mut binding6 = vec![Some("15/03/2014".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+        let new_entry5 = Some(&mut binding5);
+        let new_entry6 = Some(&mut binding6);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        table.add_entry(&"entry5".to_string(), new_entry5)?;
+        table.add_entry(&"entry6".to_string(), new_entry6)?;
+
+
+        // Equality
+        let expected_vec = vec!["entry1".to_string(), "entry4".to_string()];
+        let res = check_result((1, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), None), true)?.unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // No match
+        let res = check_result((2, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2015, 3, 13).unwrap(), None), true)?.unwrap();
+        check_option((2, 2), res, false)?;
+
+        // Different
+        let expected_vec = vec!["entry2".to_string(), "entry3".to_string(), "entry5".to_string(), "entry6".to_string()];
+        let res = check_result((3, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Different, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), None), true)?.unwrap();
+        let opt = check_option((3, 2), res, true)?.unwrap();
+        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // After
+        let expected_vec = vec!["entry3".to_string(), "entry6".to_string()];
+        let res = check_result((4, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::IsMore, NaiveDate::from_ymd_opt(2014, 3, 14).unwrap(), None), true)?.unwrap();
+        let opt = check_option((4, 2), res, true)?.unwrap();
+        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Before
+        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry4".to_string(), "entry5".to_string()];
+        let res = check_result((5, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::IsLess, NaiveDate::from_ymd_opt(2014, 3, 15).unwrap(), None), true)?.unwrap();
+        let opt = check_option((5, 2), res, true)?.unwrap();
+        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Between
+        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry4".to_string(), "entry6".to_string()];
+        let res = check_result((6, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Between, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), Some(NaiveDate::from_ymd_opt(2014, 3, 15).unwrap())), true)?.unwrap();
+        let opt = check_option((6, 2), res, true)?.unwrap();
+        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        Ok(())
     }
 }

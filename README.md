@@ -14,12 +14,12 @@ called.
 A database contains one or many tables, each tables containing one or many database fields. Tables and fields name (
 keys) are defined during initialization process. Each field has a designated type among the followings :
 
-* Integer
-* Unsigned Integer
-* Float
-* Boolean
-* String
-* Date
+* **Integer**
+* **Unsigned Integer**
+* **Float**
+* **Boolean**
+* **String**
+* **Date**
 
 A database entry is linked to a table and has its fields filled with a value. It is possible to leave a field empty.
 
@@ -45,6 +45,7 @@ original file. The linked file can be updated using `set_database_file`.
 ```rust
 use smoldb::SmolDb;
 use std::path::PathBuf;
+use std::fs::remove_file;
 
 // Create new empty database
 let mut db = SmolDb::init("Database name".to_string());
@@ -57,6 +58,9 @@ db.save().unwrap();
 
 // Load existing database
 let new_db = SmolDb::load(PathBuf::from("file.json")).unwrap();
+
+// Delete base
+remove_file("file.json").unwrap_or(());
 ```
 
 ### Table management
@@ -131,4 +135,48 @@ table.remove_entry( & "entry1".to_string()).unwrap();
 
 // Rename an entry
 table.rename_entry( & "entry2".to_string(), & "new_name".to_string()).unwrap();
+```
+
+### Find entries by key values
+
+It is possible to find the entries corresponding to a specific key value. The following comparison criteria are
+available :
+
+* **More**: value is higher than the reference (or **after** for date, not available for String and Boolean types)
+* **Less**: value is lower than the reference (or **before** for date, not available for String and Boolean types)
+* **Equal**: value is equal than the reference
+* **Different**: value is different of the reference
+* **Between**: value is between the 1st and the 2nd references (not available for String and Boolean types)
+
+```rust
+use smoldb::SmolDb;
+use chrono::NaiveDate;
+use smoldb::MatchingCriteria;
+
+// Create database and table
+let mut db = SmolDb::init("Database name".to_string());
+let keys = Some(vec![
+    ("key1".to_string(), "Date".to_string()),
+    ("key2".to_string(), "String".to_string()),
+    ("key3".to_string(), "Float".to_string()),
+]);
+db.database().create_table( & "Table name".to_string(), keys).unwrap();
+
+// Get table reference
+let mut table = db.database().table( & "Table name".to_string()).unwrap();
+
+let mut binding = vec![Some("13/03/2014".to_string()), None, Some("2.23".to_string())];
+let mut binding2 = vec![Some("14/03/2014".to_string()), None, Some("1.46".to_string())];
+let mut binding3 = vec![Some("13/08/2024".to_string()), None, Some("-0.27".to_string())];
+let new_entry = Some( & mut binding);
+let new_entry2 = Some( & mut binding2);
+let new_entry3 = Some( & mut binding3);
+
+
+table.add_entry( & "entry1".to_string(), new_entry);
+table.add_entry( & "entry2".to_string(), new_entry2);
+table.add_entry( & "entry3".to_string(), new_entry3);
+
+// Find all entries with date equal to 13/03/2014
+let matching_entries = table.get_matching_entries_date( & "key1".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), None);
 ```
