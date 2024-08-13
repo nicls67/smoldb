@@ -179,4 +179,7 @@ table.add_entry( & "entry3".to_string(), new_entry3);
 
 // Find all entries with date equal to 13/03/2014
 let matching_entries = table.get_matching_entries_date( & "key1".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), None);
+
+// Find all entries with None
+let none_entries = table.get_entries_none( & "key2".to_string());
 ```
