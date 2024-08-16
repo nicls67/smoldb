@@ -644,6 +644,73 @@ impl DbTable {
         }
     }
 
+    /// Returns all entries matching the selected boolean criteria
+    ///
+    /// ### Inputs
+    /// * `key_name`: key to use for comparison
+    /// * `criteria`: Comparison criteria
+    /// * `ref_bool`: Reference boolean for comparison
+    ///
+    /// ### Returns
+    /// * `Err` if there is any error during processing or wrong parameters are given
+    /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
+    /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
+    pub fn get_matching_entries_bool(&self, key_name: &String, criteria: MatchingCriteria, ref_bool: bool) -> Result<Option<Vec<String>>, String> {
+        if self.entries_count() > 0 {
+            // Check selected key has a bool type
+            let key = self.find_key(key_name)?;
+            match key.1 {
+                DbType::Bool(_) => {
+                    let mut output = Vec::new();
+                    for entry in self.entries.iter() {
+                        if let Some(entry_bool_wrapped) = entry.get(key.0) {
+                            if let DbType::Bool(entry_bool) = entry_bool_wrapped {
+                                match criteria {
+                                    MatchingCriteria::Equal => {
+                                        if ref_bool == *entry_bool {
+                                            output.push(entry.name().clone());
+                                        }
+                                    }
+                                    MatchingCriteria::Different => {
+                                        if ref_bool != *entry_bool {
+                                            output.push(entry.name().clone());
+                                        }
+                                    }
+                                    _ => {
+                                        let msg = "Only Equal and Different matching criteria are allowed for Boolean data".to_string();
+                                        write_log(
+                                            LogSeverity::Error,
+                                            &msg,
+                                            &env!("CARGO_PKG_NAME").to_string(),
+                                        );
+                                        return Err(msg);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if output.len() == 0 {
+                        Ok(None)
+                    } else {
+                        Ok(Some(output))
+                    }
+                }
+                _ => {
+                    let msg = format!("Key {} is not a boolean", key_name);
+                    write_log(
+                        LogSeverity::Error,
+                        &msg,
+                        &env!("CARGO_PKG_NAME").to_string(),
+                    );
+                    Err(msg)
+                }
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
     /// Returns all entries with `None` value on the selected key
     ///
     /// ### Returns
@@ -1711,6 +1778,88 @@ mod tests {
         // No None
         let res = check_result((4, 1), table.get_entries_none(&"key1".to_string()), true)?.unwrap();
         check_option((4, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_matching_bool_error() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result((1, 1), table.get_matching_entries_bool(&"key2".to_string(), MatchingCriteria::Equal, false), false)?;
+        check_result((2, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Between, true), false)?;
+        check_result((3, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::IsLess, true), false)?;
+        check_result((4, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::IsMore, true), false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_matching_bool() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Bool(false)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("true".to_string()), None, Some("false".to_string())];
+        let mut binding2 = vec![Some("true".to_string()), None, Some("false".to_string())];
+        let mut binding3 = vec![Some("false".to_string()), None, Some("false".to_string())];
+        let mut binding4 = vec![Some("false".to_string()), None, Some("false".to_string())];
+        let mut binding5 = vec![Some("true".to_string()), None, Some("false".to_string())];
+        let mut binding6 = vec![Some("false".to_string()), None, Some("false".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+        let new_entry5 = Some(&mut binding5);
+        let new_entry6 = Some(&mut binding6);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        table.add_entry(&"entry5".to_string(), new_entry5)?;
+        table.add_entry(&"entry6".to_string(), new_entry6)?;
+
+
+        // Equality True
+        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry5".to_string()];
+        let res = check_result((1, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Equal, true), true)?.unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // No match
+        let res = check_result((2, 1), table.get_matching_entries_bool(&"key3".to_string(), MatchingCriteria::Equal, true), true)?.unwrap();
+        check_option((2, 2), res, false)?;
+
+        // Different
+        let expected_vec = vec!["entry3".to_string(), "entry4".to_string(), "entry6".to_string()];
+        let res = check_result((3, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Different, true), true)?.unwrap();
+        let opt = check_option((3, 2), res, true)?.unwrap();
+        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Equality False
+        let expected_vec = vec!["entry3".to_string(), "entry4".to_string(), "entry6".to_string()];
+        let res = check_result((4, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Equal, false), true)?.unwrap();
+        let opt = check_option((4, 2), res, true)?.unwrap();
+        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         Ok(())
     }
