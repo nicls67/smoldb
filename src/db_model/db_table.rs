@@ -721,7 +721,7 @@ impl DbTable {
             // Check input compatibility
             Self::check_input_compatibility_int(&criteria, int1, int2)?;
 
-            // Check selected key has a date type
+            // Check selected key has an integer type
             let key = self.find_key(key_name)?;
             match key.1 {
                 DbType::Integer(_) => {
@@ -744,6 +744,59 @@ impl DbTable {
                 }
                 _ => {
                     let msg = format!("Key {} is not an integer", key_name);
+                    write_log(
+                        LogSeverity::Error,
+                        &msg,
+                        &env!("CARGO_PKG_NAME").to_string(),
+                    );
+                    Err(msg)
+                }
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Returns all entries matching the selected unsigned integer criteria
+    ///
+    /// ### Inputs
+    /// * `key_name`: key to use for comparison
+    /// * `criteria`: Comparison criteria
+    /// * `int1`: Reference integer for comparison
+    /// * `int2`: second reference integer, used for `Between` comparison only, can be set to `None` for other criteria. `int2` must be higher than `int1`
+    ///
+    /// ### Returns
+    /// * `Err` if there is any error during processing or wrong parameters are given
+    /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
+    /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
+    pub fn get_matching_entries_unsigned_integer(&self, key_name: &String, criteria: MatchingCriteria, int1: u32, int2: Option<u32>) -> Result<Option<Vec<String>>, String> {
+        if self.entries_count() > 0 {
+            // Check input compatibility
+            Self::check_input_compatibility_int(&criteria, int1 as i32, int2.map_or(None, |v| Some(v as i32)))?;
+
+            // Check selected key has an unsigned int type
+            let key = self.find_key(key_name)?;
+            match key.1 {
+                DbType::UnsignedInt(_) => {
+                    let mut output = Vec::new();
+                    for entry in self.entries.iter() {
+                        if let Some(entry_int_wrapped) = entry.get(key.0) {
+                            if let DbType::UnsignedInt(entry_int) = entry_int_wrapped {
+                                if Self::integer_comparison(*entry_int as i32, &criteria, int1 as i32, int2.map_or(None, |v| Some(v as i32))) {
+                                    output.push(entry.name().clone());
+                                }
+                            }
+                        }
+                    }
+
+                    if output.len() == 0 {
+                        Ok(None)
+                    } else {
+                        Ok(Some(output))
+                    }
+                }
+                _ => {
+                    let msg = format!("Key {} is not an unsigned integer", key_name);
                     write_log(
                         LogSeverity::Error,
                         &msg,
@@ -2207,6 +2260,99 @@ mod tests {
         // Between
         let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry3".to_string(), "entry5".to_string()];
         let res = check_result((6, 1), table.get_matching_entries_integer(&"key1".to_string(), MatchingCriteria::Between, 4, Some(6)), true)?.unwrap();
+        let opt = check_option((6, 2), res, true)?.unwrap();
+        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_matching_uint_error() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::UnsignedInt(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result((1, 1), table.get_matching_entries_unsigned_integer(&"key2".to_string(), MatchingCriteria::Equal, 5, None), false)?;
+        check_result((2, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Between, 5, None), false)?;
+        check_result((3, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Between, 5, Some(4)), false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_matching_uint() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::UnsignedInt(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut binding4 = vec![Some("1".to_string()), None, Some("-0.27".to_string())];
+        let mut binding5 = vec![Some("4".to_string()), None, Some("-0.27".to_string())];
+        let mut binding6 = vec![Some("2".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+        let new_entry5 = Some(&mut binding5);
+        let new_entry6 = Some(&mut binding6);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        table.add_entry(&"entry5".to_string(), new_entry5)?;
+        table.add_entry(&"entry6".to_string(), new_entry6)?;
+
+
+        // Equality
+        let expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
+        let res = check_result((1, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Equal, 5, None), true)?.unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // No match
+        let res = check_result((2, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Equal, 7, None), true)?.unwrap();
+        check_option((2, 2), res, false)?;
+
+        // Different
+        let expected_vec = vec!["entry2".to_string(), "entry4".to_string(), "entry5".to_string(), "entry6".to_string()];
+        let res = check_result((3, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Different, 5, None), true)?.unwrap();
+        let opt = check_option((3, 2), res, true)?.unwrap();
+        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // More
+        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry3".to_string()];
+        let res = check_result((4, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::IsMore, 4, None), true)?.unwrap();
+        let opt = check_option((4, 2), res, true)?.unwrap();
+        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Less
+        let expected_vec = vec!["entry4".to_string(), "entry6".to_string()];
+        let res = check_result((5, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::IsLess, 4, None), true)?.unwrap();
+        let opt = check_option((5, 2), res, true)?.unwrap();
+        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Between
+        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry3".to_string(), "entry5".to_string()];
+        let res = check_result((6, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Between, 4, Some(6)), true)?.unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
