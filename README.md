@@ -183,6 +183,9 @@ let matching_entries = table.get_matching_entries_date( & "key1".to_string(), Ma
 // Find all entries with string equal to "toto"
 let matching_entries = table.get_matching_entries_string( & "key2".to_string(), MatchingCriteria::Equal, & "toto".to_string());
 
+// Find all entries with values between 1.46 and 2.23
+let matching_entries = table.get_matching_entries_float( & "key3".to_string(), MatchingCriteria::Between, 1.46, Some(2.23));
+
 // Find all entries with None
 let none_entries = table.get_entries_none( & "key2".to_string());
 ```
