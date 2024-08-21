@@ -165,9 +165,9 @@ db.database().create_table( & "Table name".to_string(), keys).unwrap();
 // Get table reference
 let mut table = db.database().table( & "Table name".to_string()).unwrap();
 
-let mut binding = vec![Some("13/03/2014".to_string()), None, Some("2.23".to_string())];
-let mut binding2 = vec![Some("14/03/2014".to_string()), None, Some("1.46".to_string())];
-let mut binding3 = vec![Some("13/08/2024".to_string()), None, Some("-0.27".to_string())];
+let mut binding = vec![Some("13/03/2014".to_string()), Some("toto".to_string()), Some("2.23".to_string())];
+let mut binding2 = vec![Some("14/03/2014".to_string()), Some("tata".to_string()), Some("1.46".to_string())];
+let mut binding3 = vec![Some("13/08/2024".to_string()), Some("toto".to_string()), Some("-0.27".to_string())];
 let new_entry = Some( & mut binding);
 let new_entry2 = Some( & mut binding2);
 let new_entry3 = Some( & mut binding3);
@@ -179,6 +179,12 @@ table.add_entry( & "entry3".to_string(), new_entry3);
 
 // Find all entries with date equal to 13/03/2014
 let matching_entries = table.get_matching_entries_date( & "key1".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), None);
+
+// Find all entries with string equal to "toto"
+let matching_entries = table.get_matching_entries_string( & "key2".to_string(), MatchingCriteria::Equal, & "toto".to_string());
+
+// Find all entries with values between 1.46 and 2.23
+let matching_entries = table.get_matching_entries_float( & "key3".to_string(), MatchingCriteria::Between, 1.46, Some(2.23));
 
 // Find all entries with None
 let none_entries = table.get_entries_none( & "key2".to_string());
