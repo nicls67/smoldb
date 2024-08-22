@@ -1097,6 +1097,52 @@ impl DbTable {
             Ok(None)
         }
     }
+
+    /// Returns all values contained in the selected boolean key.
+    ///
+    /// If two entries have the same key value, this value will be present only once.
+    ///
+    /// ### Returns
+    /// * `Err` if the selected key does not exist or doesn't match the method return type.
+    /// `Ok(None)` if the key exists but all entries contain a `None` value or if the table is empty
+    /// `Ok(Some(xxx))` if the key exists with xxx a vector containing existing values
+    pub fn get_key_values_bool(&self, key_name: &String) -> Result<Option<Vec<bool>>, String> {
+        if self.entries_count() > 0 {
+            // Check selected key has a bool type
+            let key = self.find_key(key_name)?;
+            match key.1 {
+                DbType::Bool(_) => {
+                    let mut output = Vec::new();
+                    for entry in self.entries.iter() {
+                        if let Some(val_wrapped) = entry.get(key.0) {
+                            if let DbType::Bool(val) = val_wrapped {
+                                if !output.contains(val) {
+                                    output.push(*val);
+                                }
+                            }
+                        }
+                    }
+
+                    if output.len() > 0 {
+                        Ok(Some(output))
+                    } else {
+                        Ok(None)
+                    }
+                }
+                _ => {
+                    let msg = format!("Key {} is not a string", key_name);
+                    write_log(
+                        LogSeverity::Error,
+                        &msg,
+                        &env!("CARGO_PKG_NAME").to_string(),
+                    );
+                    Err(msg)
+                }
+            }
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 
@@ -2549,6 +2595,69 @@ mod tests {
         let res = check_result((6, 1), table.get_matching_entries_float(&"key3".to_string(), MatchingCriteria::Between, 0.45, Some(2.23)), true)?.unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_bool_error() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::Bool(false)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result((1, 1), table.get_key_values_bool(&"key3".to_string()), false)?;
+        check_result((2, 1), table.get_key_values_bool(&"key8".to_string()), false)?;
+        let res = check_result((3, 1), table.get_key_values_bool(&"key2".to_string()), true)?.unwrap();
+        check_option((3, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_bool() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::Bool(false)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("false".to_string()), Some("true".to_string()), Some("2.23".to_string())];
+        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("true".to_string()), Some("true".to_string()), Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+
+        // Equality True
+        let expected_vec_1 = vec![false, true];
+        let expected_vec_2 = vec![true];
+        let res = check_result((1, 1), table.get_key_values_bool(&"key1".to_string()), true)?.unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let res = check_result((2, 1), table.get_key_values_bool(&"key2".to_string()), true)?.unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+
 
         Ok(())
     }
