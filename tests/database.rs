@@ -10,7 +10,7 @@ use smoldb::{MatchingCriteria, SmolDb};
 /// Create a database, a table, add entries and get some values
 #[test]
 fn basic_ops_1() -> Result<(), String> {
-    let mut db = SmolDb::init("Database test".to_string());
+    let mut db = SmolDb::init("Database test");
 
     check_value(
         (1, 1),
@@ -112,7 +112,7 @@ fn basic_ops_1() -> Result<(), String> {
 /// Error cases
 #[test]
 fn error_ops_1() -> Result<(), String> {
-    let mut db = SmolDb::init("Database test".to_string());
+    let mut db = SmolDb::init("Database test");
 
     // Unknown table
     check_result((1, 1), db.database().table(&"Table test 1".to_string()), false)?;

@@ -12,7 +12,7 @@ use smoldb::SmolDb;
 /// Create a database, save it and load values from file
 #[test]
 fn file_ops_1() -> Result<(), String> {
-    let mut db = SmolDb::init("Database test".to_string());
+    let mut db = SmolDb::init("Database test");
 
     db.set_database_file(PathBuf::from("test.json"));
 

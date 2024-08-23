@@ -3,7 +3,7 @@
 //!
 
 use chrono::NaiveDate;
-use rustlog::{write_log, LogSeverity};
+use rustlog::{LogSeverity, write_log};
 use serde_derive::{Deserialize, Serialize};
 
 /// Field type definition
@@ -14,12 +14,20 @@ pub enum DbType {
     Float(f32),
     String(String),
     Date(NaiveDate),
-    Bool(bool)
+    Bool(bool),
 }
 
 impl DbType {
-    /// Converts a String into the variant contained by `self`, returns `Err` if the string doesn't match the correct type.
-    /// If the variant is `Date`, date shall be supplied in format `DD/MM/YYYY`
+    /// Converts a value to a specific database type.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - The value to be converted.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `Result` that contains the converted `DbType` if the conversion was successful, or a `String` containing an error message if the conversion failed.
+    ///
     pub fn convert(&self, value: &String) -> Result<DbType, String> {
         match &self {
             DbType::Integer(_) => match value.parse::<i32>() {
@@ -49,8 +57,8 @@ impl DbType {
         }
     }
 
-    /// Converts the variant contained by `self` into a String
-    pub fn into_string(&self) -> String {
+    /// Convert the value of a DbType enum variant to a String representation.
+    pub fn to_string(&self) -> String {
         match &self {
             DbType::Integer(i) => i.to_string(),
             DbType::UnsignedInt(u) => u.to_string(),
@@ -61,9 +69,16 @@ impl DbType {
         }
     }
 
-    /// Checks coherency between variant in `self` and the given type
+    /// Checks if the given `new_type` is compatible with the current database type.
     ///
-    /// If `new_type` is String, it is assumed to be coherent with all types
+    /// # Arguments
+    ///
+    /// * `new_type` - The new database type to check.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the new type is compatible.
+    /// * `Err(String)` with an error message if the types are incompatible.
     pub fn check_type(&self, new_type: &DbType) -> Result<(), String> {
         let res = match new_type {
             DbType::Integer(_) => match &self {
@@ -92,7 +107,7 @@ impl DbType {
         if res {
             Ok(())
         } else {
-            let msg = format!("Database type incompatibility");
+            let msg = "Database type incompatibility".to_string();
             write_log(
                 LogSeverity::Error,
                 &msg,
@@ -102,7 +117,17 @@ impl DbType {
         }
     }
 
-    /// Returns a `DbType` variant with default value according the type name passed as a `String`
+    /// Creates a default value of the specified database type from a string.
+    ///
+    /// # Arguments
+    ///
+    /// * `type_name` - The name of the database type.
+    ///
+    /// # Returns
+    ///
+    /// Returns a default value of the specified database type wrapped in a `Result`,
+    /// or an error message if the database type is unknown.
+    ///
     pub fn default_from_string(type_name: &String) -> Result<DbType, String> {
         match type_name.as_str() {
             "Integer" => Ok(DbType::Integer(0)),
@@ -126,7 +151,6 @@ impl DbType {
 
 #[cfg(test)]
 mod tests {
-
     use chrono::NaiveDate;
     use rusttests::{check_result, check_struct};
 

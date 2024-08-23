@@ -24,9 +24,19 @@ pub struct DbModel {
 }
 
 impl DbModel {
+    /// Creates a new instance of `DbModel`.
+    ///
+    /// # Arguments
+    ///
+    /// * `db_name` - The name of the database.
+    ///
+    /// # Returns
+    ///
+    /// A `DbModel` instance.
+    ///
     pub(crate) fn new(db_name: String) -> DbModel {
         DbModel {
-            name: db_name.clone(),
+            name: db_name,
             version: env!("CARGO_PKG_VERSION")
                 .split(".")
                 .map(|ver| ver.parse::<u8>().unwrap())
@@ -35,20 +45,21 @@ impl DbModel {
         }
     }
 
+    /// Creates a new table with the given name and optional keys.
     ///
-    /// ## Creates a new table
+    /// # Arguments
     ///
-    /// ### Inputs
-    /// * Table name
-    /// * Keys name and type as a tuple : first item is key name, second is key type among the following :
+    /// * `name` - The name of the table.
+    /// * `keys` - Optional keys (name and type) for the table. Type is among the following : 
     /// `Integer`, `UnsignedInt`, `Float`, `Date`, `Bool`, `String`
     ///
-    /// ### Returns
-    /// * `Ok` if the table is created
-    /// * `Err` if the table can't be created due to a key-type error
+    /// # Returns
+    ///
+    /// * `Ok(())` - if the table is created successfully.
+    /// * `Err(String)` - if there is an error during table creation.
     pub fn create_table(
         &mut self,
-        name: &String,
+        name: &str,
         keys: Option<Vec<(String, String)>>,
     ) -> Result<(), String> {
         let mut new_vec = None;
@@ -60,7 +71,7 @@ impl DbModel {
             new_vec = Some(vec_tmp);
         }
 
-        self.tables.push(DbTable::new(name.clone(), new_vec));
+        self.tables.push(DbTable::new(name.to_string(), new_vec));
         write_log(
             LogSeverity::Info,
             &format!("CREATED table {}", name),
@@ -70,12 +81,28 @@ impl DbModel {
         Ok(())
     }
 
-    /// Returns database name
+    /// Returns the reference to the name of the object.
+    ///
+    /// # Returns
+    ///
+    /// - `&String`: A reference to the name of the object.
+    ///
     pub fn name(&self) -> &String {
         &self.name
     }
 
-    /// Returns database version
+    /// Returns the version of the object as a string.
+    ///
+    /// This function formats the version array into a string using the format "<major>.<minor>.<patch>".
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The current object.
+    ///
+    /// # Returns
+    ///
+    /// * A string representation of the version.
+    ///
     pub fn version(&self) -> String {
         format!(
             "{}.{}.{}",
@@ -83,7 +110,16 @@ impl DbModel {
         )
     }
 
-    /// Returns a reference to the selected table
+    /// Retrieves a mutable reference to a database table by its name.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - A reference to the name of the table.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok` containing a mutable reference to the `DbTable` if the table exists.
+    /// * `Err` containing an error message if the table does not exist.
     pub fn table(&mut self, name: &String) -> Result<&mut DbTable, String> {
         match self.find_table(name) {
             Ok(table) => Ok(table.1),
@@ -91,7 +127,15 @@ impl DbModel {
         }
     }
 
-    /// Removes the selected table
+    /// Deletes a table from the database.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the table to delete.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the table was successfully deleted, otherwise returns `Err` with an error message.
     pub fn delete_table(&mut self, name: &String) -> Result<(), String> {
         let index = self.find_table(name)?.0;
         self.tables.swap_remove(index);
@@ -104,7 +148,17 @@ impl DbModel {
         Ok(())
     }
 
-    /// Find the selected table, returns reference to the table and its index in vector
+    /// Searches for a table with the given name in the database.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the table to search for, as a reference to a String.
+    ///
+    /// # Returns
+    ///
+    /// Returns a Result containing a tuple with the index and a mutable reference to the found table if it exists.
+    /// If the table is found, the Result is Ok. Otherwise, an Err is returned with a descriptive error message.
+    ///
     fn find_table(&mut self, name: &String) -> Result<(usize, &mut DbTable), String> {
         for table in self.tables.iter_mut().enumerate() {
             if table.1.name() == name {
@@ -121,7 +175,11 @@ impl DbModel {
         Err(msg)
     }
 
-    /// Returns current number of tables inside the database
+    /// Returns the number of tables in the current context.
+    ///
+    /// # Returns
+    ///
+    /// The number of tables as a `usize`.
     pub fn tables_count(&self) -> usize {
         self.tables.len()
     }
