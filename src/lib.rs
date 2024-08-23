@@ -69,7 +69,7 @@ impl SmolDb {
     /// The newly created error message string.
     fn log_and_create_load_err_msg(msg: String) -> String {
         let new_msg = format!("Error while opening database {}", msg);
-        write_log(rustlog::LogSeverity::Error, &new_msg, &env!("CARGO_PKG_NAME").to_string());
+        write_log(LogSeverity::Error, &new_msg, &env!("CARGO_PKG_NAME").to_string());
         new_msg
     }
 
@@ -148,7 +148,7 @@ impl SmolDb {
                     Ok(_) => {
                         let info_msg = format!("Database saved to file {}", db_file.display());
                         write_log(
-                            rustlog::LogSeverity::Info,
+                            LogSeverity::Info,
                             &info_msg,
                             &env!("CARGO_PKG_NAME").to_string(),
                         );
@@ -161,7 +161,7 @@ impl SmolDb {
         } else {
             let warn_msg = "Cannot save database, no database file configured".to_string();
             write_log(
-                rustlog::LogSeverity::Warning,
+                LogSeverity::Warning,
                 &warn_msg,
                 &env!("CARGO_PKG_NAME").to_string(),
             );

@@ -132,7 +132,7 @@ impl DbTable {
         key_name: &String,
     ) -> Result<Option<String>, String> {
         if let Some(value) = self.get_entry_value(entry_name, key_name)? {
-            Ok(Some(value.into_string()))
+            Ok(Some(value.to_string()))
         } else {
             Ok(None)
         }
