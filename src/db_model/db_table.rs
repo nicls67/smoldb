@@ -36,18 +36,44 @@ pub struct DbTable {
 }
 
 impl DbTable {
-    /// Creates a new table with the selected keys. The new table has no entries, the keys can be left empty
+    /// Create a new instance of `DbTable`.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - A `String` representing the name of the table.
+    /// * `keys` - An optional `Vec` of tuples containing a `String` representing the name of each key,
+    ///            and a `DbType` representing the type of the key.
+    ///
+    /// # Returns
+    ///
+    /// Returns a new `DbTable` with the specified name and keys.
+    ///
     pub(crate) fn new(name: String, keys: Option<Vec<(String, DbType)>>) -> DbTable {
         DbTable {
             name,
-            keys: if let Some(k) = keys { k } else { Vec::new() },
+            keys: keys.unwrap_or_else(Vec::new),
             entries: Vec::new(),
         }
     }
 
+    /// Adds a new entry to the table.
     ///
-    /// ## Adds a new entry to table.
-    /// Entry name and fields values in String format must be provided, values can be set to `None` globally
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entry. It must be unique within the table.
+    /// * `values` - Optional values for the entry. If provided, the length must be equal to the number of keys in the table.
+    ///              Each value should be wrapped in an `Option<String>`.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` on success.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error message as a `Result` if any of the following conditions are met:
+    ///
+    /// * The entry name already exists in the table.
+    /// * The length of the `values` vector is not equal to the number of keys in the table.
     ///
     pub fn add_entry(
         &mut self,
@@ -58,7 +84,10 @@ impl DbTable {
 
         // Check unicity of entry name
         if self.entry_exists(&name) {
-            let msg = format!("Cannot create new entry : name {name} already exists in table");
+            let msg = format!(
+                "Cannot create new entry : name {} already exists in table",
+                name
+            );
             write_log(
                 LogSeverity::Error,
                 &msg,
@@ -101,11 +130,18 @@ impl DbTable {
         Ok(())
     }
 
+    /// Updates the value of a key for a given entry in the database.
     ///
-    /// ## Updates an entry of the table (String format).
-    /// Entry name, key to update and field value in string format must be provided, value can be set to `None`.
+    /// # Arguments
     ///
-    /// If the given String can't be interpreted as the configured key type, `Err` is returned
+    /// - `entry_name`: A reference to the name of the entry.
+    /// - `key_name`: A reference to the name of the key.
+    /// - `new_value`: An optional new value to update the key with. If `None`, the key will be unset.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(())` if the update is successful.
+    /// - `Err(String)` if an error occurs during the update process.
     ///
     pub fn update_entry_string(
         &mut self,
@@ -120,11 +156,18 @@ impl DbTable {
         self.update_entry(entry_name, key_name, db_value)
     }
 
+    /// Returns the value of a specific key in an entry as a string.
     ///
-    /// ## Gets an entry value (String format).
-    /// Entry name, key to get must be provided.
+    /// # Arguments
     ///
-    /// If the key is not configured as String, the data is converted into a String
+    /// * `entry_name` - A reference to a `String` that represents the name of the entry.
+    /// * `key_name` - A reference to a `String` that represents the name of the key.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Some(value))` - If the key exists in the entry, returns `Some(value.to_string())` where `value` is the value associated with the key.
+    /// * `Ok(None)` - If the key does not exist in the entry, returns `None`.
+    /// * `Err(message)` - If an error occurs during the retrieval of the value, returns an error message as a `String`.
     ///
     pub fn get_entry_value_string(
         &mut self,
@@ -138,11 +181,17 @@ impl DbTable {
         }
     }
 
+    /// Updates an entry in the database with a new integer value.
     ///
-    /// ## Updates an entry of the table (Int format).
-    /// Entry name, key to update and field value as integer must be provided, value can be set to `None`
+    /// # Arguments
     ///
-    /// If the selected key is not configured as Integer, `Err` is returned
+    /// * `entry_name` - The name of the entry to update.
+    /// * `key_name` - The name of the key within the entry to update.
+    /// * `new_value` - The new integer value to set. Pass `None` to remove the value.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the update was successful, or an error message as a `String` if there was a problem.
     ///
     pub fn update_entry_integer(
         &mut self,
@@ -157,12 +206,11 @@ impl DbTable {
         self.update_entry(entry_name, key_name, db_value)
     }
 
+    /// Retrieves the value of an entry as an integer.
     ///
-    /// ## Gets an entry value (Int format).
-    /// Entry name, key to get must be provided
+    /// # Arguments
     ///
-    /// If the selected key is not configured as Integer, `Err` is returned
-    ///
+    /// * `entry_name` - The name of the entry to retrieve
     pub fn get_entry_value_integer(
         &mut self,
         entry_name: &String,
@@ -186,11 +234,17 @@ impl DbTable {
         }
     }
 
+    /// Update an entry in the database with an unsigned integer value.
     ///
-    /// ## Updates an entry of the table (UInt format).
-    /// Entry name, key to update and field value as unsigned integer must be provided, value can be set to `None`
+    /// # Arguments
     ///
-    /// If the selected key is not configured as Unsigned Integer, `Err` is returned
+    /// - `entry_name`: The name of the entry to update.
+    /// - `key_name`: The name of the key within the entry to update.
+    /// - `new_value`: The new value to set for the key. Use `None` to delete the key.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the update was successful, otherwise returns an error message as a `Result`.
     ///
     pub fn update_entry_unsigned_integer(
         &mut self,
@@ -205,12 +259,20 @@ impl DbTable {
         self.update_entry(entry_name, key_name, db_value)
     }
 
+    /// Retrieves the value of an entry with an unsigned integer type, given the entry name and key name.
     ///
-    /// ## Gets an entry value (UInt format).
-    /// Entry name, key to get must be provided
+    /// # Arguments
     ///
-    /// If the selected key is not configured as Unsigned Integer, `Err` is returned
+    /// * `entry_name` - The name of the entry to retrieve the value from.
+    /// * `key_name` - The name of the key within the entry.
     ///
+    /// # Returns
+    ///
+    /// Returns a `Result` indicating the success of the operation. If successful, it returns an `Option` containing a reference to the unsigned integer value. If the entry or key does not exist, or if the value is not an unsigned integer, it returns `Ok(None)`. If an error occurs during the operation, it returns an `Err` with a descriptive error message.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a coherency check fails or an error occurs while retrieving the value.
     pub fn get_entry_value_unsigned_integer(
         &mut self,
         entry_name: &String,
@@ -238,11 +300,18 @@ impl DbTable {
         }
     }
 
+    /// Updates the entry with a new floating point value.
     ///
-    /// ## Updates an entry of the table (Float format).
-    /// Entry name, key to update and field value as float must be provided, value can be set to `None`
+    /// # Arguments
     ///
-    /// If the selected key is not configured as Float, `Err` is returned
+    /// - `entry_name`: A reference to the string containing the name of the entry.
+    /// - `key_name`: A reference to the string containing the name of the key in the entry.
+    /// - `new_value`: An optional `f32` value containing the new value to be set.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(())` if the entry was successfully updated.
+    /// - `Err(String)` if an error occurred while updating the entry.
     ///
     pub fn update_entry_float(
         &mut self,
@@ -257,11 +326,17 @@ impl DbTable {
         self.update_entry(entry_name, key_name, db_value)
     }
 
+    /// Retrieves the floating-point value of an entry given its name and key name.
     ///
-    /// ## Gets an entry value (Float format).
-    /// Entry name, key to get must be provided
+    /// # Arguments
     ///
-    /// If the selected key is not configured as Float, `Err` is returned
+    /// * `entry_name` - The name of the entry to retrieve from.
+    /// * `key_name` - The name of the key to retrieve the value for.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(Some(&f32))` with the value if it exists and is of type `DbType::Float`,
+    /// `Ok(None)` if the value doesn't exist, or `Err(String)` if there was an error.
     ///
     pub fn get_entry_value_float(
         &mut self,
@@ -286,11 +361,21 @@ impl DbTable {
         }
     }
 
+    /// Updates the entry with the specified key in the database.
     ///
-    /// ## Updates an entry of the table (Bool format).
-    /// Entry name, key to update and field value as float must be provided, value can be set to `None`
+    /// The `entry_name` parameter is a reference to the name of the entry to be updated.
+    /// The `key_name` parameter is a reference to the name of the key in the entry to be updated.
+    /// The `new_value` parameter is an optional boolean value to be set as the new value for the key.
     ///
-    /// If the selected key is not configured as Bool, `Err` is returned
+    /// # Arguments
+    ///
+    /// * `entry_name` - The name of the entry to be updated.
+    /// * `key_name` - The name of the key in the entry to be updated.
+    /// * `new_value` - An optional boolean value to be set as the new value for the key.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error message as a `Result` if the update operation fails.
     ///
     pub fn update_entry_bool(
         &mut self,
@@ -305,12 +390,23 @@ impl DbTable {
         self.update_entry(entry_name, key_name, db_value)
     }
 
+    /// Gets the value of a boolean entry.
     ///
-    /// ## Gets an entry value (Bool format).
-    /// Entry name, key to get must be provided
+    /// This method checks if the given key exists and has the same type as `DbType::Bool(false)`,
+    /// and returns the corresponding value if it exists and is of type `DbType::Bool`.
+    /// Otherwise, it returns `None`.
     ///
-    /// If the selected key is not configured as Bool, `Err` is returned
+    /// # Arguments
     ///
+    /// - `entry_name`: A reference to a `String` representing the entry name.
+    /// - `key_name`: A reference to a `String` representing the key name.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing:
+    /// - `Ok(Some(bool))` if the value exists and is of type `DbType::Bool`.
+    /// - `Ok(None)` if the value does not exist or is not of type `DbType::Bool`.
+    /// - `Err(String)` if an error occurred during the coherency check or while retrieving the value.
     pub fn get_entry_value_bool(
         &mut self,
         entry_name: &String,
@@ -334,12 +430,18 @@ impl DbTable {
         }
     }
 
+    /// Updates the entry date for a given entry with a new value.
     ///
-    /// ## Updates an entry of the table (Date format).
-    /// Entry name, key to update and field value as float must be provided, value can be set to `None`
+    /// # Arguments
     ///
-    /// If the selected key is not configured as Date, `Err` is returned
+    /// - `entry_name`: The name of the entry to update.
+    /// - `key_name`: The name of the key within the entry to update.
+    /// - `new_value`: An optional new value for the entry date.
     ///
+    /// # Returns
+    ///
+    /// - `Ok(())` if the update was successful.
+    /// - `Err(String)` if there was an error updating the entry.
     pub fn update_entry_date(
         &mut self,
         entry_name: &String,
@@ -353,11 +455,22 @@ impl DbTable {
         self.update_entry(entry_name, key_name, db_value)
     }
 
+    /// Retrieves the value of a specified key in a given entry
     ///
-    /// ## Gets an entry value (Date format).
-    /// Entry name, key to get must be provided
+    /// This method is used to retrieve the value of a specified key in a specific entry.
+    /// It performs a coherency check to ensure that the key has the correct data type.
     ///
-    /// If the selected key is not configured as Date, `Err` is returned
+    /// # Arguments
+    ///
+    /// * `entry_name` - A reference to a String representing the name of the entry
+    /// * `key_name` - A reference to a String representing the name of the key
+    ///
+    /// # Returns
+    ///
+    /// This method returns a Result containing an optional reference to a NaiveDate.
+    /// - If the value is found and is of type DbType::Date, it returns Ok(Some(&NaiveDate)).
+    /// - If the value is not found or is not of type DbType::Date, it returns Ok(None).
+    /// - If an error occurs during the coherency check or value retrieval, it returns an Err(String).
     ///
     pub fn get_entry_value_date(
         &mut self,
@@ -386,7 +499,15 @@ impl DbTable {
         }
     }
 
-    /// Removes the selected entry from the table
+    /// Removes an entry from the collection.
+    ///
+    /// # Arguments
+    ///
+    /// * `entry_name` - The name of the entry to remove.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the entry is successfully removed. Otherwise, returns `Err(String)` with an error message.
     pub fn remove_entry(&mut self, entry_name: &String) -> Result<(), String> {
         let index = self.find_entry(entry_name)?.1;
         self.entries.swap_remove(index);
@@ -399,9 +520,24 @@ impl DbTable {
         Ok(())
     }
 
-    /// Updates the selected entry
+    /// Updates the value of a key in an entry.
     ///
-    /// Private method called by type-specific public methods
+    /// # Arguments
+    ///
+    /// * `entry_name` - The name of the entry to update.
+    /// * `key_name` - The name of the key to update.
+    /// * `new_value` - The new value to assign to the key.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the key is not found in the database or if the type of the key is not compatible with the given type.
+    ///
+    /// # Remarks
+    ///
+    /// This method finds the key by name in the database. If the `new_value` parameter is provided, it checks if the type of the key matches the type of the new value. If not, it logs an error message and returns an error. Otherwise, it updates the key with the new value in the entry identified by `entry_name`.
+    ///
+    /// It also logs a verbose message indicating that an entry has been updated.
+    ///
     fn update_entry(
         &mut self,
         entry_name: &String,
@@ -433,9 +569,18 @@ impl DbTable {
         Ok(())
     }
 
-    /// Gets key value for selected entry.
+    /// Retrieves the value associated with a given key in a specified entry.
     ///
-    /// Private method called by type-specific public methods
+    /// # Arguments
+    ///
+    /// - `entry_name`: A reference to a String representing the name of the entry.
+    /// - `key_name`: A reference to a String representing the name of the key.
+    ///
+    /// # Returns
+    ///
+    /// Returns a Result object. If the key is found, it returns an Option containing a reference to the value associated with the key.
+    /// If the key or entry does not exist, it returns an error message as a String.
+    ///
     fn get_entry_value(
         &mut self,
         entry_name: &String,
@@ -451,12 +596,27 @@ impl DbTable {
         Ok(val)
     }
 
-    /// Returns entries count in table
+    /// Returns the number of entries in the collection.
+    ///
+    /// # Returns
+    ///
+    /// The number of entries in the collection as a `usize`.
+    ///
     pub fn entries_count(&self) -> usize {
         self.entries.len()
     }
 
-    /// Search for an entry and returns `Ok` with a reference to it, or `Err` if the entry does not exist
+    /// Find an entry in the database with the given name.
+    ///
+    /// # Arguments
+    ///
+    /// * `entry_name` - The name of the entry to search for.
+    ///
+    /// # Returns
+    ///
+    /// Returns a Result containing a mutable reference to the found DbEntry and its index within the entries vector if found.
+    /// If the entry is not found, an Err is returned containing an error message.
+    ///
     fn find_entry(&mut self, entry_name: &String) -> Result<(&mut DbEntry, usize), String> {
         for (index, entry) in self.entries.iter_mut().enumerate() {
             if entry.name() == entry_name {
@@ -476,15 +636,31 @@ impl DbTable {
         Err(msg)
     }
 
-    /// Checks if the entry exists or not
+    /// Checks if an entry with the given name exists in the data structure.
+    ///
+    /// # Arguments
+    ///
+    /// * `entry_name` - The name of the entry to look for.
+    ///
+    /// # Returns
+    ///
+    /// * `true` - If an entry with the given name exists.
+    /// * `false` - If no entry with the given name exists.
     fn entry_exists(&mut self, entry_name: &String) -> bool {
-        match self.find_entry(entry_name) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        self.find_entry(entry_name).is_ok()
     }
 
-    /// Search for a key name and returns `Ok` with its index and type, or `Err` if the key doesn't exist
+    /// Finds a key in the database table based on its name.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_name` - The name of the key to find.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing a tuple `(usize, &DbType)` with the index and a reference to the key,
+    /// or a `String` with an error message if the key does not exist.
+    ///
     fn find_key(&self, key_name: &String) -> Result<(usize, &DbType), String> {
         for (index, key) in self.keys.iter().enumerate() {
             if &key.0 == key_name {
@@ -501,8 +677,17 @@ impl DbTable {
         Err(msg)
     }
 
-    /// ## Adds a key to the table
-    /// All entries of the table will get the new key with a default `None` value
+    /// Adds a key to the table.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_name` - The name of the key.
+    /// * `key_type` - The data type of the key.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `key_type` does not correspond to a known type.
+    ///
     pub fn add_key(&mut self, key_name: &String, key_type: &String) -> Result<(), String> {
         self.keys
             .push((key_name.clone(), DbType::default_from_string(key_type)?));
@@ -519,42 +704,70 @@ impl DbTable {
         Ok(())
     }
 
-    /// Returns table name
+    /// Returns the name of the object.
     pub fn name(&self) -> &String {
         &self.name
     }
 
-    /// Rename the selected entry
+    /// Renames an entry in the system.
+    ///
+    /// # Arguments
+    ///
+    /// * `entry_name` - The name of the entry to be renamed.
+    /// * `new_name` - The new name for the entry.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the rename operation was successful, otherwise returns an `Err` with an error message.
     pub fn rename_entry(&mut self, entry_name: &String, new_name: &String) -> Result<(), String> {
         self.find_entry(entry_name)?.0.rename(new_name);
         Ok(())
     }
 
-    /// Returns all table's entries name as a vector, or `None` if the table is empty
+    /// Returns all the entries as a vector of strings.
+    ///
+    /// If there are no entries, `None` is returned. Otherwise, the names of all the entries are
+    /// collected and returned as a vector of strings.
+    ///
+    /// # Arguments
+    /// * `self` - A reference to `self`, an instance of the struct.
+    ///
+    /// # Returns
+    /// * `Option<Vec<String>>` - A vector of strings containing the names of all the entries.
+    ///
     pub fn get_all_entries(&self) -> Option<Vec<String>> {
-        if self.entries_count() > 0 {
-            let mut vect = Vec::new();
-            for entry in self.entries.iter() {
-                vect.push(entry.name().clone())
-            }
-            Some(vect)
-        } else {
-            None
+        if self.entries.is_empty() {
+            return None;
         }
+        Some(
+            self.entries
+                .iter()
+                .map(|entry| entry.name().clone())
+                .collect(),
+        )
     }
 
-    /// Returns all entries matching the selected date criteria
+    /// Retrieves entries that match a given date criteria for a specific key.
     ///
-    /// ### Inputs
-    /// * `key_name`: key to use for comparison
-    /// * `criteria`: Comparison criteria
-    /// * `date1`: Reference date for comparison
-    /// * `date2`: second reference date, used for `Between` comparison only, can be set to `None` for other criteria. `date2` must be after `date1`
+    /// # Arguments
     ///
-    /// ### Returns
-    /// * `Err` if there is any error during processing or wrong parameters are given
-    /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
-    /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
+    /// * `key_name` - The name of the key to search for.
+    /// * `criteria` - The matching criteria to use.
+    /// * `date1` - The first reference date.
+    /// * `date2` - The optional second reference date for 'Between' criteria.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(None)` if no matching entries are found. Otherwise, returns `Ok(Some(output))`,
+    /// where `output` is a vector of entry names that match the criteria.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error message as a `String` if:
+    /// * The second reference date is not defined for 'Between' criteria.
+    /// * The second reference date is not after the first reference date.
+    /// * The selected key is not of type `DbType::Date`.
+    ///
     pub fn get_matching_entries_date(
         &self,
         key_name: &String,
@@ -598,31 +811,31 @@ impl DbTable {
                     for entry in self.entries.iter() {
                         if let Some(entry_date_wrapped) = entry.get(key.0) {
                             if let DbType::Date(entry_date) = entry_date_wrapped {
-                                let delta = *entry_date - date1;
+                                let delta = (*entry_date - date1).num_days();
                                 match criteria {
                                     MatchingCriteria::IsMore => {
-                                        if delta.num_days() > 0 {
+                                        if delta > 0 {
                                             output.push(entry.name().clone());
                                         }
                                     }
                                     MatchingCriteria::IsLess => {
-                                        if delta.num_days() < 0 {
+                                        if delta < 0 {
                                             output.push(entry.name().clone());
                                         }
                                     }
                                     MatchingCriteria::Equal => {
-                                        if delta.num_days() == 0 {
+                                        if delta == 0 {
                                             output.push(entry.name().clone());
                                         }
                                     }
                                     MatchingCriteria::Different => {
-                                        if delta.num_days() != 0 {
+                                        if delta != 0 {
                                             output.push(entry.name().clone());
                                         }
                                     }
                                     MatchingCriteria::Between => {
-                                        let delta2 = *entry_date - date2.unwrap();
-                                        if delta.num_days() >= 0 && delta2.num_days() <= 0 {
+                                        let delta2 = (*entry_date - date2.unwrap()).num_days();
+                                        if delta >= 0 && delta2 <= 0 {
                                             output.push(entry.name().clone());
                                         }
                                     }
@@ -652,40 +865,88 @@ impl DbTable {
         }
     }
 
-    /// Checks input compatibility for integers comparison
+    /// Check condition and log error message.
+    ///
+    /// # Arguments
+    ///
+    /// * `condition` - A boolean value representing the condition to be checked.
+    /// * `msg` - A static string message to log when the condition is true.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the condition is false.
+    /// * `Err(String)` - If the condition is true, containing the formatted error message.
+    ///
+    fn check_and_log_error(condition: bool, msg: &'static str) -> Result<(), String> {
+        if condition {
+            let full_msg = format!("Incompatibility between comparison inputs: {}", msg);
+            write_log(
+                LogSeverity::Error,
+                &full_msg,
+                &env!("CARGO_PKG_NAME").to_string(),
+            );
+            return Err(full_msg);
+        }
+        Ok(())
+    }
+
+    /// Checks if the input integers are compatible based on the given matching criteria.
+    ///
+    /// # Arguments
+    ///
+    /// * `criteria` - The matching criteria to determine the compatibility.
+    /// * `int1` - The first reference integer.
+    /// * `int2` - The second reference integer. This argument is an `Option` and can be `None`.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the input integers are compatible. Otherwise, returns `Err` with an error message.
+    ///
+    /// # Errors
+    ///
+    /// An error occurs in the following conditions:
+    ///
+    /// * If `MatchingCriteria::Between` is passed as `criteria`, and `int2` is `None`.
+    /// * If `MatchingCriteria::Between` is passed as `criteria`, and `int2` is defined but less than or equal to `int1`.
+    ///
     fn check_input_compatibility_int(
         criteria: &MatchingCriteria,
         int1: i32,
         int2: Option<i32>,
     ) -> Result<(), String> {
         if *criteria == MatchingCriteria::Between {
-            if int2.is_none() {
-                let msg = "Second reference integer not defined for Between integer comparison"
-                    .to_string();
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
-                return Err(msg);
-            }
+            Self::check_and_log_error(
+                int2.is_none(),
+                "Second reference integer not defined for Between integer comparison",
+            )?;
+
             if let Some(value) = int2 {
-                if value - int1 <= 0 {
-                    let msg = "Second reference integer is not higher than first reference integer"
-                        .to_string();
-                    write_log(
-                        LogSeverity::Error,
-                        &msg,
-                        &env!("CARGO_PKG_NAME").to_string(),
-                    );
-                    return Err(msg);
-                }
+                Self::check_and_log_error(
+                    value - int1 <= 0,
+                    "Second reference integer is not higher than first reference integer",
+                )?;
             }
         }
         Ok(())
     }
 
-    /// Integer comparison with reference
+    /// Compares an entry value with two integer values using the given matching criteria.
+    ///
+    /// The function takes an entry value, a matching criteria, an integer value (`int1`), and an optional
+    /// second integer value (`int2`). It returns a boolean value indicating whether the comparison
+    /// satisfies the matching criteria.
+    ///
+    /// # Arguments
+    ///
+    /// * `entry_value` - The value to compare with the integer values.
+    /// * `criteria` - The matching criteria to apply.
+    /// * `int1` - The first integer value to compare.
+    /// * `int2` - An optional second integer value to compare.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the comparison satisfies the matching criteria, otherwise `false`.
+    ///
     fn integer_comparison(
         entry_value: i32,
         criteria: &MatchingCriteria,
@@ -694,57 +955,39 @@ impl DbTable {
     ) -> bool {
         let delta = entry_value - int1;
         match criteria {
-            MatchingCriteria::IsMore => {
-                if delta > 0 {
-                    true
-                } else {
-                    false
-                }
-            }
-            MatchingCriteria::IsLess => {
-                if delta < 0 {
-                    true
-                } else {
-                    false
-                }
-            }
-            MatchingCriteria::Equal => {
-                if delta == 0 {
-                    true
-                } else {
-                    false
-                }
-            }
-            MatchingCriteria::Different => {
-                if delta != 0 {
-                    true
-                } else {
-                    false
-                }
-            }
+            MatchingCriteria::IsMore => delta > 0,
+            MatchingCriteria::IsLess => delta < 0,
+            MatchingCriteria::Equal => delta == 0,
+            MatchingCriteria::Different => delta != 0,
             MatchingCriteria::Between => {
                 let delta2 = entry_value - int2.unwrap();
-                if delta >= 0 && delta2 <= 0 {
-                    true
-                } else {
-                    false
-                }
+                delta >= 0 && delta2 <= 0
             }
         }
     }
 
-    /// Returns all entries matching the selected integer criteria
+    /// Retrieves entries with a matching integer value based on the specified criteria.
     ///
-    /// ### Inputs
-    /// * `key_name`: key to use for comparison
-    /// * `criteria`: Comparison criteria
-    /// * `int1`: Reference integer for comparison
-    /// * `int2`: second reference integer, used for `Between` comparison only, can be set to `None` for other criteria. `int2` must be higher than `int1`
+    /// # Arguments
     ///
-    /// ### Returns
-    /// * `Err` if there is any error during processing or wrong parameters are given
-    /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
-    /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
+    /// * `key_name` - The name of the key to search for.
+    /// * `criteria` - The matching criteria to use.
+    /// * `int1` - The first integer value to match.
+    /// * `int2` - An optional second integer value to match.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(None)` if no matching entries were found.
+    /// * `Ok(Some(output))` with the list of matching entries if any were found.
+    /// * `Err(msg)` if an error occurred.
+    ///
+    /// # Errors
+    ///
+    /// This function may return an error message if:
+    /// * The specified `key_name` is not found in the entries.
+    /// * The specified `key_name` does not have an integer type.
+    /// * The `criteria` is incompatible with the input.
+    ///
     pub fn get_matching_entries_integer(
         &self,
         key_name: &String,
@@ -752,58 +995,59 @@ impl DbTable {
         int1: i32,
         int2: Option<i32>,
     ) -> Result<Option<Vec<String>>, String> {
-        if self.entries_count() > 0 {
-            // Check input compatibility
-            Self::check_input_compatibility_int(&criteria, int1, int2)?;
+        if self.entries_count() == 0 {
+            return Ok(None);
+        }
+        // Check input compatibility
+        Self::check_input_compatibility_int(&criteria, int1, int2)?;
 
-            // Check selected key has an integer type
-            let key = self.find_key(key_name)?;
-            match key.1 {
-                DbType::Integer(_) => {
-                    let mut output = Vec::new();
-                    for entry in self.entries.iter() {
-                        if let Some(entry_int_wrapped) = entry.get(key.0) {
-                            if let DbType::Integer(entry_int) = entry_int_wrapped {
-                                if Self::integer_comparison(*entry_int, &criteria, int1, int2) {
-                                    output.push(entry.name().clone());
-                                }
+        // Check selected key has an integer type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::Integer(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(entry_int_wrapped) = entry.get(key.0) {
+                        if let DbType::Integer(entry_int) = entry_int_wrapped {
+                            if Self::integer_comparison(*entry_int, &criteria, int1, int2) {
+                                output.push(entry.name().clone());
                             }
                         }
                     }
-
-                    if output.len() == 0 {
-                        Ok(None)
-                    } else {
-                        Ok(Some(output))
-                    }
                 }
-                _ => {
-                    let msg = format!("Key {} is not an integer", key_name);
-                    write_log(
-                        LogSeverity::Error,
-                        &msg,
-                        &env!("CARGO_PKG_NAME").to_string(),
-                    );
-                    Err(msg)
+
+                if output.is_empty() {
+                    Ok(None)
+                } else {
+                    Ok(Some(output))
                 }
             }
-        } else {
-            Ok(None)
+            _ => {
+                let msg = format!("Key {} is not an integer", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
         }
     }
 
-    /// Returns all entries matching the selected unsigned integer criteria
+    /// Retrieves entries with a matching unsigned integer value based on the given criteria and key.
     ///
-    /// ### Inputs
-    /// * `key_name`: key to use for comparison
-    /// * `criteria`: Comparison criteria
-    /// * `int1`: Reference integer for comparison
-    /// * `int2`: second reference integer, used for `Between` comparison only, can be set to `None` for other criteria. `int2` must be higher than `int1`
+    /// # Arguments
     ///
-    /// ### Returns
-    /// * `Err` if there is any error during processing or wrong parameters are given
-    /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
-    /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
+    /// * `key_name` - The name of the key to match against.
+    /// * `criteria` - The matching criteria to apply.
+    /// * `int1` - The first unsigned integer value to compare against.
+    /// * `int2` - An optional second unsigned integer value to compare against.
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Option<Vec<String>>, String>` - Returns `Ok(None)` if no matching entries are found. Otherwise, returns `Ok(Some(output))` where `output` is a vector of matching entry names.
+    /// * `Result` will return `Err` if the selected key is not an unsigned integer or an error occurs during processing.
+    ///
     pub fn get_matching_entries_unsigned_integer(
         &self,
         key_name: &String,
@@ -811,67 +1055,76 @@ impl DbTable {
         int1: u32,
         int2: Option<u32>,
     ) -> Result<Option<Vec<String>>, String> {
-        if self.entries_count() > 0 {
-            // Check input compatibility
-            Self::check_input_compatibility_int(
-                &criteria,
-                int1 as i32,
-                int2.map_or(None, |v| Some(v as i32)),
-            )?;
+        if self.entries_count() == 0 {
+            return Ok(None);
+        }
+        // Check input compatibility
+        Self::check_input_compatibility_int(
+            &criteria,
+            int1 as i32,
+            int2.map_or(None, |v| Some(v as i32)),
+        )?;
 
-            // Check selected key has an unsigned int type
-            let key = self.find_key(key_name)?;
-            match key.1 {
-                DbType::UnsignedInt(_) => {
-                    let mut output = Vec::new();
-                    for entry in self.entries.iter() {
-                        if let Some(entry_int_wrapped) = entry.get(key.0) {
-                            if let DbType::UnsignedInt(entry_int) = entry_int_wrapped {
-                                if Self::integer_comparison(
-                                    *entry_int as i32,
-                                    &criteria,
-                                    int1 as i32,
-                                    int2.map_or(None, |v| Some(v as i32)),
-                                ) {
-                                    output.push(entry.name().clone());
-                                }
+        // Check selected key has an unsigned int type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::UnsignedInt(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(entry_int_wrapped) = entry.get(key.0) {
+                        if let DbType::UnsignedInt(entry_int) = entry_int_wrapped {
+                            if Self::integer_comparison(
+                                *entry_int as i32,
+                                &criteria,
+                                int1 as i32,
+                                int2.map_or(None, |v| Some(v as i32)),
+                            ) {
+                                output.push(entry.name().clone());
                             }
                         }
                     }
-
-                    if output.len() == 0 {
-                        Ok(None)
-                    } else {
-                        Ok(Some(output))
-                    }
                 }
-                _ => {
-                    let msg = format!("Key {} is not an unsigned integer", key_name);
-                    write_log(
-                        LogSeverity::Error,
-                        &msg,
-                        &env!("CARGO_PKG_NAME").to_string(),
-                    );
-                    Err(msg)
+
+                if output.is_empty() {
+                    Ok(None)
+                } else {
+                    Ok(Some(output))
                 }
             }
-        } else {
-            Ok(None)
+            _ => {
+                let msg = format!("Key {} is not an unsigned integer", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
         }
     }
 
-    /// Returns all entries matching the selected float criteria
+    /// Get matching entries based on float comparison criteria.
     ///
-    /// ### Inputs
-    /// * `key_name`: key to use for comparison
-    /// * `criteria`: Comparison criteria
-    /// * `float1`: Reference float for comparison
-    /// * `float2`: second reference float, used for `Between` comparison only, can be set to `None` for other criteria. `float2` must be higher than `float1`
+    /// # Arguments
     ///
-    /// ### Returns
-    /// * `Err` if there is any error during processing or wrong parameters are given
-    /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
-    /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
+    /// * `key_name` - The name of the key to perform the comparison on.
+    /// * `criteria` - The matching criteria to use for comparison.
+    /// * `float1` - The first reference float for comparison.
+    /// * `float2` - The optional second reference float for comparison (only used for `Between` criteria).
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` with an optional vector of matching entry names if successful, or an error message if unsuccessful.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error message if any of the following conditions are met:
+    ///
+    /// * The number of entries is zero.
+    /// * The second reference float is not defined for `Between` criteria.
+    /// * The second reference float is not higher than the first reference float for `Between` criteria.
+    /// * The selected key is not of float type.
+    ///
     pub fn get_matching_entries_float(
         &self,
         key_name: &String,
@@ -879,11 +1132,24 @@ impl DbTable {
         float1: f32,
         float2: Option<f32>,
     ) -> Result<Option<Vec<String>>, String> {
-        if self.entries_count() > 0 {
-            // Check input compatibility
-            if criteria == MatchingCriteria::Between {
-                if float2.is_none() {
-                    let msg = "Second reference float not defined for Between integer comparison"
+        if self.entries_count() == 0 {
+            return Ok(None);
+        }
+        // Check input compatibility
+        if criteria == MatchingCriteria::Between {
+            if float2.is_none() {
+                let msg =
+                    "Second reference float not defined for Between integer comparison".to_string();
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                return Err(msg);
+            }
+            if let Some(value) = float2 {
+                if value - float1 <= 0.0 {
+                    let msg = "Second reference float is not higher than first reference float"
                         .to_string();
                     write_log(
                         LogSeverity::Error,
@@ -892,277 +1158,276 @@ impl DbTable {
                     );
                     return Err(msg);
                 }
-                if let Some(value) = float2 {
-                    if value - float1 <= 0.0 {
-                        let msg = "Second reference float is not higher than first reference float"
-                            .to_string();
-                        write_log(
-                            LogSeverity::Error,
-                            &msg,
-                            &env!("CARGO_PKG_NAME").to_string(),
-                        );
-                        return Err(msg);
-                    }
-                }
             }
+        }
 
-            // Check selected key has a float type
-            let key = self.find_key(key_name)?;
-            match key.1 {
-                DbType::Float(_) => {
-                    let mut output = Vec::new();
-                    for entry in self.entries.iter() {
-                        if let Some(entry_float_wrapped) = entry.get(key.0) {
-                            if let DbType::Float(entry_float) = entry_float_wrapped {
-                                let delta = entry_float - float1;
-                                match criteria {
-                                    MatchingCriteria::IsMore => {
-                                        if delta > 0.0 {
-                                            output.push(entry.name().clone());
-                                        }
+        // Check selected key has a float type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::Float(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(entry_float_wrapped) = entry.get(key.0) {
+                        if let DbType::Float(entry_float) = entry_float_wrapped {
+                            let delta = entry_float - float1;
+                            match criteria {
+                                MatchingCriteria::IsMore => {
+                                    if delta > 0.0 {
+                                        output.push(entry.name().clone());
                                     }
-                                    MatchingCriteria::IsLess => {
-                                        if delta < 0.0 {
-                                            output.push(entry.name().clone());
-                                        }
+                                }
+                                MatchingCriteria::IsLess => {
+                                    if delta < 0.0 {
+                                        output.push(entry.name().clone());
                                     }
-                                    MatchingCriteria::Equal => {
-                                        if delta == 0.0 {
-                                            output.push(entry.name().clone());
-                                        }
+                                }
+                                MatchingCriteria::Equal => {
+                                    if delta == 0.0 {
+                                        output.push(entry.name().clone());
                                     }
-                                    MatchingCriteria::Different => {
-                                        if delta != 0.0 {
-                                            output.push(entry.name().clone());
-                                        }
+                                }
+                                MatchingCriteria::Different => {
+                                    if delta != 0.0 {
+                                        output.push(entry.name().clone());
                                     }
-                                    MatchingCriteria::Between => {
-                                        let delta2 = entry_float - float2.unwrap();
-                                        if delta >= 0.0 && delta2 <= 0.0 {
-                                            output.push(entry.name().clone());
-                                        }
+                                }
+                                MatchingCriteria::Between => {
+                                    let delta2 = entry_float - float2.unwrap();
+                                    if delta >= 0.0 && delta2 <= 0.0 {
+                                        output.push(entry.name().clone());
                                     }
                                 }
                             }
                         }
                     }
-
-                    if output.len() == 0 {
-                        Ok(None)
-                    } else {
-                        Ok(Some(output))
-                    }
                 }
-                _ => {
-                    let msg = format!("Key {} is not a float", key_name);
-                    write_log(
-                        LogSeverity::Error,
-                        &msg,
-                        &env!("CARGO_PKG_NAME").to_string(),
-                    );
-                    Err(msg)
+
+                if output.is_empty() {
+                    Ok(None)
+                } else {
+                    Ok(Some(output))
                 }
             }
-        } else {
-            Ok(None)
+            _ => {
+                let msg = format!("Key {} is not a float", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
         }
     }
 
-    /// Returns all entries matching the selected boolean criteria
+    /// Returns matching entries based on the provided key, matching criteria, and reference bool value.
     ///
-    /// ### Inputs
-    /// * `key_name`: key to use for comparison
-    /// * `criteria`: Comparison criteria
-    /// * `ref_bool`: Reference boolean for comparison
+    /// # Arguments
     ///
-    /// ### Returns
-    /// * `Err` if there is any error during processing or wrong parameters are given
-    /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
-    /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
+    /// * `key_name` - The name of the key to match.
+    /// * `criteria` - The matching criteria (Equal or Different).
+    /// * `ref_bool` - The reference bool value for comparison.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(None)` if there are no entries in the collection. Otherwise, returns `Ok(Some(output))`
+    /// where `output` is a vector of strings containing the names of the matching entries.
+    /// If the selected key is not of boolean type, returns `Err(msg)` with the error message.
+    ///
     pub fn get_matching_entries_bool(
         &self,
         key_name: &String,
         criteria: MatchingCriteria,
         ref_bool: bool,
     ) -> Result<Option<Vec<String>>, String> {
-        if self.entries_count() > 0 {
-            // Check selected key has a bool type
-            let key = self.find_key(key_name)?;
-            match key.1 {
-                DbType::Bool(_) => {
-                    let mut output = Vec::new();
-                    for entry in self.entries.iter() {
-                        if let Some(entry_bool_wrapped) = entry.get(key.0) {
-                            if let DbType::Bool(entry_bool) = entry_bool_wrapped {
-                                match criteria {
-                                    MatchingCriteria::Equal => {
-                                        if ref_bool == *entry_bool {
-                                            output.push(entry.name().clone());
-                                        }
+        if self.entries_count() == 0 {
+            return Ok(None);
+        }
+        // Check selected key has a bool type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::Bool(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(entry_bool_wrapped) = entry.get(key.0) {
+                        if let DbType::Bool(entry_bool) = entry_bool_wrapped {
+                            match criteria {
+                                MatchingCriteria::Equal => {
+                                    if ref_bool == *entry_bool {
+                                        output.push(entry.name().clone());
                                     }
-                                    MatchingCriteria::Different => {
-                                        if ref_bool != *entry_bool {
-                                            output.push(entry.name().clone());
-                                        }
+                                }
+                                MatchingCriteria::Different => {
+                                    if ref_bool != *entry_bool {
+                                        output.push(entry.name().clone());
                                     }
-                                    _ => {
-                                        let msg = "Only Equal and Different matching criteria are allowed for Boolean data".to_string();
-                                        write_log(
-                                            LogSeverity::Error,
-                                            &msg,
-                                            &env!("CARGO_PKG_NAME").to_string(),
-                                        );
-                                        return Err(msg);
-                                    }
+                                }
+                                _ => {
+                                    let msg = "Only Equal and Different matching criteria are allowed for Boolean data".to_string();
+                                    write_log(
+                                        LogSeverity::Error,
+                                        &msg,
+                                        &env!("CARGO_PKG_NAME").to_string(),
+                                    );
+                                    return Err(msg);
                                 }
                             }
                         }
                     }
-
-                    if output.len() == 0 {
-                        Ok(None)
-                    } else {
-                        Ok(Some(output))
-                    }
                 }
-                _ => {
-                    let msg = format!("Key {} is not a boolean", key_name);
-                    write_log(
-                        LogSeverity::Error,
-                        &msg,
-                        &env!("CARGO_PKG_NAME").to_string(),
-                    );
-                    Err(msg)
+
+                if output.is_empty() {
+                    Ok(None)
+                } else {
+                    Ok(Some(output))
                 }
             }
-        } else {
-            Ok(None)
+            _ => {
+                let msg = format!("Key {} is not a boolean", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
         }
     }
 
-    /// Returns all entries matching the selected string criteria
+    /// Returns a vector of entry names that match the given criteria for a specific key.
     ///
-    /// ### Inputs
-    /// * `key_name`: key to use for comparison
-    /// * `criteria`: Comparison criteria
-    /// * `ref_str`: Reference string for comparison
+    /// # Arguments
     ///
-    /// ### Returns
-    /// * `Err` if there is any error during processing or wrong parameters are given
-    /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
-    /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
+    /// * `key_name` - The name of the key to be matched.
+    /// * `criteria` - The matching criteria to be applied.
+    /// * `ref_str` - The reference string to compare against.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(None)` - If there are no entries or the selected key is not present in the entries.
+    /// * `Ok(Some(output))` - If matching entries are found, returns a vector of their names.
+    /// * `Err(msg)` - If there is an error, such as invalid matching criteria or the selected key not being of string type.
+    ///
     pub fn get_matching_entries_string(
         &self,
         key_name: &String,
         criteria: MatchingCriteria,
         ref_str: &String,
     ) -> Result<Option<Vec<String>>, String> {
-        if self.entries_count() > 0 {
-            // Check selected key has a String type
-            let key = self.find_key(key_name)?;
-            match key.1 {
-                DbType::String(_) => {
-                    let mut output = Vec::new();
-                    for entry in self.entries.iter() {
-                        if let Some(entry_str_wrapped) = entry.get(key.0) {
-                            if let DbType::String(entry_str) = entry_str_wrapped {
-                                match criteria {
-                                    MatchingCriteria::Equal => {
-                                        if ref_str == entry_str {
-                                            output.push(entry.name().clone());
-                                        }
+        if self.entries_count() == 0 {
+            return Ok(None);
+        }
+        // Check selected key has a String type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::String(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(entry_str_wrapped) = entry.get(key.0) {
+                        if let DbType::String(entry_str) = entry_str_wrapped {
+                            match criteria {
+                                MatchingCriteria::Equal => {
+                                    if ref_str == entry_str {
+                                        output.push(entry.name().clone());
                                     }
-                                    MatchingCriteria::Different => {
-                                        if ref_str != entry_str {
-                                            output.push(entry.name().clone());
-                                        }
+                                }
+                                MatchingCriteria::Different => {
+                                    if ref_str != entry_str {
+                                        output.push(entry.name().clone());
                                     }
-                                    _ => {
-                                        let msg = "Only Equal and Different matching criteria are allowed for String data".to_string();
-                                        write_log(
-                                            LogSeverity::Error,
-                                            &msg,
-                                            &env!("CARGO_PKG_NAME").to_string(),
-                                        );
-                                        return Err(msg);
-                                    }
+                                }
+                                _ => {
+                                    let msg = "Only Equal and Different matching criteria are allowed for String data".to_string();
+                                    write_log(
+                                        LogSeverity::Error,
+                                        &msg,
+                                        &env!("CARGO_PKG_NAME").to_string(),
+                                    );
+                                    return Err(msg);
                                 }
                             }
                         }
                     }
-
-                    if output.len() == 0 {
-                        Ok(None)
-                    } else {
-                        Ok(Some(output))
-                    }
                 }
-                _ => {
-                    let msg = format!("Key {} is not a string", key_name);
-                    write_log(
-                        LogSeverity::Error,
-                        &msg,
-                        &env!("CARGO_PKG_NAME").to_string(),
-                    );
-                    Err(msg)
+
+                if output.is_empty() {
+                    Ok(None)
+                } else {
+                    Ok(Some(output))
                 }
             }
-        } else {
-            Ok(None)
+            _ => {
+                let msg = format!("Key {} is not a string", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
         }
     }
 
-    /// Returns all entries with `None` value on the selected key
+
+    /// Retrieves entries with no value for a given key name.
     ///
-    /// ### Returns
-    /// * `Err` if the selected key does not exist
-    /// * `Ok(None)` if the key exists but no entry has a `None` value or if the table is empty
-    /// * `Ok(Some(xxx))` if the key exists with xxx a vector containing entry names with a `None` value
+    /// # Arguments
+    ///
+    /// * `key_name` - The name of the key to search for.
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Option<Vec<String>>, String>` - A result that either contains `None` if there are no entries or `Some(output)` which is a vector of entry names with no value for the given key name.
+    ///
     pub fn get_entries_none(&self, key_name: &String) -> Result<Option<Vec<String>>, String> {
-        if self.entries_count() > 0 {
-            let key = self.find_key(key_name)?;
-            let mut output = Vec::new();
+        if self.entries_count() == 0 {
+            return Ok(None);
+        }
+        let key = self.find_key(key_name)?;
+        let mut output = Vec::new();
 
-            for entry in self.entries.iter() {
-                if entry.get(key.0).is_none() {
-                    output.push(entry.name().clone())
-                }
+        for entry in self.entries.iter() {
+            if entry.get(key.0).is_none() {
+                output.push(entry.name().clone())
             }
+        }
 
-            if output.len() == 0 {
-                Ok(None)
-            } else {
-                Ok(Some(output))
-            }
-        } else {
+        if output.is_empty() {
             Ok(None)
+        } else {
+            Ok(Some(output))
         }
     }
 
-    /// Returns all entries with `Some` value on the selected key
+    /// Retrieves entries that have a non-null value for a given key.
     ///
-    /// ### Returns
-    /// * `Err` if the selected key does not exist
-    /// * `Ok(None)` if the key exists but no entry has a `Some` value or if the table is empty
-    /// * `Ok(Some(xxx))` if the key exists with xxx a vector containing entry names with a `Some` value
+    /// # Arguments
+    ///
+    /// - `key_name`: The name of the key to search for.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(None)`: If the entries collection is empty.
+    /// - `Ok(Some(output))`: A `Vec<String>` containing the names of entries where the provided key has a non-null value.
+    /// - `Err(err)`: If there was an error while searching for the key.
+    ///
     pub fn get_entries_some(&self, key_name: &String) -> Result<Option<Vec<String>>, String> {
-        if self.entries_count() > 0 {
-            let key = self.find_key(key_name)?;
-            let mut output = Vec::new();
+        if self.entries_count() == 0 {
+            return Ok(None);
+        }
+        let key = self.find_key(key_name)?;
+        let mut output = Vec::new();
 
-            for entry in self.entries.iter() {
-                if entry.get(key.0).is_some() {
-                    output.push(entry.name().clone())
-                }
+        for entry in self.entries.iter() {
+            if entry.get(key.0).is_some() {
+                output.push(entry.name().clone())
             }
+        }
 
-            if output.len() == 0 {
-                Ok(None)
-            } else {
-                Ok(Some(output))
-            }
-        } else {
+        if output.is_empty() {
             Ok(None)
+        } else {
+            Ok(Some(output))
         }
     }
 
