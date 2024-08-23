@@ -1385,7 +1385,10 @@ impl DbTable {
     /// * `Ok(Some(output))` - A vector containing unique float values for the given key.
     /// * `Err(msg)` - If the key is not of float type.
     ///
-    pub fn get_unique_float_values_for_key(&self, key_name: &String) -> Result<Option<Vec<f32>>, String> {
+    pub fn get_unique_float_values_for_key(
+        &self,
+        key_name: &String,
+    ) -> Result<Option<Vec<f32>>, String> {
         if self.entries.is_empty() {
             return Ok(None);
         }
@@ -1412,6 +1415,60 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not a float", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
+        }
+    }
+
+    /// Returns unique date values associated with a given key.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The reference to the object implementing the function.
+    /// * `key_name` - The name of the key for which to retrieve unique date values.
+    ///
+    /// # Returns
+    ///
+    /// * If the `entries` vector is empty, returns `Ok(None)`.
+    /// * If the selected key has a `DbType::Date` type, returns `Ok(Some(output))` where `output`
+    ///   is a vector containing the unique date values associated with the key.
+    /// * If the selected key is not a `DbType::Date` type, logs an error and returns `Err(msg)`,
+    ///   where `msg` is a string indicating that the key is not a date.
+    ///
+    pub fn get_unique_date_values_for_key(
+        &self,
+        key_name: &String,
+    ) -> Result<Option<Vec<NaiveDate>>, String> {
+        if self.entries.is_empty() {
+            return Ok(None);
+        }
+        // Check the selected key has a date type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::Date(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(val_wrapped) = entry.get(key.0) {
+                        if let DbType::Date(val) = val_wrapped {
+                            if !output.contains(val) {
+                                output.push(*val);
+                            }
+                        }
+                    }
+                }
+                if !output.is_empty() {
+                    Ok(Some(output))
+                } else {
+                    Ok(None)
+                }
+            }
+            _ => {
+                let msg = format!("Key {} is not a date", key_name);
                 write_log(
                     LogSeverity::Error,
                     &msg,
@@ -3947,6 +4004,127 @@ mod tests {
         let res = check_result(
             (1, 1),
             table.get_unique_float_values_for_key(&"key1".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_date_error() -> Result<(), String> {
+        let keys = vec![
+            (
+                "key1".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
+            ),
+            (
+                "key2".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
+            ),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("01/12/2021".to_string()),
+            None,
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("02/12/2021".to_string()),
+            None,
+            Some("1.46".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("03/12/2021".to_string()),
+            None,
+            Some("-0.27".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result(
+            (1, 1),
+            table.get_unique_date_values_for_key(&"key3".to_string()),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_unique_date_values_for_key(&"key8".to_string()),
+            false,
+        )?;
+        let res = check_result(
+            (3, 1),
+            table.get_unique_date_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        check_option((3, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_date() -> Result<(), String> {
+        let keys = vec![
+            (
+                "key1".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
+            ),
+            (
+                "key2".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
+            ),
+            ("key3".to_string(), DbType::String("Test".to_string())),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("01/12/2021".to_string()),
+            Some("01/01/2022".to_string()),
+            Some("Hello".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("02/12/2021".to_string()),
+            Some("02/01/2022".to_string()),
+            Some("World".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("03/12/2021".to_string()),
+            Some("03/01/2022".to_string()),
+            Some("AI".to_string()),
+        ];
+        let mut binding4 = vec![
+            Some("02/12/2021".to_string()),
+            Some("03/01/2022".to_string()),
+            Some("AI".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+
+        let expected_vec_1 = vec![
+            NaiveDate::from_ymd_opt(2021, 12, 01).unwrap(),
+            NaiveDate::from_ymd_opt(2021, 12, 02).unwrap(),
+            NaiveDate::from_ymd_opt(2021, 12, 03).unwrap(),
+        ];
+
+        let res = check_result(
+            (1, 1),
+            table.get_unique_date_values_for_key(&"key1".to_string()),
             true,
         )?
             .unwrap();
