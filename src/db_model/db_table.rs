@@ -1321,6 +1321,57 @@ impl DbTable {
             }
         }
     }
+
+    /// Gets the unique string values associated with a given key.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_name` - The name of the key for which to get the unique string values.
+    ///
+    /// # Returns
+    ///
+    /// * If the database entries is empty, the function returns `Ok(None)`.
+    /// * If the selected key is not a string, the function returns an `Err` with an error message.
+    /// * Otherwise, the function returns `Ok(Some(vec))` where `vec` is a vector containing the unique string values.
+    ///
+    pub fn get_unique_string_values_for_key(
+        &self,
+        key_name: &String,
+    ) -> Result<Option<Vec<String>>, String> {
+        if self.entries.is_empty() {
+            return Ok(None);
+        }
+        // Check the selected key has a string type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::String(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(val_wrapped) = entry.get(key.0) {
+                        if let DbType::String(val) = val_wrapped {
+                            if !output.contains(val) {
+                                output.push(val.clone());
+                            }
+                        }
+                    }
+                }
+                if !output.is_empty() {
+                    Ok(Some(output))
+                } else {
+                    Ok(None)
+                }
+            }
+            _ => {
+                let msg = format!("Key {} is not a string", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -3654,6 +3705,107 @@ mod tests {
         let res = check_result(
             (2, 1),
             table.get_unique_unsigned_integer_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_string_error() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::String("0".to_string())),
+            ("key2".to_string(), DbType::String("0".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result(
+            (1, 1),
+            table.get_unique_string_values_for_key(&"key3".to_string()),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_unique_string_values_for_key(&"key8".to_string()),
+            false,
+        )?;
+        let res = check_result(
+            (3, 1),
+            table.get_unique_string_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        check_option((3, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_string() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::String("".to_string())),
+            ("key2".to_string(), DbType::String("".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("1".to_string()),
+            Some("4".to_string()),
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("2".to_string()),
+            Some("5".to_string()),
+            Some("1.46".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("3".to_string()),
+            Some("6".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let mut binding4 = vec![
+            Some("1".to_string()),
+            Some("5".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        table.add_entry(&"entry5".to_string(), new_entry4)?;
+
+        let expected_vec_1 = vec!["1".to_string(), "2".to_string(), "3".to_string()];
+        let expected_vec_2 = vec!["4".to_string(), "5".to_string(), "6".to_string()];
+        let res = check_result(
+            (1, 1),
+            table.get_unique_string_values_for_key(&"key1".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let res = check_result(
+            (2, 1),
+            table.get_unique_string_values_for_key(&"key2".to_string()),
             true,
         )?
             .unwrap();
