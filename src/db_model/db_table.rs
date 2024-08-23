@@ -555,12 +555,19 @@ impl DbTable {
     /// * `Err` if there is any error during processing or wrong parameters are given
     /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
     /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
-    pub fn get_matching_entries_date(&self, key_name: &String, criteria: MatchingCriteria, date1: NaiveDate, date2: Option<NaiveDate>) -> Result<Option<Vec<String>>, String> {
+    pub fn get_matching_entries_date(
+        &self,
+        key_name: &String,
+        criteria: MatchingCriteria,
+        date1: NaiveDate,
+        date2: Option<NaiveDate>,
+    ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() > 0 {
             // Check input compatibility
             if criteria == MatchingCriteria::Between {
                 if date2.is_none() {
-                    let msg = "Second reference date not defined for Between date comparison".to_string();
+                    let msg =
+                        "Second reference date not defined for Between date comparison".to_string();
                     write_log(
                         LogSeverity::Error,
                         &msg,
@@ -571,7 +578,8 @@ impl DbTable {
                 if let Some(date) = date2 {
                     let delta = date - date1;
                     if delta.num_days() <= 0 {
-                        let msg = "Second reference date is not after first reference date".to_string();
+                        let msg =
+                            "Second reference date is not after first reference date".to_string();
                         write_log(
                             LogSeverity::Error,
                             &msg,
@@ -645,10 +653,15 @@ impl DbTable {
     }
 
     /// Checks input compatibility for integers comparison
-    fn check_input_compatibility_int(criteria: &MatchingCriteria, int1: i32, int2: Option<i32>) -> Result<(), String> {
+    fn check_input_compatibility_int(
+        criteria: &MatchingCriteria,
+        int1: i32,
+        int2: Option<i32>,
+    ) -> Result<(), String> {
         if *criteria == MatchingCriteria::Between {
             if int2.is_none() {
-                let msg = "Second reference integer not defined for Between integer comparison".to_string();
+                let msg = "Second reference integer not defined for Between integer comparison"
+                    .to_string();
                 write_log(
                     LogSeverity::Error,
                     &msg,
@@ -658,7 +671,8 @@ impl DbTable {
             }
             if let Some(value) = int2 {
                 if value - int1 <= 0 {
-                    let msg = "Second reference integer is not higher than first reference integer".to_string();
+                    let msg = "Second reference integer is not higher than first reference integer"
+                        .to_string();
                     write_log(
                         LogSeverity::Error,
                         &msg,
@@ -672,34 +686,49 @@ impl DbTable {
     }
 
     /// Integer comparison with reference
-    fn integer_comparison(entry_value: i32, criteria: &MatchingCriteria, int1: i32, int2: Option<i32>) -> bool {
+    fn integer_comparison(
+        entry_value: i32,
+        criteria: &MatchingCriteria,
+        int1: i32,
+        int2: Option<i32>,
+    ) -> bool {
         let delta = entry_value - int1;
         match criteria {
             MatchingCriteria::IsMore => {
                 if delta > 0 {
                     true
-                } else { false }
+                } else {
+                    false
+                }
             }
             MatchingCriteria::IsLess => {
                 if delta < 0 {
                     true
-                } else { false }
+                } else {
+                    false
+                }
             }
             MatchingCriteria::Equal => {
                 if delta == 0 {
                     true
-                } else { false }
+                } else {
+                    false
+                }
             }
             MatchingCriteria::Different => {
                 if delta != 0 {
                     true
-                } else { false }
+                } else {
+                    false
+                }
             }
             MatchingCriteria::Between => {
                 let delta2 = entry_value - int2.unwrap();
                 if delta >= 0 && delta2 <= 0 {
                     true
-                } else { false }
+                } else {
+                    false
+                }
             }
         }
     }
@@ -716,7 +745,13 @@ impl DbTable {
     /// * `Err` if there is any error during processing or wrong parameters are given
     /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
     /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
-    pub fn get_matching_entries_integer(&self, key_name: &String, criteria: MatchingCriteria, int1: i32, int2: Option<i32>) -> Result<Option<Vec<String>>, String> {
+    pub fn get_matching_entries_integer(
+        &self,
+        key_name: &String,
+        criteria: MatchingCriteria,
+        int1: i32,
+        int2: Option<i32>,
+    ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() > 0 {
             // Check input compatibility
             Self::check_input_compatibility_int(&criteria, int1, int2)?;
@@ -769,10 +804,20 @@ impl DbTable {
     /// * `Err` if there is any error during processing or wrong parameters are given
     /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
     /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
-    pub fn get_matching_entries_unsigned_integer(&self, key_name: &String, criteria: MatchingCriteria, int1: u32, int2: Option<u32>) -> Result<Option<Vec<String>>, String> {
+    pub fn get_matching_entries_unsigned_integer(
+        &self,
+        key_name: &String,
+        criteria: MatchingCriteria,
+        int1: u32,
+        int2: Option<u32>,
+    ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() > 0 {
             // Check input compatibility
-            Self::check_input_compatibility_int(&criteria, int1 as i32, int2.map_or(None, |v| Some(v as i32)))?;
+            Self::check_input_compatibility_int(
+                &criteria,
+                int1 as i32,
+                int2.map_or(None, |v| Some(v as i32)),
+            )?;
 
             // Check selected key has an unsigned int type
             let key = self.find_key(key_name)?;
@@ -782,7 +827,12 @@ impl DbTable {
                     for entry in self.entries.iter() {
                         if let Some(entry_int_wrapped) = entry.get(key.0) {
                             if let DbType::UnsignedInt(entry_int) = entry_int_wrapped {
-                                if Self::integer_comparison(*entry_int as i32, &criteria, int1 as i32, int2.map_or(None, |v| Some(v as i32))) {
+                                if Self::integer_comparison(
+                                    *entry_int as i32,
+                                    &criteria,
+                                    int1 as i32,
+                                    int2.map_or(None, |v| Some(v as i32)),
+                                ) {
                                     output.push(entry.name().clone());
                                 }
                             }
@@ -822,12 +872,19 @@ impl DbTable {
     /// * `Err` if there is any error during processing or wrong parameters are given
     /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
     /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
-    pub fn get_matching_entries_float(&self, key_name: &String, criteria: MatchingCriteria, float1: f32, float2: Option<f32>) -> Result<Option<Vec<String>>, String> {
+    pub fn get_matching_entries_float(
+        &self,
+        key_name: &String,
+        criteria: MatchingCriteria,
+        float1: f32,
+        float2: Option<f32>,
+    ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() > 0 {
             // Check input compatibility
             if criteria == MatchingCriteria::Between {
                 if float2.is_none() {
-                    let msg = "Second reference float not defined for Between integer comparison".to_string();
+                    let msg = "Second reference float not defined for Between integer comparison"
+                        .to_string();
                     write_log(
                         LogSeverity::Error,
                         &msg,
@@ -837,7 +894,8 @@ impl DbTable {
                 }
                 if let Some(value) = float2 {
                     if value - float1 <= 0.0 {
-                        let msg = "Second reference float is not higher than first reference float".to_string();
+                        let msg = "Second reference float is not higher than first reference float"
+                            .to_string();
                         write_log(
                             LogSeverity::Error,
                             &msg,
@@ -921,7 +979,12 @@ impl DbTable {
     /// * `Err` if there is any error during processing or wrong parameters are given
     /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
     /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
-    pub fn get_matching_entries_bool(&self, key_name: &String, criteria: MatchingCriteria, ref_bool: bool) -> Result<Option<Vec<String>>, String> {
+    pub fn get_matching_entries_bool(
+        &self,
+        key_name: &String,
+        criteria: MatchingCriteria,
+        ref_bool: bool,
+    ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() > 0 {
             // Check selected key has a bool type
             let key = self.find_key(key_name)?;
@@ -988,7 +1051,12 @@ impl DbTable {
     /// * `Err` if there is any error during processing or wrong parameters are given
     /// * `Ok(None)` if no entry matches the selected criteria or if the table is empty
     /// * `Ok(Some(xxx))` in other cases where xxx is a vector containing matching entries names
-    pub fn get_matching_entries_string(&self, key_name: &String, criteria: MatchingCriteria, ref_str: &String) -> Result<Option<Vec<String>>, String> {
+    pub fn get_matching_entries_string(
+        &self,
+        key_name: &String,
+        criteria: MatchingCriteria,
+        ref_str: &String,
+    ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() > 0 {
             // Check selected key has a String type
             let key = self.find_key(key_name)?;
@@ -1097,8 +1165,320 @@ impl DbTable {
             Ok(None)
         }
     }
-}
 
+    /// Returns a vector of unique boolean values for the specified key.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_name` - A reference to the name of the key.
+    ///
+    /// # Returns
+    ///
+    /// * If the database is empty, returns `Ok(None)`.
+    /// * If the selected key is of boolean type, returns `Ok(Some(Vec<bool>))` with a vector of unique boolean values.
+    /// * If the selected key is not of boolean type, logs an error message and returns `Err(String)`.
+    ///
+    pub fn get_unique_boolean_values_for_key(
+        &self,
+        key_name: &String,
+    ) -> Result<Option<Vec<bool>>, String> {
+        if self.entries.is_empty() {
+            return Ok(None);
+        }
+
+        // Check selected key has a bool type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::Bool(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(val_wrapped) = entry.get(key.0) {
+                        if let DbType::Bool(val) = val_wrapped {
+                            if !output.contains(val) {
+                                output.push(*val);
+                            }
+                        }
+                    }
+                }
+
+                if !output.is_empty() {
+                    Ok(Some(output))
+                } else {
+                    Ok(None)
+                }
+            }
+            _ => {
+                let msg = format!("Key {} is not a bool", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
+        }
+    }
+
+    /// Returns a vector of unique integer values for a given key.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_name` - A reference to a string containing the name of the key.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Some(Vec<i32>)` - If the key is found and is of type `Integer`, returns a vector containing unique integer values for that key.
+    /// * `Ok(None)` - If the key is not found or the vector is empty, returns `None`.
+    /// * `Err(String)` - If the key is found but is not of type `Integer`, returns an error message.
+    pub fn get_unique_integer_values_for_key(
+        &self,
+        key_name: &String,
+    ) -> Result<Option<Vec<i32>>, String> {
+        if self.entries.is_empty() {
+            return Ok(None);
+        }
+
+        // Check selected key has a bool type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::Integer(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(val_wrapped) = entry.get(key.0) {
+                        if let DbType::Integer(val) = val_wrapped {
+                            if !output.contains(val) {
+                                output.push(*val);
+                            }
+                        }
+                    }
+                }
+
+                if !output.is_empty() {
+                    Ok(Some(output))
+                } else {
+                    Ok(None)
+                }
+            }
+            _ => {
+                let msg = format!("Key {} is not an integer", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
+        }
+    }
+
+    /// Retrieves unique unsigned integer values for a given key.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_name` - The name of the key to retrieve values for.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Some(values))` - If the key exists and has unsigned integer values, returns a `Vec<u32>` containing unique values.
+    /// * `Ok(None)` - If the key does not exist or has no unsigned integer values.
+    /// * `Err(error_message)` - If the key exists but is not of unsigned integer type.
+    ///
+    pub fn get_unique_unsigned_integer_values_for_key(
+        &self,
+        key_name: &String,
+    ) -> Result<Option<Vec<u32>>, String> {
+        if self.entries.is_empty() {
+            return Ok(None);
+        }
+        // Check the selected key has an unsigned int type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::UnsignedInt(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(val_wrapped) = entry.get(key.0) {
+                        if let DbType::UnsignedInt(val) = val_wrapped {
+                            if !output.contains(val) {
+                                output.push(*val);
+                            }
+                        }
+                    }
+                }
+                if !output.is_empty() {
+                    Ok(Some(output))
+                } else {
+                    Ok(None)
+                }
+            }
+            _ => {
+                let msg = format!("Key {} is not an unsigned integer", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
+        }
+    }
+
+    /// Gets the unique string values associated with a given key.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_name` - The name of the key for which to get the unique string values.
+    ///
+    /// # Returns
+    ///
+    /// * If the database entries is empty, the function returns `Ok(None)`.
+    /// * If the selected key is not a string, the function returns an `Err` with an error message.
+    /// * Otherwise, the function returns `Ok(Some(vec))` where `vec` is a vector containing the unique string values.
+    ///
+    pub fn get_unique_string_values_for_key(
+        &self,
+        key_name: &String,
+    ) -> Result<Option<Vec<String>>, String> {
+        if self.entries.is_empty() {
+            return Ok(None);
+        }
+        // Check the selected key has a string type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::String(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(val_wrapped) = entry.get(key.0) {
+                        if let DbType::String(val) = val_wrapped {
+                            if !output.contains(val) {
+                                output.push(val.clone());
+                            }
+                        }
+                    }
+                }
+                if !output.is_empty() {
+                    Ok(Some(output))
+                } else {
+                    Ok(None)
+                }
+            }
+            _ => {
+                let msg = format!("Key {} is not a string", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
+        }
+    }
+
+    /// Retrieves unique float values for a given key name.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_name` - The name of the key to search for.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(None)` - If no entries exist in the data structure.
+    /// * `Ok(Some(output))` - A vector containing unique float values for the given key.
+    /// * `Err(msg)` - If the key is not of float type.
+    ///
+    pub fn get_unique_float_values_for_key(
+        &self,
+        key_name: &String,
+    ) -> Result<Option<Vec<f32>>, String> {
+        if self.entries.is_empty() {
+            return Ok(None);
+        }
+
+        // Check the selected key has a float type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::Float(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(val_wrapped) = entry.get(key.0) {
+                        if let DbType::Float(val) = val_wrapped {
+                            if !output.contains(val) {
+                                output.push(*val);
+                            }
+                        }
+                    }
+                }
+                if !output.is_empty() {
+                    Ok(Some(output))
+                } else {
+                    Ok(None)
+                }
+            }
+            _ => {
+                let msg = format!("Key {} is not a float", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
+        }
+    }
+
+    /// Returns unique date values associated with a given key.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The reference to the object implementing the function.
+    /// * `key_name` - The name of the key for which to retrieve unique date values.
+    ///
+    /// # Returns
+    ///
+    /// * If the `entries` vector is empty, returns `Ok(None)`.
+    /// * If the selected key has a `DbType::Date` type, returns `Ok(Some(output))` where `output`
+    ///   is a vector containing the unique date values associated with the key.
+    /// * If the selected key is not a `DbType::Date` type, logs an error and returns `Err(msg)`,
+    ///   where `msg` is a string indicating that the key is not a date.
+    ///
+    pub fn get_unique_date_values_for_key(
+        &self,
+        key_name: &String,
+    ) -> Result<Option<Vec<NaiveDate>>, String> {
+        if self.entries.is_empty() {
+            return Ok(None);
+        }
+        // Check the selected key has a date type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::Date(_) => {
+                let mut output = Vec::new();
+                for entry in self.entries.iter() {
+                    if let Some(val_wrapped) = entry.get(key.0) {
+                        if let DbType::Date(val) = val_wrapped {
+                            if !output.contains(val) {
+                                output.push(*val);
+                            }
+                        }
+                    }
+                }
+                if !output.is_empty() {
+                    Ok(Some(output))
+                } else {
+                    Ok(None)
+                }
+            }
+            _ => {
+                let msg = format!("Key {} is not a date", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -1752,7 +2132,10 @@ mod tests {
         let keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
-            ("key3".to_string(), DbType::default_from_string(&"Date".to_string()).unwrap()),
+            (
+                "key3".to_string(),
+                DbType::default_from_string(&"Date".to_string()).unwrap(),
+            ),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
         let mut binding = vec![Some("1".to_string()), None, Some("15/08/2016".to_string())];
@@ -1761,7 +2144,11 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        table.update_entry_date(&"entry1".to_string(), &"key3".to_string(), Some(NaiveDate::from_ymd_opt(1789, 7, 14).unwrap()))?;
+        table.update_entry_date(
+            &"entry1".to_string(),
+            &"key3".to_string(),
+            Some(NaiveDate::from_ymd_opt(1789, 7, 14).unwrap()),
+        )?;
 
         let val = check_option(
             (1, 1),
@@ -1769,7 +2156,12 @@ mod tests {
             true,
         )?
             .unwrap();
-        check_value((1, 2), val, &NaiveDate::from_ymd_opt(1789, 7, 14).unwrap(), rusttests::CheckType::Equal)?;
+        check_value(
+            (1, 2),
+            val,
+            &NaiveDate::from_ymd_opt(1789, 7, 14).unwrap(),
+            rusttests::CheckType::Equal,
+        )?;
         Ok(())
     }
 
@@ -1778,7 +2170,10 @@ mod tests {
         let keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
-            ("key3".to_string(), DbType::default_from_string(&"Date".to_string()).unwrap()),
+            (
+                "key3".to_string(),
+                DbType::default_from_string(&"Date".to_string()).unwrap(),
+            ),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
         let mut binding = vec![Some("1".to_string()), None, Some("15/08/2016".to_string())];
@@ -1955,7 +2350,17 @@ mod tests {
         table.add_entry(&"entry5".to_string(), new_entry2)?;
         table.add_entry(&"entry4".to_string(), new_entry3)?;
 
-        check_value((1, 1), &table.get_all_entries(), &Some(vec!["entry1".to_string(), "entry2".to_string(), "entry5".to_string(), "entry4".to_string()]), rusttests::CheckType::Equal)
+        check_value(
+            (1, 1),
+            &table.get_all_entries(),
+            &Some(vec![
+                "entry1".to_string(),
+                "entry2".to_string(),
+                "entry5".to_string(),
+                "entry4".to_string(),
+            ]),
+            rusttests::CheckType::Equal,
+        )
     }
 
     #[test]
@@ -1967,20 +2372,40 @@ mod tests {
         ];
         let table = DbTable::new("Table".to_string(), Some(keys));
 
-        check_value((1, 1), &table.get_all_entries(), &None, rusttests::CheckType::Equal)
+        check_value(
+            (1, 1),
+            &table.get_all_entries(),
+            &None,
+            rusttests::CheckType::Equal,
+        )
     }
 
     #[test]
     fn get_entries_matching_date_error() -> Result<(), String> {
         let keys = vec![
-            ("key1".to_string(), DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap())),
+            (
+                "key1".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()),
+            ),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("13/03/2014".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("14/03/2014".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("13/08/2024".to_string()), None, Some("-0.27".to_string())];
+        let mut binding = vec![
+            Some("13/03/2014".to_string()),
+            None,
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("14/03/2014".to_string()),
+            None,
+            Some("1.46".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("13/08/2024".to_string()),
+            None,
+            Some("-0.27".to_string()),
+        ];
         let new_entry = Some(&mut binding);
         let new_entry2 = Some(&mut binding2);
         let new_entry3 = Some(&mut binding3);
@@ -1990,9 +2415,36 @@ mod tests {
         table.add_entry(&"entry3".to_string(), new_entry2)?;
         table.add_entry(&"entry4".to_string(), new_entry3)?;
 
-        check_result((1, 1), table.get_matching_entries_date(&"key2".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(), None), false)?;
-        check_result((2, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Between, NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(), None), false)?;
-        check_result((3, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Between, NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(), Some(NaiveDate::from_ymd_opt(2000, 12, 31).unwrap())), false)?;
+        check_result(
+            (1, 1),
+            table.get_matching_entries_date(
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(),
+                None,
+            ),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_matching_entries_date(
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(),
+                None,
+            ),
+            false,
+        )?;
+        check_result(
+            (3, 1),
+            table.get_matching_entries_date(
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(),
+                Some(NaiveDate::from_ymd_opt(2000, 12, 31).unwrap()),
+            ),
+            false,
+        )?;
 
         Ok(())
     }
@@ -2000,17 +2452,44 @@ mod tests {
     #[test]
     fn get_entries_matching_date() -> Result<(), String> {
         let keys = vec![
-            ("key1".to_string(), DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap())),
+            (
+                "key1".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()),
+            ),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("13/03/2014".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("14/03/2014".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("13/08/2024".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![Some("13/03/2014".to_string()), None, Some("-0.27".to_string())];
-        let mut binding5 = vec![Some("10/03/2014".to_string()), None, Some("-0.27".to_string())];
-        let mut binding6 = vec![Some("15/03/2014".to_string()), None, Some("-0.27".to_string())];
+        let mut binding = vec![
+            Some("13/03/2014".to_string()),
+            None,
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("14/03/2014".to_string()),
+            None,
+            Some("1.46".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("13/08/2024".to_string()),
+            None,
+            Some("-0.27".to_string()),
+        ];
+        let mut binding4 = vec![
+            Some("13/03/2014".to_string()),
+            None,
+            Some("-0.27".to_string()),
+        ];
+        let mut binding5 = vec![
+            Some("10/03/2014".to_string()),
+            None,
+            Some("-0.27".to_string()),
+        ];
+        let mut binding6 = vec![
+            Some("15/03/2014".to_string()),
+            None,
+            Some("-0.27".to_string()),
+        ];
         let new_entry = Some(&mut binding);
         let new_entry2 = Some(&mut binding2);
         let new_entry3 = Some(&mut binding3);
@@ -2025,38 +2504,112 @@ mod tests {
         table.add_entry(&"entry5".to_string(), new_entry5)?;
         table.add_entry(&"entry6".to_string(), new_entry6)?;
 
-
         // Equality
         let expected_vec = vec!["entry1".to_string(), "entry4".to_string()];
-        let res = check_result((1, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), None), true)?.unwrap();
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_date(
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(),
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result((2, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2015, 3, 13).unwrap(), None), true)?.unwrap();
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_date(
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                NaiveDate::from_ymd_opt(2015, 3, 13).unwrap(),
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
-        let expected_vec = vec!["entry2".to_string(), "entry3".to_string(), "entry5".to_string(), "entry6".to_string()];
-        let res = check_result((3, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Different, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), None), true)?.unwrap();
+        let expected_vec = vec![
+            "entry2".to_string(),
+            "entry3".to_string(),
+            "entry5".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_date(
+                &"key1".to_string(),
+                MatchingCriteria::Different,
+                NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(),
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // After
         let expected_vec = vec!["entry3".to_string(), "entry6".to_string()];
-        let res = check_result((4, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::IsMore, NaiveDate::from_ymd_opt(2014, 3, 14).unwrap(), None), true)?.unwrap();
+        let res = check_result(
+            (4, 1),
+            table.get_matching_entries_date(
+                &"key1".to_string(),
+                MatchingCriteria::IsMore,
+                NaiveDate::from_ymd_opt(2014, 3, 14).unwrap(),
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // Before
-        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry4".to_string(), "entry5".to_string()];
-        let res = check_result((5, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::IsLess, NaiveDate::from_ymd_opt(2014, 3, 15).unwrap(), None), true)?.unwrap();
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry4".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (5, 1),
+            table.get_matching_entries_date(
+                &"key1".to_string(),
+                MatchingCriteria::IsLess,
+                NaiveDate::from_ymd_opt(2014, 3, 15).unwrap(),
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((5, 2), res, true)?.unwrap();
         check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // Between
-        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry4".to_string(), "entry6".to_string()];
-        let res = check_result((6, 1), table.get_matching_entries_date(&"key1".to_string(), MatchingCriteria::Between, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), Some(NaiveDate::from_ymd_opt(2014, 3, 15).unwrap())), true)?.unwrap();
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry4".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (6, 1),
+            table.get_matching_entries_date(
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(),
+                Some(NaiveDate::from_ymd_opt(2014, 3, 15).unwrap()),
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2066,17 +2619,36 @@ mod tests {
     #[test]
     fn get_entries_none() -> Result<(), String> {
         let keys = vec![
-            ("key1".to_string(), DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap())),
+            (
+                "key1".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()),
+            ),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("13/03/2014".to_string()), None, Some("2.23".to_string())];
+        let mut binding = vec![
+            Some("13/03/2014".to_string()),
+            None,
+            Some("2.23".to_string()),
+        ];
         let mut binding2 = vec![Some("14/03/2014".to_string()), None, None];
-        let mut binding3 = vec![Some("13/08/2024".to_string()), None, Some("-0.27".to_string())];
+        let mut binding3 = vec![
+            Some("13/08/2024".to_string()),
+            None,
+            Some("-0.27".to_string()),
+        ];
         let mut binding4 = vec![Some("13/03/2014".to_string()), None, None];
-        let mut binding5 = vec![Some("10/03/2014".to_string()), None, Some("-0.27".to_string())];
-        let mut binding6 = vec![Some("15/03/2014".to_string()), None, Some("-0.27".to_string())];
+        let mut binding5 = vec![
+            Some("10/03/2014".to_string()),
+            None,
+            Some("-0.27".to_string()),
+        ];
+        let mut binding6 = vec![
+            Some("15/03/2014".to_string()),
+            None,
+            Some("-0.27".to_string()),
+        ];
         let new_entry = Some(&mut binding);
         let new_entry2 = Some(&mut binding2);
         let new_entry3 = Some(&mut binding3);
@@ -2091,7 +2663,6 @@ mod tests {
         table.add_entry(&"entry5".to_string(), new_entry5)?;
         table.add_entry(&"entry6".to_string(), new_entry6)?;
 
-
         // None
         let expected_vec = vec!["entry2".to_string(), "entry4".to_string()];
         let res = check_result((1, 1), table.get_entries_none(&"key3".to_string()), true)?.unwrap();
@@ -2099,7 +2670,12 @@ mod tests {
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // Some
-        let expected_vec = vec!["entry1".to_string(), "entry3".to_string(), "entry5".to_string(), "entry6".to_string()];
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry3".to_string(),
+            "entry5".to_string(),
+            "entry6".to_string(),
+        ];
         let res = check_result((2, 1), table.get_entries_some(&"key3".to_string()), true)?.unwrap();
         let opt = check_option((2, 2), res, true)?.unwrap();
         check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
@@ -2135,10 +2711,26 @@ mod tests {
         table.add_entry(&"entry3".to_string(), new_entry2)?;
         table.add_entry(&"entry4".to_string(), new_entry3)?;
 
-        check_result((1, 1), table.get_matching_entries_bool(&"key2".to_string(), MatchingCriteria::Equal, false), false)?;
-        check_result((2, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Between, true), false)?;
-        check_result((3, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::IsLess, true), false)?;
-        check_result((4, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::IsMore, true), false)?;
+        check_result(
+            (1, 1),
+            table.get_matching_entries_bool(&"key2".to_string(), MatchingCriteria::Equal, false),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Between, true),
+            false,
+        )?;
+        check_result(
+            (3, 1),
+            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::IsLess, true),
+            false,
+        )?;
+        check_result(
+            (4, 1),
+            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::IsMore, true),
+            false,
+        )?;
 
         Ok(())
     }
@@ -2171,26 +2763,57 @@ mod tests {
         table.add_entry(&"entry5".to_string(), new_entry5)?;
         table.add_entry(&"entry6".to_string(), new_entry6)?;
 
-
         // Equality True
-        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry5".to_string()];
-        let res = check_result((1, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Equal, true), true)?.unwrap();
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Equal, true),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result((2, 1), table.get_matching_entries_bool(&"key3".to_string(), MatchingCriteria::Equal, true), true)?.unwrap();
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_bool(&"key3".to_string(), MatchingCriteria::Equal, true),
+            true,
+        )?
+            .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
-        let expected_vec = vec!["entry3".to_string(), "entry4".to_string(), "entry6".to_string()];
-        let res = check_result((3, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Different, true), true)?.unwrap();
+        let expected_vec = vec![
+            "entry3".to_string(),
+            "entry4".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Different, true),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // Equality False
-        let expected_vec = vec!["entry3".to_string(), "entry4".to_string(), "entry6".to_string()];
-        let res = check_result((4, 1), table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Equal, false), true)?.unwrap();
+        let expected_vec = vec![
+            "entry3".to_string(),
+            "entry4".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (4, 1),
+            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Equal, false),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2205,9 +2828,21 @@ mod tests {
             ("key3".to_string(), DbType::Float(0.0)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("true".to_string()), Some("toto".to_string()), Some("2.23".to_string())];
-        let mut binding2 = vec![Some("false".to_string()), Some("tata".to_string()), Some("1.46".to_string())];
-        let mut binding3 = vec![Some("true".to_string()), Some("titi".to_string()), Some("-0.27".to_string())];
+        let mut binding = vec![
+            Some("true".to_string()),
+            Some("toto".to_string()),
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("false".to_string()),
+            Some("tata".to_string()),
+            Some("1.46".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("true".to_string()),
+            Some("titi".to_string()),
+            Some("-0.27".to_string()),
+        ];
         let new_entry = Some(&mut binding);
         let new_entry2 = Some(&mut binding2);
         let new_entry3 = Some(&mut binding3);
@@ -2217,10 +2852,42 @@ mod tests {
         table.add_entry(&"entry3".to_string(), new_entry2)?;
         table.add_entry(&"entry4".to_string(), new_entry3)?;
 
-        check_result((1, 1), table.get_matching_entries_string(&"key1".to_string(), MatchingCriteria::Equal, &"toto".to_string()), false)?;
-        check_result((2, 1), table.get_matching_entries_string(&"key2".to_string(), MatchingCriteria::Between, &"toto".to_string()), false)?;
-        check_result((3, 1), table.get_matching_entries_string(&"key2".to_string(), MatchingCriteria::IsLess, &"toto".to_string()), false)?;
-        check_result((4, 1), table.get_matching_entries_string(&"key2".to_string(), MatchingCriteria::IsMore, &"toto".to_string()), false)?;
+        check_result(
+            (1, 1),
+            table.get_matching_entries_string(
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                &"toto".to_string(),
+            ),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_matching_entries_string(
+                &"key2".to_string(),
+                MatchingCriteria::Between,
+                &"toto".to_string(),
+            ),
+            false,
+        )?;
+        check_result(
+            (3, 1),
+            table.get_matching_entries_string(
+                &"key2".to_string(),
+                MatchingCriteria::IsLess,
+                &"toto".to_string(),
+            ),
+            false,
+        )?;
+        check_result(
+            (4, 1),
+            table.get_matching_entries_string(
+                &"key2".to_string(),
+                MatchingCriteria::IsMore,
+                &"toto".to_string(),
+            ),
+            false,
+        )?;
 
         Ok(())
     }
@@ -2233,12 +2900,36 @@ mod tests {
             ("key3".to_string(), DbType::Bool(false)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("true".to_string()), Some("toto".to_string()), Some("false".to_string())];
-        let mut binding2 = vec![Some("true".to_string()), Some("tata".to_string()), Some("false".to_string())];
-        let mut binding3 = vec![Some("false".to_string()), Some("titi".to_string()), Some("false".to_string())];
-        let mut binding4 = vec![Some("false".to_string()), Some("tutu".to_string()), Some("false".to_string())];
-        let mut binding5 = vec![Some("true".to_string()), Some("tata".to_string()), Some("false".to_string())];
-        let mut binding6 = vec![Some("false".to_string()), Some("tata".to_string()), Some("false".to_string())];
+        let mut binding = vec![
+            Some("true".to_string()),
+            Some("toto".to_string()),
+            Some("false".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("true".to_string()),
+            Some("tata".to_string()),
+            Some("false".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("false".to_string()),
+            Some("titi".to_string()),
+            Some("false".to_string()),
+        ];
+        let mut binding4 = vec![
+            Some("false".to_string()),
+            Some("tutu".to_string()),
+            Some("false".to_string()),
+        ];
+        let mut binding5 = vec![
+            Some("true".to_string()),
+            Some("tata".to_string()),
+            Some("false".to_string()),
+        ];
+        let mut binding6 = vec![
+            Some("false".to_string()),
+            Some("tata".to_string()),
+            Some("false".to_string()),
+        ];
         let new_entry = Some(&mut binding);
         let new_entry2 = Some(&mut binding2);
         let new_entry3 = Some(&mut binding3);
@@ -2253,20 +2944,54 @@ mod tests {
         table.add_entry(&"entry5".to_string(), new_entry5)?;
         table.add_entry(&"entry6".to_string(), new_entry6)?;
 
-
         // Equality
-        let expected_vec = vec!["entry2".to_string(), "entry5".to_string(), "entry6".to_string()];
-        let res = check_result((1, 1), table.get_matching_entries_string(&"key2".to_string(), MatchingCriteria::Equal, &"tata".to_string()), true)?.unwrap();
+        let expected_vec = vec![
+            "entry2".to_string(),
+            "entry5".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_string(
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                &"tata".to_string(),
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result((2, 1), table.get_matching_entries_string(&"key2".to_string(), MatchingCriteria::Equal, &"tyty".to_string()), true)?.unwrap();
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_string(
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                &"tyty".to_string(),
+            ),
+            true,
+        )?
+            .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
-        let expected_vec = vec!["entry1".to_string(), "entry3".to_string(), "entry4".to_string()];
-        let res = check_result((3, 1), table.get_matching_entries_string(&"key2".to_string(), MatchingCriteria::Different, &"tata".to_string()), true)?.unwrap();
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry3".to_string(),
+            "entry4".to_string(),
+        ];
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_string(
+                &"key2".to_string(),
+                MatchingCriteria::Different,
+                &"tata".to_string(),
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2293,9 +3018,36 @@ mod tests {
         table.add_entry(&"entry3".to_string(), new_entry2)?;
         table.add_entry(&"entry4".to_string(), new_entry3)?;
 
-        check_result((1, 1), table.get_matching_entries_integer(&"key2".to_string(), MatchingCriteria::Equal, 5, None), false)?;
-        check_result((2, 1), table.get_matching_entries_integer(&"key1".to_string(), MatchingCriteria::Between, 5, None), false)?;
-        check_result((3, 1), table.get_matching_entries_integer(&"key1".to_string(), MatchingCriteria::Between, 5, Some(4)), false)?;
+        check_result(
+            (1, 1),
+            table.get_matching_entries_integer(
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                5,
+                None,
+            ),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_matching_entries_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                5,
+                None,
+            ),
+            false,
+        )?;
+        check_result(
+            (3, 1),
+            table.get_matching_entries_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                5,
+                Some(4),
+            ),
+            false,
+        )?;
 
         Ok(())
     }
@@ -2328,38 +3080,111 @@ mod tests {
         table.add_entry(&"entry5".to_string(), new_entry5)?;
         table.add_entry(&"entry6".to_string(), new_entry6)?;
 
-
         // Equality
         let expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
-        let res = check_result((1, 1), table.get_matching_entries_integer(&"key1".to_string(), MatchingCriteria::Equal, 5, None), true)?.unwrap();
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                5,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result((2, 1), table.get_matching_entries_integer(&"key1".to_string(), MatchingCriteria::Equal, 7, None), true)?.unwrap();
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                7,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
-        let expected_vec = vec!["entry2".to_string(), "entry4".to_string(), "entry5".to_string(), "entry6".to_string()];
-        let res = check_result((3, 1), table.get_matching_entries_integer(&"key1".to_string(), MatchingCriteria::Different, 5, None), true)?.unwrap();
+        let expected_vec = vec![
+            "entry2".to_string(),
+            "entry4".to_string(),
+            "entry5".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Different,
+                5,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // More
-        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry3".to_string()];
-        let res = check_result((4, 1), table.get_matching_entries_integer(&"key1".to_string(), MatchingCriteria::IsMore, 4, None), true)?.unwrap();
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry3".to_string(),
+        ];
+        let res = check_result(
+            (4, 1),
+            table.get_matching_entries_integer(
+                &"key1".to_string(),
+                MatchingCriteria::IsMore,
+                4,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // Less
         let expected_vec = vec!["entry4".to_string(), "entry6".to_string()];
-        let res = check_result((5, 1), table.get_matching_entries_integer(&"key1".to_string(), MatchingCriteria::IsLess, 4, None), true)?.unwrap();
+        let res = check_result(
+            (5, 1),
+            table.get_matching_entries_integer(
+                &"key1".to_string(),
+                MatchingCriteria::IsLess,
+                4,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((5, 2), res, true)?.unwrap();
         check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // Between
-        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry3".to_string(), "entry5".to_string()];
-        let res = check_result((6, 1), table.get_matching_entries_integer(&"key1".to_string(), MatchingCriteria::Between, 4, Some(6)), true)?.unwrap();
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry3".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (6, 1),
+            table.get_matching_entries_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                4,
+                Some(6),
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2386,9 +3211,36 @@ mod tests {
         table.add_entry(&"entry3".to_string(), new_entry2)?;
         table.add_entry(&"entry4".to_string(), new_entry3)?;
 
-        check_result((1, 1), table.get_matching_entries_unsigned_integer(&"key2".to_string(), MatchingCriteria::Equal, 5, None), false)?;
-        check_result((2, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Between, 5, None), false)?;
-        check_result((3, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Between, 5, Some(4)), false)?;
+        check_result(
+            (1, 1),
+            table.get_matching_entries_unsigned_integer(
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                5,
+                None,
+            ),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_matching_entries_unsigned_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                5,
+                None,
+            ),
+            false,
+        )?;
+        check_result(
+            (3, 1),
+            table.get_matching_entries_unsigned_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                5,
+                Some(4),
+            ),
+            false,
+        )?;
 
         Ok(())
     }
@@ -2421,38 +3273,111 @@ mod tests {
         table.add_entry(&"entry5".to_string(), new_entry5)?;
         table.add_entry(&"entry6".to_string(), new_entry6)?;
 
-
         // Equality
         let expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
-        let res = check_result((1, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Equal, 5, None), true)?.unwrap();
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_unsigned_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                5,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result((2, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Equal, 7, None), true)?.unwrap();
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_unsigned_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                7,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
-        let expected_vec = vec!["entry2".to_string(), "entry4".to_string(), "entry5".to_string(), "entry6".to_string()];
-        let res = check_result((3, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Different, 5, None), true)?.unwrap();
+        let expected_vec = vec![
+            "entry2".to_string(),
+            "entry4".to_string(),
+            "entry5".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_unsigned_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Different,
+                5,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // More
-        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry3".to_string()];
-        let res = check_result((4, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::IsMore, 4, None), true)?.unwrap();
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry3".to_string(),
+        ];
+        let res = check_result(
+            (4, 1),
+            table.get_matching_entries_unsigned_integer(
+                &"key1".to_string(),
+                MatchingCriteria::IsMore,
+                4,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // Less
         let expected_vec = vec!["entry4".to_string(), "entry6".to_string()];
-        let res = check_result((5, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::IsLess, 4, None), true)?.unwrap();
+        let res = check_result(
+            (5, 1),
+            table.get_matching_entries_unsigned_integer(
+                &"key1".to_string(),
+                MatchingCriteria::IsLess,
+                4,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((5, 2), res, true)?.unwrap();
         check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // Between
-        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry3".to_string(), "entry5".to_string()];
-        let res = check_result((6, 1), table.get_matching_entries_unsigned_integer(&"key1".to_string(), MatchingCriteria::Between, 4, Some(6)), true)?.unwrap();
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry3".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (6, 1),
+            table.get_matching_entries_unsigned_integer(
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                4,
+                Some(6),
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2479,10 +3404,46 @@ mod tests {
         table.add_entry(&"entry3".to_string(), new_entry2)?;
         table.add_entry(&"entry4".to_string(), new_entry3)?;
 
-        check_result((1, 1), table.get_matching_entries_float(&"key2".to_string(), MatchingCriteria::Equal, 5.1, None), false)?;
-        check_result((2, 1), table.get_matching_entries_float(&"key3".to_string(), MatchingCriteria::Between, 5.1, None), false)?;
-        check_result((3, 1), table.get_matching_entries_float(&"key3".to_string(), MatchingCriteria::Between, 5.1, Some(5.1)), false)?;
-        check_result((4, 1), table.get_matching_entries_float(&"key3".to_string(), MatchingCriteria::Between, 5.1, Some(5.0)), false)?;
+        check_result(
+            (1, 1),
+            table.get_matching_entries_float(
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                5.1,
+                None,
+            ),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_matching_entries_float(
+                &"key3".to_string(),
+                MatchingCriteria::Between,
+                5.1,
+                None,
+            ),
+            false,
+        )?;
+        check_result(
+            (3, 1),
+            table.get_matching_entries_float(
+                &"key3".to_string(),
+                MatchingCriteria::Between,
+                5.1,
+                Some(5.1),
+            ),
+            false,
+        )?;
+        check_result(
+            (4, 1),
+            table.get_matching_entries_float(
+                &"key3".to_string(),
+                MatchingCriteria::Between,
+                5.1,
+                Some(5.0),
+            ),
+            false,
+        )?;
 
         Ok(())
     }
@@ -2515,40 +3476,660 @@ mod tests {
         table.add_entry(&"entry5".to_string(), new_entry5)?;
         table.add_entry(&"entry6".to_string(), new_entry6)?;
 
-
         // Equality
         let expected_vec = vec!["entry3".to_string(), "entry4".to_string()];
-        let res = check_result((1, 1), table.get_matching_entries_float(&"key3".to_string(), MatchingCriteria::Equal, -0.27, None), true)?.unwrap();
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_float(
+                &"key3".to_string(),
+                MatchingCriteria::Equal,
+                -0.27,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result((2, 1), table.get_matching_entries_float(&"key3".to_string(), MatchingCriteria::Equal, 7.25, None), true)?.unwrap();
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_float(
+                &"key3".to_string(),
+                MatchingCriteria::Equal,
+                7.25,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
-        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry5".to_string(), "entry6".to_string()];
-        let res = check_result((3, 1), table.get_matching_entries_float(&"key3".to_string(), MatchingCriteria::Different, -0.27, None), true)?.unwrap();
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry5".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_float(
+                &"key3".to_string(),
+                MatchingCriteria::Different,
+                -0.27,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // More
         let expected_vec = vec!["entry1".to_string(), "entry6".to_string()];
-        let res = check_result((4, 1), table.get_matching_entries_float(&"key3".to_string(), MatchingCriteria::IsMore, 1.46, None), true)?.unwrap();
+        let res = check_result(
+            (4, 1),
+            table.get_matching_entries_float(
+                &"key3".to_string(),
+                MatchingCriteria::IsMore,
+                1.46,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // Less
-        let expected_vec = vec!["entry3".to_string(), "entry4".to_string(), "entry5".to_string()];
-        let res = check_result((5, 1), table.get_matching_entries_float(&"key3".to_string(), MatchingCriteria::IsLess, 1.46, None), true)?.unwrap();
+        let expected_vec = vec![
+            "entry3".to_string(),
+            "entry4".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (5, 1),
+            table.get_matching_entries_float(
+                &"key3".to_string(),
+                MatchingCriteria::IsLess,
+                1.46,
+                None,
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((5, 2), res, true)?.unwrap();
         check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // Between
-        let expected_vec = vec!["entry1".to_string(), "entry2".to_string(), "entry5".to_string()];
-        let res = check_result((6, 1), table.get_matching_entries_float(&"key3".to_string(), MatchingCriteria::Between, 0.45, Some(2.23)), true)?.unwrap();
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (6, 1),
+            table.get_matching_entries_float(
+                &"key3".to_string(),
+                MatchingCriteria::Between,
+                0.45,
+                Some(2.23),
+            ),
+            true,
+        )?
+            .unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_bool_error() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::Bool(false)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result(
+            (1, 1),
+            table.get_unique_boolean_values_for_key(&"key3".to_string()),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_unique_boolean_values_for_key(&"key8".to_string()),
+            false,
+        )?;
+        let res = check_result(
+            (3, 1),
+            table.get_unique_boolean_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        check_option((3, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_bool() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::Bool(false)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("false".to_string()),
+            Some("true".to_string()),
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![
+            Some("true".to_string()),
+            Some("true".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        let expected_vec_1 = vec![false, true];
+        let expected_vec_2 = vec![true];
+        let res = check_result(
+            (1, 1),
+            table.get_unique_boolean_values_for_key(&"key1".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let res = check_result(
+            (2, 1),
+            table.get_unique_boolean_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_int_error() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::Integer(0)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result(
+            (1, 1),
+            table.get_unique_integer_values_for_key(&"key3".to_string()),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_unique_integer_values_for_key(&"key8".to_string()),
+            false,
+        )?;
+        let res = check_result(
+            (3, 1),
+            table.get_unique_integer_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        check_option((3, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_uint_error() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::UnsignedInt(0)),
+            ("key2".to_string(), DbType::UnsignedInt(0)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result(
+            (1, 1),
+            table.get_unique_unsigned_integer_values_for_key(&"key3".to_string()),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_unique_unsigned_integer_values_for_key(&"key8".to_string()),
+            false,
+        )?;
+        let res = check_result(
+            (3, 1),
+            table.get_unique_unsigned_integer_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        check_option((3, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_int() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::UnsignedInt(0)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("1".to_string()),
+            Some("4".to_string()),
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("2".to_string()),
+            Some("5".to_string()),
+            Some("1.46".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("3".to_string()),
+            Some("6".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let mut binding4 = vec![
+            Some("1".to_string()),
+            Some("5".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        table.add_entry(&"entry5".to_string(), new_entry4)?;
+
+        let expected_vec_1 = vec![1, 2, 3];
+        let expected_vec_2 = vec![4, 5, 6];
+        let res = check_result(
+            (1, 1),
+            table.get_unique_integer_values_for_key(&"key1".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let res = check_result(
+            (2, 1),
+            table.get_unique_unsigned_integer_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_string_error() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::String("0".to_string())),
+            ("key2".to_string(), DbType::String("0".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result(
+            (1, 1),
+            table.get_unique_string_values_for_key(&"key3".to_string()),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_unique_string_values_for_key(&"key8".to_string()),
+            false,
+        )?;
+        let res = check_result(
+            (3, 1),
+            table.get_unique_string_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        check_option((3, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_string() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::String("".to_string())),
+            ("key2".to_string(), DbType::String("".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("1".to_string()),
+            Some("4".to_string()),
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("2".to_string()),
+            Some("5".to_string()),
+            Some("1.46".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("3".to_string()),
+            Some("6".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let mut binding4 = vec![
+            Some("1".to_string()),
+            Some("5".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        table.add_entry(&"entry5".to_string(), new_entry4)?;
+
+        let expected_vec_1 = vec!["1".to_string(), "2".to_string(), "3".to_string()];
+        let expected_vec_2 = vec!["4".to_string(), "5".to_string(), "6".to_string()];
+        let res = check_result(
+            (1, 1),
+            table.get_unique_string_values_for_key(&"key1".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let res = check_result(
+            (2, 1),
+            table.get_unique_string_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_float_error() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Float(0.0)),
+            ("key2".to_string(), DbType::Float(0.0)),
+            ("key3".to_string(), DbType::String("0.0".to_string())),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1.1".to_string()), None, Some("Hello".to_string())];
+        let mut binding2 = vec![Some("2.2".to_string()), None, Some("World".to_string())];
+        let mut binding3 = vec![Some("3.3".to_string()), None, Some("AI".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result(
+            (1, 1),
+            table.get_unique_float_values_for_key(&"key3".to_string()),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_unique_float_values_for_key(&"key8".to_string()),
+            false,
+        )?;
+        let res = check_result(
+            (3, 1),
+            table.get_unique_float_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        check_option((3, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_float() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Float(0.0)),
+            ("key2".to_string(), DbType::Float(0.0)),
+            ("key3".to_string(), DbType::String("0.0".to_string())),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("1.0".to_string()),
+            Some("4.1".to_string()),
+            Some("Hello".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("2.2".to_string()),
+            Some("5.3".to_string()),
+            Some("World".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("3.3".to_string()),
+            Some("6.4".to_string()),
+            Some("AI".to_string()),
+        ];
+        let mut binding4 = vec![
+            Some("1.0".to_string()),
+            Some("5.5".to_string()),
+            Some("Assistant".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        table.add_entry(&"entry5".to_string(), new_entry4)?;
+
+        let expected_vec_1 = vec![1.0, 2.2, 3.3];
+        let res = check_result(
+            (1, 1),
+            table.get_unique_float_values_for_key(&"key1".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_date_error() -> Result<(), String> {
+        let keys = vec![
+            (
+                "key1".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
+            ),
+            (
+                "key2".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
+            ),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("01/12/2021".to_string()),
+            None,
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("02/12/2021".to_string()),
+            None,
+            Some("1.46".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("03/12/2021".to_string()),
+            None,
+            Some("-0.27".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result(
+            (1, 1),
+            table.get_unique_date_values_for_key(&"key3".to_string()),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_unique_date_values_for_key(&"key8".to_string()),
+            false,
+        )?;
+        let res = check_result(
+            (3, 1),
+            table.get_unique_date_values_for_key(&"key2".to_string()),
+            true,
+        )?
+            .unwrap();
+        check_option((3, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_date() -> Result<(), String> {
+        let keys = vec![
+            (
+                "key1".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
+            ),
+            (
+                "key2".to_string(),
+                DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
+            ),
+            ("key3".to_string(), DbType::String("Test".to_string())),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("01/12/2021".to_string()),
+            Some("01/01/2022".to_string()),
+            Some("Hello".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("02/12/2021".to_string()),
+            Some("02/01/2022".to_string()),
+            Some("World".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("03/12/2021".to_string()),
+            Some("03/01/2022".to_string()),
+            Some("AI".to_string()),
+        ];
+        let mut binding4 = vec![
+            Some("02/12/2021".to_string()),
+            Some("03/01/2022".to_string()),
+            Some("AI".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+
+        let expected_vec_1 = vec![
+            NaiveDate::from_ymd_opt(2021, 12, 01).unwrap(),
+            NaiveDate::from_ymd_opt(2021, 12, 02).unwrap(),
+            NaiveDate::from_ymd_opt(2021, 12, 03).unwrap(),
+        ];
+
+        let res = check_result(
+            (1, 1),
+            table.get_unique_date_values_for_key(&"key1".to_string()),
+            true,
+        )?
+            .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
 
         Ok(())
     }
