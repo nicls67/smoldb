@@ -48,7 +48,7 @@ use std::path::PathBuf;
 use std::fs::remove_file;
 
 // Create new empty database
-let mut db = SmolDb::init("Database name".to_string());
+let mut db = SmolDb::init("Database name");
 
 // Configure database file
 db.set_database_file(PathBuf::from("file.json"));
@@ -67,7 +67,7 @@ remove_file("file.json").unwrap_or(());
 
 ```rust
 use smoldb::SmolDb;
-let mut db = SmolDb::init("Database name".to_string());
+let mut db = SmolDb::init("Database name");
 
 // Define keys name and type and create table
 let keys = Some(vec![
@@ -89,7 +89,7 @@ db.database().delete_table( & "Table name".to_string()).unwrap();
 use smoldb::SmolDb;
 
 // Create database and table
-let mut db = SmolDb::init("Database name".to_string());
+let mut db = SmolDb::init("Database name");
 let keys = Some(vec![
     ("key1".to_string(), "String".to_string()),
     ("key2".to_string(), "Integer".to_string()),
@@ -154,7 +154,7 @@ use chrono::NaiveDate;
 use smoldb::MatchingCriteria;
 
 // Create database and table
-let mut db = SmolDb::init("Database name".to_string());
+let mut db = SmolDb::init("Database name");
 let keys = Some(vec![
     ("key1".to_string(), "Date".to_string()),
     ("key2".to_string(), "String".to_string()),
@@ -198,7 +198,7 @@ For a given key it is possible to get the list of unique existing values
 use smoldb::SmolDb;
 
 // Create database and table
-let mut db = SmolDb::init("Database name".to_string());
+let mut db = SmolDb::init("Database name");
 let keys = Some(vec![
     ("key1".to_string(), "Date".to_string()),
     ("key2".to_string(), "String".to_string()),

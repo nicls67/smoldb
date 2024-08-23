@@ -2,7 +2,7 @@
 //! Database Entry definition
 //!
 
-use rustlog::{write_log, LogSeverity};
+use rustlog::{LogSeverity, write_log};
 use serde_derive::{Deserialize, Serialize};
 
 use super::db_type::DbType;
@@ -17,9 +17,18 @@ pub struct DbEntry {
 }
 
 impl DbEntry {
-    /// Creates a new entry, number of fields and their values must be provided.
-    /// Fields values can be globally empty (parameter `values` equal to `None`)
-    /// or one particular field can be empty (one element of vector is `None`)
+    /// Create a new `DbEntry`.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the `DbEntry`.
+    /// * `fields_nb` - The number of fields in the `DbEntry`.
+    /// * `values` - An optional mutable reference to a vector of `DbType` values.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `Err` if the number of fields in the `values` vector is not equal to `fields_nb`, with a message indicating the incorrect size.
+    ///
     pub fn new(
         name: &String,
         fields_nb: usize,
@@ -62,27 +71,59 @@ impl DbEntry {
         })
     }
 
-    /// Updates the designated field of the entry
+    /// Update the value of a field in the data structure.
+    ///
+    /// # Arguments
+    ///
+    /// - `key_index`: The index of the field to be updated.
+    /// - `value`: The new value to be assigned to the field. Use `None` to unset the value.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if the `key_index` is out of bounds.
+    ///
+    /// # Notes
+    ///
+    /// - This method mutates the data structure in-place.
+    /// - If the `key_index` is out of bounds, this method will panic.
     pub fn update(&mut self, key_index: usize, value: Option<DbType>) {
-        *self.fields.get_mut(key_index).unwrap() = value.clone();
+        *self.fields.get_mut(key_index).unwrap() = value;
     }
 
-    /// Gets value of the selected field
+    /// Retrieves the value associated with the specified key index from the underlying data structure.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_index` - The index of the key to retrieve the value for.
+    ///
+    /// # Returns
+    ///
+    /// An `Option` containing a reference to the value, if it exists, otherwise `None`.
     pub fn get(&self, key_index: usize) -> Option<&DbType> {
         self.fields.get(key_index).unwrap().as_ref()
     }
 
-    /// Gets entry name
+    /// Returns a reference to the name of the object.
     pub fn name(&self) -> &String {
         &self.name
     }
 
-    /// Adds a new field to the entry with the given value (can be `None`)
+    /// Adds a field value to the current instance of the struct.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - An optional value of the specified type to be added to the fields.
+    ///
     pub fn add_field(&mut self, value: Option<DbType>) {
         self.fields.push(value);
     }
 
-    /// Rename entry
+    /// Renames the object.
+    ///
+    /// # Arguments
+    ///
+    /// * `new_name` - The new name of the object.
+    ///
     pub fn rename(&mut self, new_name: &String) {
         self.name = new_name.clone();
     }
@@ -90,7 +131,6 @@ impl DbEntry {
 
 #[cfg(test)]
 mod tests {
-
     use rusttests::{check_option, check_result, check_struct, check_value};
 
     use crate::db_model::db_type::DbType;
@@ -129,7 +169,7 @@ mod tests {
             DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)),
             true,
         )?
-        .unwrap();
+            .unwrap();
         check_value(
             (1, 2),
             &val.name,
