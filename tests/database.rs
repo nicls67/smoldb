@@ -83,7 +83,7 @@ fn basic_ops_1() -> Result<(), String> {
     check_value((4, 2), &table.get_all_entries(), &Some(vec!["entry1".to_string(), "entry2".to_string(), "entry3".to_string()]), rusttests::CheckType::Equal)?;
 
     // Get entries with key4 value equal to 30/04/2020
-    check_value((4, 3), &table.get_matching_entries_date(&"key4".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2020, 4, 30).unwrap(), None).unwrap().unwrap(), &vec!["entry1".to_string()], CheckType::Equal)?;
+    check_value((4, 3), &table.get_matching_entries_date(None, &"key4".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2020, 4, 30).unwrap(), None).unwrap().unwrap(), &vec!["entry1".to_string()], CheckType::Equal)?;
 
     // Remove an entry from the table
     table.remove_entry(&"entry1".to_string())?;
