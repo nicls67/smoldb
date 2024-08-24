@@ -747,40 +747,76 @@ impl DbTable {
         )
     }
 
-    /// Retrieves entries that match a given date criteria for a specific key.
+    /// Returns a subset of database entries based on the given entry names.
     ///
     /// # Arguments
     ///
-    /// * `key_name` - The name of the key to search for.
-    /// * `criteria` - The matching criteria to use.
-    /// * `date1` - The first reference date.
-    /// * `date2` - The optional second reference date for 'Between' criteria.
+    /// * `entries_subset_names` - An optional vector of entry names to filter the database entries.
     ///
     /// # Returns
     ///
-    /// Returns `Ok(None)` if no matching entries are found. Otherwise, returns `Ok(Some(output))`,
-    /// where `output` is a vector of entry names that match the criteria.
+    /// A vector of references to database entries that match the given entry names.
+    fn get_entries_subset(&self, entries_subset_names: Option<Vec<&String>>) -> Vec<&DbEntry> {
+        self.entries
+            .iter()
+            .filter_map(|entry| {
+                if let Some(names) = &entries_subset_names {
+                    if names.contains(&entry.name()) {
+                        Some(entry)
+                    } else {
+                        None
+                    }
+                } else {
+                    Some(entry)
+                }
+            })
+            .collect::<Vec<&DbEntry>>()
+    }
+
+    /// Get matching entries based on date criteria.
     ///
-    /// # Errors
+    /// This method takes in the following parameters:
     ///
-    /// Returns an error message as a `String` if:
-    /// * The second reference date is not defined for 'Between' criteria.
-    /// * The second reference date is not after the first reference date.
-    /// * The selected key is not of type `DbType::Date`.
+    /// - `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// - `key_name`: A reference to a string value that represents the key used for comparison.
+    /// - `criteria`: A `MatchingCriteria` enum value that specifies the type of matching criteria to use.
+    /// - `date1`: A `NaiveDate` value representing the first reference date for comparison.
+    /// - `date2`: An optional `NaiveDate` value representing the second reference date for comparison. It is required when `criteria` is set to `MatchingCriteria::Between`.
+    ///
+    /// The method returns a `Result<Option<Vec<String>>, String>`:
+    ///
+    /// - If the number of entries is zero, it returns `Ok(None)`.
+    /// - If a matching error occurs, it returns `Err(String)` with an error message.
+    /// - If matching entries are found, it returns `Ok(Some(Vec<String>))` with a vector containing the names of the matching entries.
     ///
     pub fn get_matching_entries_date(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
         criteria: MatchingCriteria,
         date1: NaiveDate,
         date2: Option<NaiveDate>,
     ) -> Result<Option<Vec<String>>, String> {
-        if self.entries_count() > 0 {
-            // Check input compatibility
-            if criteria == MatchingCriteria::Between {
-                if date2.is_none() {
-                    let msg =
-                        "Second reference date not defined for Between date comparison".to_string();
+        if self.entries_count() == 0 {
+            return Ok(None);
+        }
+
+        // Check input compatibility
+        if criteria == MatchingCriteria::Between {
+            if date2.is_none() {
+                let msg =
+                    "Second reference date not defined for Between date comparison".to_string();
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                return Err(msg);
+            }
+            if let Some(date) = date2 {
+                let delta = date - date1;
+                if delta.num_days() <= 0 {
+                    let msg = "Second reference date is not after first reference date".to_string();
                     write_log(
                         LogSeverity::Error,
                         &msg,
@@ -788,80 +824,65 @@ impl DbTable {
                     );
                     return Err(msg);
                 }
-                if let Some(date) = date2 {
-                    let delta = date - date1;
-                    if delta.num_days() <= 0 {
-                        let msg =
-                            "Second reference date is not after first reference date".to_string();
-                        write_log(
-                            LogSeverity::Error,
-                            &msg,
-                            &env!("CARGO_PKG_NAME").to_string(),
-                        );
-                        return Err(msg);
-                    }
-                }
             }
+        }
 
-            // Check selected key has a date type
-            let key = self.find_key(key_name)?;
-            match key.1 {
-                DbType::Date(_) => {
-                    let mut output = Vec::new();
-                    for entry in self.entries.iter() {
-                        if let Some(entry_date_wrapped) = entry.get(key.0) {
-                            if let DbType::Date(entry_date) = entry_date_wrapped {
-                                let delta = (*entry_date - date1).num_days();
-                                match criteria {
-                                    MatchingCriteria::IsMore => {
-                                        if delta > 0 {
-                                            output.push(entry.name().clone());
-                                        }
+        // Check selected key has a date type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::Date(_) => {
+                let mut output = Vec::new();
+                for entry in self.get_entries_subset(entries_subset) {
+                    if let Some(entry_date_wrapped) = entry.get(key.0) {
+                        if let DbType::Date(entry_date) = entry_date_wrapped {
+                            let delta = (*entry_date - date1).num_days();
+                            match criteria {
+                                MatchingCriteria::IsMore => {
+                                    if delta > 0 {
+                                        output.push(entry.name().clone());
                                     }
-                                    MatchingCriteria::IsLess => {
-                                        if delta < 0 {
-                                            output.push(entry.name().clone());
-                                        }
+                                }
+                                MatchingCriteria::IsLess => {
+                                    if delta < 0 {
+                                        output.push(entry.name().clone());
                                     }
-                                    MatchingCriteria::Equal => {
-                                        if delta == 0 {
-                                            output.push(entry.name().clone());
-                                        }
+                                }
+                                MatchingCriteria::Equal => {
+                                    if delta == 0 {
+                                        output.push(entry.name().clone());
                                     }
-                                    MatchingCriteria::Different => {
-                                        if delta != 0 {
-                                            output.push(entry.name().clone());
-                                        }
+                                }
+                                MatchingCriteria::Different => {
+                                    if delta != 0 {
+                                        output.push(entry.name().clone());
                                     }
-                                    MatchingCriteria::Between => {
-                                        let delta2 = (*entry_date - date2.unwrap()).num_days();
-                                        if delta >= 0 && delta2 <= 0 {
-                                            output.push(entry.name().clone());
-                                        }
+                                }
+                                MatchingCriteria::Between => {
+                                    let delta2 = (*entry_date - date2.unwrap()).num_days();
+                                    if delta >= 0 && delta2 <= 0 {
+                                        output.push(entry.name().clone());
                                     }
                                 }
                             }
                         }
                     }
-
-                    if output.len() == 0 {
-                        Ok(None)
-                    } else {
-                        Ok(Some(output))
-                    }
                 }
-                _ => {
-                    let msg = format!("Key {} is not a date", key_name);
-                    write_log(
-                        LogSeverity::Error,
-                        &msg,
-                        &env!("CARGO_PKG_NAME").to_string(),
-                    );
-                    Err(msg)
+
+                if output.len() == 0 {
+                    Ok(None)
+                } else {
+                    Ok(Some(output))
                 }
             }
-        } else {
-            Ok(None)
+            _ => {
+                let msg = format!("Key {} is not a date", key_name);
+                write_log(
+                    LogSeverity::Error,
+                    &msg,
+                    &env!("CARGO_PKG_NAME").to_string(),
+                );
+                Err(msg)
+            }
         }
     }
 
@@ -970,6 +991,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - The name of the key to search for.
     /// * `criteria` - The matching criteria to use.
     /// * `int1` - The first integer value to match.
@@ -990,6 +1012,7 @@ impl DbTable {
     ///
     pub fn get_matching_entries_integer(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
         criteria: MatchingCriteria,
         int1: i32,
@@ -1006,7 +1029,7 @@ impl DbTable {
         match key.1 {
             DbType::Integer(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(entry_int_wrapped) = entry.get(key.0) {
                         if let DbType::Integer(entry_int) = entry_int_wrapped {
                             if Self::integer_comparison(*entry_int, &criteria, int1, int2) {
@@ -1038,6 +1061,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - The name of the key to match against.
     /// * `criteria` - The matching criteria to apply.
     /// * `int1` - The first unsigned integer value to compare against.
@@ -1050,6 +1074,7 @@ impl DbTable {
     ///
     pub fn get_matching_entries_unsigned_integer(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
         criteria: MatchingCriteria,
         int1: u32,
@@ -1070,7 +1095,7 @@ impl DbTable {
         match key.1 {
             DbType::UnsignedInt(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(entry_int_wrapped) = entry.get(key.0) {
                         if let DbType::UnsignedInt(entry_int) = entry_int_wrapped {
                             if Self::integer_comparison(
@@ -1107,6 +1132,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - The name of the key to perform the comparison on.
     /// * `criteria` - The matching criteria to use for comparison.
     /// * `float1` - The first reference float for comparison.
@@ -1127,6 +1153,7 @@ impl DbTable {
     ///
     pub fn get_matching_entries_float(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
         criteria: MatchingCriteria,
         float1: f32,
@@ -1166,7 +1193,7 @@ impl DbTable {
         match key.1 {
             DbType::Float(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(entry_float_wrapped) = entry.get(key.0) {
                         if let DbType::Float(entry_float) = entry_float_wrapped {
                             let delta = entry_float - float1;
@@ -1224,6 +1251,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - The name of the key to match.
     /// * `criteria` - The matching criteria (Equal or Different).
     /// * `ref_bool` - The reference bool value for comparison.
@@ -1236,6 +1264,7 @@ impl DbTable {
     ///
     pub fn get_matching_entries_bool(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
         criteria: MatchingCriteria,
         ref_bool: bool,
@@ -1248,7 +1277,7 @@ impl DbTable {
         match key.1 {
             DbType::Bool(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(entry_bool_wrapped) = entry.get(key.0) {
                         if let DbType::Bool(entry_bool) = entry_bool_wrapped {
                             match criteria {
@@ -1298,6 +1327,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - The name of the key to be matched.
     /// * `criteria` - The matching criteria to be applied.
     /// * `ref_str` - The reference string to compare against.
@@ -1310,6 +1340,7 @@ impl DbTable {
     ///
     pub fn get_matching_entries_string(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
         criteria: MatchingCriteria,
         ref_str: &String,
@@ -1322,7 +1353,7 @@ impl DbTable {
         match key.1 {
             DbType::String(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(entry_str_wrapped) = entry.get(key.0) {
                         if let DbType::String(entry_str) = entry_str_wrapped {
                             match criteria {
@@ -1368,25 +1399,29 @@ impl DbTable {
         }
     }
 
-
     /// Retrieves entries with no value for a given key name.
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - The name of the key to search for.
     ///
     /// # Returns
     ///
     /// * `Result<Option<Vec<String>>, String>` - A result that either contains `None` if there are no entries or `Some(output)` which is a vector of entry names with no value for the given key name.
     ///
-    pub fn get_entries_none(&self, key_name: &String) -> Result<Option<Vec<String>>, String> {
+    pub fn get_entries_none(
+        &self,
+        entries_subset: Option<Vec<&String>>,
+        key_name: &String,
+    ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() == 0 {
             return Ok(None);
         }
         let key = self.find_key(key_name)?;
         let mut output = Vec::new();
 
-        for entry in self.entries.iter() {
+        for entry in self.get_entries_subset(entries_subset) {
             if entry.get(key.0).is_none() {
                 output.push(entry.name().clone())
             }
@@ -1403,6 +1438,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// - `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// - `key_name`: The name of the key to search for.
     ///
     /// # Returns
@@ -1411,14 +1447,18 @@ impl DbTable {
     /// - `Ok(Some(output))`: A `Vec<String>` containing the names of entries where the provided key has a non-null value.
     /// - `Err(err)`: If there was an error while searching for the key.
     ///
-    pub fn get_entries_some(&self, key_name: &String) -> Result<Option<Vec<String>>, String> {
+    pub fn get_entries_some(
+        &self,
+        entries_subset: Option<Vec<&String>>,
+        key_name: &String,
+    ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() == 0 {
             return Ok(None);
         }
         let key = self.find_key(key_name)?;
         let mut output = Vec::new();
 
-        for entry in self.entries.iter() {
+        for entry in self.get_entries_subset(entries_subset) {
             if entry.get(key.0).is_some() {
                 output.push(entry.name().clone())
             }
@@ -1435,6 +1475,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - A reference to the name of the key.
     ///
     /// # Returns
@@ -1445,6 +1486,7 @@ impl DbTable {
     ///
     pub fn get_unique_boolean_values_for_key(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
     ) -> Result<Option<Vec<bool>>, String> {
         if self.entries.is_empty() {
@@ -1456,7 +1498,7 @@ impl DbTable {
         match key.1 {
             DbType::Bool(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(val_wrapped) = entry.get(key.0) {
                         if let DbType::Bool(val) = val_wrapped {
                             if !output.contains(val) {
@@ -1488,6 +1530,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - A reference to a string containing the name of the key.
     ///
     /// # Returns
@@ -1497,6 +1540,7 @@ impl DbTable {
     /// * `Err(String)` - If the key is found but is not of type `Integer`, returns an error message.
     pub fn get_unique_integer_values_for_key(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
     ) -> Result<Option<Vec<i32>>, String> {
         if self.entries.is_empty() {
@@ -1508,7 +1552,7 @@ impl DbTable {
         match key.1 {
             DbType::Integer(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(val_wrapped) = entry.get(key.0) {
                         if let DbType::Integer(val) = val_wrapped {
                             if !output.contains(val) {
@@ -1540,6 +1584,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - The name of the key to retrieve values for.
     ///
     /// # Returns
@@ -1550,6 +1595,7 @@ impl DbTable {
     ///
     pub fn get_unique_unsigned_integer_values_for_key(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
     ) -> Result<Option<Vec<u32>>, String> {
         if self.entries.is_empty() {
@@ -1560,7 +1606,7 @@ impl DbTable {
         match key.1 {
             DbType::UnsignedInt(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(val_wrapped) = entry.get(key.0) {
                         if let DbType::UnsignedInt(val) = val_wrapped {
                             if !output.contains(val) {
@@ -1591,6 +1637,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - The name of the key for which to get the unique string values.
     ///
     /// # Returns
@@ -1601,6 +1648,7 @@ impl DbTable {
     ///
     pub fn get_unique_string_values_for_key(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
     ) -> Result<Option<Vec<String>>, String> {
         if self.entries.is_empty() {
@@ -1611,7 +1659,7 @@ impl DbTable {
         match key.1 {
             DbType::String(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(val_wrapped) = entry.get(key.0) {
                         if let DbType::String(val) = val_wrapped {
                             if !output.contains(val) {
@@ -1642,6 +1690,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - The name of the key to search for.
     ///
     /// # Returns
@@ -1652,6 +1701,7 @@ impl DbTable {
     ///
     pub fn get_unique_float_values_for_key(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
     ) -> Result<Option<Vec<f32>>, String> {
         if self.entries.is_empty() {
@@ -1663,7 +1713,7 @@ impl DbTable {
         match key.1 {
             DbType::Float(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(val_wrapped) = entry.get(key.0) {
                         if let DbType::Float(val) = val_wrapped {
                             if !output.contains(val) {
@@ -1694,7 +1744,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `self` - The reference to the object implementing the function.
+    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
     /// * `key_name` - The name of the key for which to retrieve unique date values.
     ///
     /// # Returns
@@ -1707,6 +1757,7 @@ impl DbTable {
     ///
     pub fn get_unique_date_values_for_key(
         &self,
+        entries_subset: Option<Vec<&String>>,
         key_name: &String,
     ) -> Result<Option<Vec<NaiveDate>>, String> {
         if self.entries.is_empty() {
@@ -1717,7 +1768,7 @@ impl DbTable {
         match key.1 {
             DbType::Date(_) => {
                 let mut output = Vec::new();
-                for entry in self.entries.iter() {
+                for entry in self.get_entries_subset(entries_subset) {
                     if let Some(val_wrapped) = entry.get(key.0) {
                         if let DbType::Date(val) = val_wrapped {
                             if !output.contains(val) {
@@ -1762,7 +1813,7 @@ mod tests {
             entries: Vec::new(),
         };
 
-        check_struct((1, 1), &table, &expected, rusttests::CheckType::Equal)?;
+        check_struct((1, 1), &table, &expected, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2683,6 +2734,7 @@ mod tests {
         check_result(
             (1, 1),
             table.get_matching_entries_date(
+                None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
                 NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(),
@@ -2693,6 +2745,7 @@ mod tests {
         check_result(
             (2, 1),
             table.get_matching_entries_date(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
                 NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(),
@@ -2703,6 +2756,7 @@ mod tests {
         check_result(
             (3, 1),
             table.get_matching_entries_date(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
                 NaiveDate::from_ymd_opt(2000, 12, 31).unwrap(),
@@ -2774,6 +2828,7 @@ mod tests {
         let res = check_result(
             (1, 1),
             table.get_matching_entries_date(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(),
@@ -2789,6 +2844,7 @@ mod tests {
         let res = check_result(
             (2, 1),
             table.get_matching_entries_date(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 NaiveDate::from_ymd_opt(2015, 3, 13).unwrap(),
@@ -2809,6 +2865,7 @@ mod tests {
         let res = check_result(
             (3, 1),
             table.get_matching_entries_date(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Different,
                 NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(),
@@ -2825,6 +2882,7 @@ mod tests {
         let res = check_result(
             (4, 1),
             table.get_matching_entries_date(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::IsMore,
                 NaiveDate::from_ymd_opt(2014, 3, 14).unwrap(),
@@ -2846,6 +2904,7 @@ mod tests {
         let res = check_result(
             (5, 1),
             table.get_matching_entries_date(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::IsLess,
                 NaiveDate::from_ymd_opt(2014, 3, 15).unwrap(),
@@ -2867,6 +2926,7 @@ mod tests {
         let res = check_result(
             (6, 1),
             table.get_matching_entries_date(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
                 NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(),
@@ -2930,7 +2990,7 @@ mod tests {
 
         // None
         let expected_vec = vec!["entry2".to_string(), "entry4".to_string()];
-        let res = check_result((1, 1), table.get_entries_none(&"key3".to_string()), true)?.unwrap();
+        let res = check_result((1, 1), table.get_entries_none(None, &"key3".to_string()), true)?.unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2941,16 +3001,16 @@ mod tests {
             "entry5".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result((2, 1), table.get_entries_some(&"key3".to_string()), true)?.unwrap();
+        let res = check_result((2, 1), table.get_entries_some(None, &"key3".to_string()), true)?.unwrap();
         let opt = check_option((2, 2), res, true)?.unwrap();
         check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // No Some
-        let res = check_result((3, 1), table.get_entries_some(&"key2".to_string()), true)?.unwrap();
+        let res = check_result((3, 1), table.get_entries_some(None, &"key2".to_string()), true)?.unwrap();
         check_option((3, 2), res, false)?;
 
         // No None
-        let res = check_result((4, 1), table.get_entries_none(&"key1".to_string()), true)?.unwrap();
+        let res = check_result((4, 1), table.get_entries_none(None, &"key1".to_string()), true)?.unwrap();
         check_option((4, 2), res, false)?;
 
         Ok(())
@@ -2978,22 +3038,22 @@ mod tests {
 
         check_result(
             (1, 1),
-            table.get_matching_entries_bool(&"key2".to_string(), MatchingCriteria::Equal, false),
+            table.get_matching_entries_bool(None, &"key2".to_string(), MatchingCriteria::Equal, false),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Between, true),
+            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::Between, true),
             false,
         )?;
         check_result(
             (3, 1),
-            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::IsLess, true),
+            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::IsLess, true),
             false,
         )?;
         check_result(
             (4, 1),
-            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::IsMore, true),
+            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::IsMore, true),
             false,
         )?;
 
@@ -3036,7 +3096,7 @@ mod tests {
         ];
         let res = check_result(
             (1, 1),
-            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Equal, true),
+            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::Equal, true),
             true,
         )?
             .unwrap();
@@ -3046,7 +3106,7 @@ mod tests {
         // No match
         let res = check_result(
             (2, 1),
-            table.get_matching_entries_bool(&"key3".to_string(), MatchingCriteria::Equal, true),
+            table.get_matching_entries_bool(None, &"key3".to_string(), MatchingCriteria::Equal, true),
             true,
         )?
             .unwrap();
@@ -3060,7 +3120,7 @@ mod tests {
         ];
         let res = check_result(
             (3, 1),
-            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Different, true),
+            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::Different, true),
             true,
         )?
             .unwrap();
@@ -3075,7 +3135,7 @@ mod tests {
         ];
         let res = check_result(
             (4, 1),
-            table.get_matching_entries_bool(&"key1".to_string(), MatchingCriteria::Equal, false),
+            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::Equal, false),
             true,
         )?
             .unwrap();
@@ -3120,6 +3180,7 @@ mod tests {
         check_result(
             (1, 1),
             table.get_matching_entries_string(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 &"toto".to_string(),
@@ -3129,6 +3190,7 @@ mod tests {
         check_result(
             (2, 1),
             table.get_matching_entries_string(
+                None,
                 &"key2".to_string(),
                 MatchingCriteria::Between,
                 &"toto".to_string(),
@@ -3138,6 +3200,7 @@ mod tests {
         check_result(
             (3, 1),
             table.get_matching_entries_string(
+                None,
                 &"key2".to_string(),
                 MatchingCriteria::IsLess,
                 &"toto".to_string(),
@@ -3147,6 +3210,7 @@ mod tests {
         check_result(
             (4, 1),
             table.get_matching_entries_string(
+                None,
                 &"key2".to_string(),
                 MatchingCriteria::IsMore,
                 &"toto".to_string(),
@@ -3218,6 +3282,7 @@ mod tests {
         let res = check_result(
             (1, 1),
             table.get_matching_entries_string(
+                None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
                 &"tata".to_string(),
@@ -3232,6 +3297,7 @@ mod tests {
         let res = check_result(
             (2, 1),
             table.get_matching_entries_string(
+                None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
                 &"tyty".to_string(),
@@ -3250,6 +3316,7 @@ mod tests {
         let res = check_result(
             (3, 1),
             table.get_matching_entries_string(
+                None,
                 &"key2".to_string(),
                 MatchingCriteria::Different,
                 &"tata".to_string(),
@@ -3286,6 +3353,7 @@ mod tests {
         check_result(
             (1, 1),
             table.get_matching_entries_integer(
+                None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
                 5,
@@ -3296,6 +3364,7 @@ mod tests {
         check_result(
             (2, 1),
             table.get_matching_entries_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
                 5,
@@ -3306,6 +3375,7 @@ mod tests {
         check_result(
             (3, 1),
             table.get_matching_entries_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
                 5,
@@ -3350,6 +3420,7 @@ mod tests {
         let res = check_result(
             (1, 1),
             table.get_matching_entries_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 5,
@@ -3365,6 +3436,7 @@ mod tests {
         let res = check_result(
             (2, 1),
             table.get_matching_entries_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 7,
@@ -3385,6 +3457,7 @@ mod tests {
         let res = check_result(
             (3, 1),
             table.get_matching_entries_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Different,
                 5,
@@ -3405,6 +3478,7 @@ mod tests {
         let res = check_result(
             (4, 1),
             table.get_matching_entries_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::IsMore,
                 4,
@@ -3421,6 +3495,7 @@ mod tests {
         let res = check_result(
             (5, 1),
             table.get_matching_entries_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::IsLess,
                 4,
@@ -3442,6 +3517,7 @@ mod tests {
         let res = check_result(
             (6, 1),
             table.get_matching_entries_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
                 4,
@@ -3479,6 +3555,7 @@ mod tests {
         check_result(
             (1, 1),
             table.get_matching_entries_unsigned_integer(
+                None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
                 5,
@@ -3489,6 +3566,7 @@ mod tests {
         check_result(
             (2, 1),
             table.get_matching_entries_unsigned_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
                 5,
@@ -3499,6 +3577,7 @@ mod tests {
         check_result(
             (3, 1),
             table.get_matching_entries_unsigned_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
                 5,
@@ -3543,6 +3622,7 @@ mod tests {
         let res = check_result(
             (1, 1),
             table.get_matching_entries_unsigned_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 5,
@@ -3558,6 +3638,7 @@ mod tests {
         let res = check_result(
             (2, 1),
             table.get_matching_entries_unsigned_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 7,
@@ -3578,6 +3659,7 @@ mod tests {
         let res = check_result(
             (3, 1),
             table.get_matching_entries_unsigned_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Different,
                 5,
@@ -3598,6 +3680,7 @@ mod tests {
         let res = check_result(
             (4, 1),
             table.get_matching_entries_unsigned_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::IsMore,
                 4,
@@ -3614,6 +3697,7 @@ mod tests {
         let res = check_result(
             (5, 1),
             table.get_matching_entries_unsigned_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::IsLess,
                 4,
@@ -3635,6 +3719,7 @@ mod tests {
         let res = check_result(
             (6, 1),
             table.get_matching_entries_unsigned_integer(
+                None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
                 4,
@@ -3672,6 +3757,7 @@ mod tests {
         check_result(
             (1, 1),
             table.get_matching_entries_float(
+                None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
                 5.1,
@@ -3682,6 +3768,7 @@ mod tests {
         check_result(
             (2, 1),
             table.get_matching_entries_float(
+                None,
                 &"key3".to_string(),
                 MatchingCriteria::Between,
                 5.1,
@@ -3692,6 +3779,7 @@ mod tests {
         check_result(
             (3, 1),
             table.get_matching_entries_float(
+                None,
                 &"key3".to_string(),
                 MatchingCriteria::Between,
                 5.1,
@@ -3702,6 +3790,7 @@ mod tests {
         check_result(
             (4, 1),
             table.get_matching_entries_float(
+                None,
                 &"key3".to_string(),
                 MatchingCriteria::Between,
                 5.1,
@@ -3746,6 +3835,7 @@ mod tests {
         let res = check_result(
             (1, 1),
             table.get_matching_entries_float(
+                None,
                 &"key3".to_string(),
                 MatchingCriteria::Equal,
                 -0.27,
@@ -3761,6 +3851,7 @@ mod tests {
         let res = check_result(
             (2, 1),
             table.get_matching_entries_float(
+                None,
                 &"key3".to_string(),
                 MatchingCriteria::Equal,
                 7.25,
@@ -3781,6 +3872,7 @@ mod tests {
         let res = check_result(
             (3, 1),
             table.get_matching_entries_float(
+                None,
                 &"key3".to_string(),
                 MatchingCriteria::Different,
                 -0.27,
@@ -3797,6 +3889,7 @@ mod tests {
         let res = check_result(
             (4, 1),
             table.get_matching_entries_float(
+                None,
                 &"key3".to_string(),
                 MatchingCriteria::IsMore,
                 1.46,
@@ -3817,6 +3910,7 @@ mod tests {
         let res = check_result(
             (5, 1),
             table.get_matching_entries_float(
+                None,
                 &"key3".to_string(),
                 MatchingCriteria::IsLess,
                 1.46,
@@ -3837,6 +3931,7 @@ mod tests {
         let res = check_result(
             (6, 1),
             table.get_matching_entries_float(
+                None,
                 &"key3".to_string(),
                 MatchingCriteria::Between,
                 0.45,
@@ -3873,17 +3968,17 @@ mod tests {
 
         check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(&"key3".to_string()),
+            table.get_unique_boolean_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_boolean_values_for_key(&"key8".to_string()),
+            table.get_unique_boolean_values_for_key(None, &"key8".to_string()),
             false,
         )?;
         let res = check_result(
             (3, 1),
-            table.get_unique_boolean_values_for_key(&"key2".to_string()),
+            table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
             true,
         )?
             .unwrap();
@@ -3924,7 +4019,7 @@ mod tests {
         let expected_vec_2 = vec![true];
         let res = check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(&"key1".to_string()),
+            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
             true,
         )?
             .unwrap();
@@ -3932,7 +4027,7 @@ mod tests {
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
         let res = check_result(
             (2, 1),
-            table.get_unique_boolean_values_for_key(&"key2".to_string()),
+            table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
             true,
         )?
             .unwrap();
@@ -3964,17 +4059,17 @@ mod tests {
 
         check_result(
             (1, 1),
-            table.get_unique_integer_values_for_key(&"key3".to_string()),
+            table.get_unique_integer_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_integer_values_for_key(&"key8".to_string()),
+            table.get_unique_integer_values_for_key(None, &"key8".to_string()),
             false,
         )?;
         let res = check_result(
             (3, 1),
-            table.get_unique_integer_values_for_key(&"key2".to_string()),
+            table.get_unique_integer_values_for_key(None, &"key2".to_string()),
             true,
         )?
             .unwrap();
@@ -4005,17 +4100,17 @@ mod tests {
 
         check_result(
             (1, 1),
-            table.get_unique_unsigned_integer_values_for_key(&"key3".to_string()),
+            table.get_unique_unsigned_integer_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_unsigned_integer_values_for_key(&"key8".to_string()),
+            table.get_unique_unsigned_integer_values_for_key(None, &"key8".to_string()),
             false,
         )?;
         let res = check_result(
             (3, 1),
-            table.get_unique_unsigned_integer_values_for_key(&"key2".to_string()),
+            table.get_unique_unsigned_integer_values_for_key(None, &"key2".to_string()),
             true,
         )?
             .unwrap();
@@ -4067,7 +4162,7 @@ mod tests {
         let expected_vec_2 = vec![4, 5, 6];
         let res = check_result(
             (1, 1),
-            table.get_unique_integer_values_for_key(&"key1".to_string()),
+            table.get_unique_integer_values_for_key(None, &"key1".to_string()),
             true,
         )?
             .unwrap();
@@ -4075,7 +4170,7 @@ mod tests {
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
         let res = check_result(
             (2, 1),
-            table.get_unique_unsigned_integer_values_for_key(&"key2".to_string()),
+            table.get_unique_unsigned_integer_values_for_key(None, &"key2".to_string()),
             true,
         )?
             .unwrap();
@@ -4106,17 +4201,17 @@ mod tests {
 
         check_result(
             (1, 1),
-            table.get_unique_string_values_for_key(&"key3".to_string()),
+            table.get_unique_string_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_string_values_for_key(&"key8".to_string()),
+            table.get_unique_string_values_for_key(None, &"key8".to_string()),
             false,
         )?;
         let res = check_result(
             (3, 1),
-            table.get_unique_string_values_for_key(&"key2".to_string()),
+            table.get_unique_string_values_for_key(None, &"key2".to_string()),
             true,
         )?
             .unwrap();
@@ -4168,7 +4263,7 @@ mod tests {
         let expected_vec_2 = vec!["4".to_string(), "5".to_string(), "6".to_string()];
         let res = check_result(
             (1, 1),
-            table.get_unique_string_values_for_key(&"key1".to_string()),
+            table.get_unique_string_values_for_key(None, &"key1".to_string()),
             true,
         )?
             .unwrap();
@@ -4176,7 +4271,7 @@ mod tests {
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
         let res = check_result(
             (2, 1),
-            table.get_unique_string_values_for_key(&"key2".to_string()),
+            table.get_unique_string_values_for_key(None, &"key2".to_string()),
             true,
         )?
             .unwrap();
@@ -4207,17 +4302,17 @@ mod tests {
 
         check_result(
             (1, 1),
-            table.get_unique_float_values_for_key(&"key3".to_string()),
+            table.get_unique_float_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_float_values_for_key(&"key8".to_string()),
+            table.get_unique_float_values_for_key(None, &"key8".to_string()),
             false,
         )?;
         let res = check_result(
             (3, 1),
-            table.get_unique_float_values_for_key(&"key2".to_string()),
+            table.get_unique_float_values_for_key(None, &"key2".to_string()),
             true,
         )?
             .unwrap();
@@ -4268,7 +4363,7 @@ mod tests {
         let expected_vec_1 = vec![1.0, 2.2, 3.3];
         let res = check_result(
             (1, 1),
-            table.get_unique_float_values_for_key(&"key1".to_string()),
+            table.get_unique_float_values_for_key(None, &"key1".to_string()),
             true,
         )?
             .unwrap();
@@ -4318,17 +4413,17 @@ mod tests {
 
         check_result(
             (1, 1),
-            table.get_unique_date_values_for_key(&"key3".to_string()),
+            table.get_unique_date_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_date_values_for_key(&"key8".to_string()),
+            table.get_unique_date_values_for_key(None, &"key8".to_string()),
             false,
         )?;
         let res = check_result(
             (3, 1),
-            table.get_unique_date_values_for_key(&"key2".to_string()),
+            table.get_unique_date_values_for_key(None, &"key2".to_string()),
             true,
         )?
             .unwrap();
@@ -4389,7 +4484,7 @@ mod tests {
 
         let res = check_result(
             (1, 1),
-            table.get_unique_date_values_for_key(&"key1".to_string()),
+            table.get_unique_date_values_for_key(None, &"key1".to_string()),
             true,
         )?
             .unwrap();
@@ -4397,5 +4492,77 @@ mod tests {
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
 
         Ok(())
+    }
+
+    #[test]
+    fn get_entries_subset() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Float(0.0)),
+            ("key2".to_string(), DbType::Float(0.0)),
+            ("key3".to_string(), DbType::String("0.0".to_string())),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("1.0".to_string()),
+            Some("4.1".to_string()),
+            Some("Hello".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("2.2".to_string()),
+            Some("5.3".to_string()),
+            Some("World".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("3.3".to_string()),
+            Some("6.4".to_string()),
+            Some("AI".to_string()),
+        ];
+        let mut binding4 = vec![
+            Some("1.0".to_string()),
+            Some("5.5".to_string()),
+            Some("Assistant".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        table.add_entry(&"entry5".to_string(), new_entry4)?;
+
+        let entry1 = &"entry1".to_string();
+        let entry2 = &"entry2".to_string();
+        let entry3 = &"entry3".to_string();
+        let entry4 = &"entry4".to_string();
+        let entry5 = &"entry5".to_string();
+
+        let expected_vec = vec![entry1, entry2, entry3, entry4, entry5];
+        let entries_subset = table
+            .get_entries_subset(None)
+            .iter()
+            .map(|entry| entry.name())
+            .collect::<Vec<&String>>();
+        check_value((1, 1), &entries_subset, &expected_vec, CheckType::Equal)?;
+
+        let expected_vec = vec![entry1, entry4, entry5];
+        let subset = vec![entry1, entry4, entry5];
+        let entries_subset = table
+            .get_entries_subset(Some(subset))
+            .iter()
+            .map(|entry| entry.name())
+            .collect::<Vec<&String>>();
+        check_value((2, 1), &entries_subset, &expected_vec, CheckType::Equal)?;
+
+        let expected_vec = vec![];
+        let subset = vec![];
+        let entries_subset = table
+            .get_entries_subset(Some(subset))
+            .iter()
+            .map(|entry| entry.name())
+            .collect::<Vec<&String>>();
+        check_value((3, 1), &entries_subset, &expected_vec, CheckType::Equal)
     }
 }
