@@ -178,16 +178,16 @@ table.add_entry( & "entry2".to_string(), new_entry2);
 table.add_entry( & "entry3".to_string(), new_entry3);
 
 // Find all entries with date equal to 13/03/2014
-let matching_entries = table.get_matching_entries_date( & "key1".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), None);
+let matching_entries = table.get_matching_entries_date(None, & "key1".to_string(), MatchingCriteria::Equal, NaiveDate::from_ymd_opt(2014, 3, 13).unwrap(), None);
 
 // Find all entries with string equal to "toto"
-let matching_entries = table.get_matching_entries_string( & "key2".to_string(), MatchingCriteria::Equal, & "toto".to_string());
+let matching_entries = table.get_matching_entries_string(None, & "key2".to_string(), MatchingCriteria::Equal, & "toto".to_string());
 
 // Find all entries with values between 1.46 and 2.23
-let matching_entries = table.get_matching_entries_float( & "key3".to_string(), MatchingCriteria::Between, 1.46, Some(2.23));
+let matching_entries = table.get_matching_entries_float(None, & "key3".to_string(), MatchingCriteria::Between, 1.46, Some(2.23));
 
 // Find all entries with None
-let none_entries = table.get_entries_none( & "key2".to_string());
+let none_entries = table.get_entries_none(None, & "key2".to_string());
 ```
 
 ### Get list of unique key values
@@ -221,8 +221,8 @@ table.add_entry( & "entry1".to_string(), new_entry);
 table.add_entry( & "entry2".to_string(), new_entry2);
 table.add_entry( & "entry3".to_string(), new_entry3);
 
-let float_values = table.get_unique_float_values_for_key( & "key3".to_string()).unwrap();
+let float_values = table.get_unique_float_values_for_key(None, & "key3".to_string()).unwrap();
 assert_eq!(float_values, Some(vec![2.23, 1.46, -0.27]));
-let string_values = table.get_unique_string_values_for_key( & "key2".to_string()).unwrap();
+let string_values = table.get_unique_string_values_for_key(None, & "key2".to_string()).unwrap();
 assert_eq!(string_values, Some(vec!["toto".to_string(), "tata".to_string()]));
 ```
