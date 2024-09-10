@@ -1,10 +1,10 @@
 use std::fs;
 use std::path::PathBuf;
 
-use rustlog::{LogSeverity, write_log};
+use rustlog::{write_log, LogSeverity};
 
-pub use db_model::{DbModel, DbTable};
 pub use db_model::MatchingCriteria;
+pub use db_model::{DbModel, DbTable};
 
 #[doc = include_str!("../README.md")]
 mod db_model;
@@ -41,8 +41,9 @@ impl SmolDb {
     /// a `String` containing the error message.
     ///
     pub fn load(db_file: PathBuf) -> Result<SmolDb, String> {
-        let json = fs::read_to_string(&db_file)
-            .map_err(|e| Self::log_and_create_load_err_msg(format!("{}: {}", db_file.to_str().unwrap(), e)))?;
+        let json = fs::read_to_string(&db_file).map_err(|e| {
+            Self::log_and_create_load_err_msg(format!("{}: {}", db_file.to_str().unwrap(), e))
+        })?;
 
         let model = serde_json::from_str::<DbModel>(&json)
             .map_err(|e| Self::log_and_create_load_err_msg(format!("{}", e)))?;
@@ -69,7 +70,11 @@ impl SmolDb {
     /// The newly created error message string.
     fn log_and_create_load_err_msg(msg: String) -> String {
         let new_msg = format!("Error while opening database {}", msg);
-        write_log(LogSeverity::Error, &new_msg, &env!("CARGO_PKG_NAME").to_string());
+        write_log(
+            LogSeverity::Error,
+            &new_msg,
+            &env!("CARGO_PKG_NAME").to_string(),
+        );
         new_msg
     }
 

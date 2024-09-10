@@ -3,7 +3,7 @@
 //!
 
 use chrono::NaiveDate;
-use rustlog::{LogSeverity, write_log};
+use rustlog::{write_log, LogSeverity};
 use serde_derive::{Deserialize, Serialize};
 
 /// Field type definition
@@ -81,27 +81,12 @@ impl DbType {
     /// * `Err(String)` with an error message if the types are incompatible.
     pub fn check_type(&self, new_type: &DbType) -> Result<(), String> {
         let res = match new_type {
-            DbType::Integer(_) => match &self {
-                DbType::Integer(_) => true,
-                _ => false,
-            },
-            DbType::UnsignedInt(_) => match &self {
-                DbType::UnsignedInt(_) => true,
-                _ => false,
-            },
-            DbType::Float(_) => match &self {
-                DbType::Float(_) => true,
-                _ => false,
-            },
+            DbType::Integer(_) => matches!(self, DbType::Integer(_)),
+            DbType::UnsignedInt(_) => matches!(self, DbType::UnsignedInt(_)),
+            DbType::Float(_) => matches!(self, DbType::Float(_)),
             DbType::String(_) => true,
-            DbType::Date(_) => match &self {
-                DbType::Date(_) => true,
-                _ => false
-            },
-            DbType::Bool(_) => match &self {
-                DbType::Bool(_) => true,
-                _ => false
-            },
+            DbType::Date(_) => matches!(self, DbType::Date(_)),
+            DbType::Bool(_) => matches!(self, DbType::Bool(_)),
         };
 
         if res {
@@ -238,9 +223,10 @@ mod tests {
 
     #[test]
     fn check_date_ok() -> Result<(), String> {
-        let type_date = DbType::default_from_string(&"Date".to_string()).unwrap();
+        let type_date = DbType::default_from_string(&"Date".to_string())?;
 
-        let val = check_result((1, 1), type_date.convert(&"12/07/1998".to_string()), true)?.unwrap();
+        let val =
+            check_result((1, 1), type_date.convert(&"12/07/1998".to_string()), true)?.unwrap();
         check_struct(
             (1, 2),
             &val,
@@ -252,7 +238,7 @@ mod tests {
 
     #[test]
     fn check_date_ko() -> Result<(), String> {
-        let type_date = DbType::default_from_string(&"Date".to_string()).unwrap();
+        let type_date = DbType::default_from_string(&"Date".to_string())?;
 
         check_result((1, 1), type_date.convert(&"text".to_string()), false)?;
         Ok(())
@@ -260,7 +246,7 @@ mod tests {
 
     #[test]
     fn check_bool_ok() -> Result<(), String> {
-        let type_bool = DbType::default_from_string(&"Bool".to_string()).unwrap();
+        let type_bool = DbType::default_from_string(&"Bool".to_string())?;
 
         let val = check_result((1, 1), type_bool.convert(&"true".to_string()), true)?.unwrap();
         check_struct(
@@ -281,7 +267,7 @@ mod tests {
 
     #[test]
     fn check_bool_ko() -> Result<(), String> {
-        let type_bool = DbType::default_from_string(&"Bool".to_string()).unwrap();
+        let type_bool = DbType::default_from_string(&"Bool".to_string())?;
 
         check_result((1, 1), type_bool.convert(&"text".to_string()), false)?;
         Ok(())

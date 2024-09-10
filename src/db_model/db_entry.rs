@@ -2,7 +2,7 @@
 //! Database Entry definition
 //!
 
-use rustlog::{LogSeverity, write_log};
+use rustlog::{write_log, LogSeverity};
 use serde_derive::{Deserialize, Serialize};
 
 use super::db_type::DbType;
@@ -100,7 +100,7 @@ impl DbEntry {
     ///
     /// An `Option` containing a reference to the value, if it exists, otherwise `None`.
     pub fn get(&self, key_index: usize) -> Option<&DbType> {
-        self.fields.get(key_index).unwrap().as_ref()
+        self.fields.get(key_index)?.as_ref()
     }
 
     /// Returns a reference to the name of the object.
@@ -169,7 +169,7 @@ mod tests {
             DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_value(
             (1, 2),
             &val.name,
@@ -197,7 +197,7 @@ mod tests {
             Some(DbType::Integer(12)),
         ];
 
-        let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)).unwrap();
+        let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec))?;
         entry.update(1, Some(DbType::String("new_item".to_string())));
         entry.update(2, Some(DbType::UnsignedInt(35)));
 
@@ -215,7 +215,7 @@ mod tests {
             Some(DbType::Integer(12)),
         ];
 
-        let entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)).unwrap();
+        let entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec))?;
 
         let val = entry.get(2).unwrap();
 
@@ -257,7 +257,7 @@ mod tests {
             None,
         ];
 
-        let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)).unwrap();
+        let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec))?;
         entry.add_field(Some(DbType::String("item4".to_string())));
         entry.add_field(None);
 
@@ -275,7 +275,7 @@ mod tests {
             Some(DbType::Integer(12)),
         ];
 
-        let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec)).unwrap();
+        let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec))?;
         entry.rename(&"new_name".to_string());
 
         check_struct(

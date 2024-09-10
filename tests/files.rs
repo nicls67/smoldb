@@ -23,7 +23,8 @@ fn file_ops_1() -> Result<(), String> {
         ("key3".to_string(), "Float".to_string()),
     ]);
 
-    db.database().create_table(&"Table test 1".to_string(), keys)?;
+    db.database()
+        .create_table(&"Table test 1".to_string(), keys)?;
 
     let table = db.database().table(&"Table test 1".to_string())?;
 
@@ -39,9 +40,25 @@ fn file_ops_1() -> Result<(), String> {
 
     remove_file("test.json").unwrap_or(());
 
-    check_value((1, 1), new_db.database().table(&"Table test 1".to_string())?.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?.unwrap(), &2.23, rusttests::CheckType::Equal)?;
+    check_value(
+        (1, 1),
+        new_db
+            .database()
+            .table(&"Table test 1".to_string())?
+            .get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?
+            .unwrap(),
+        &2.23,
+        rusttests::CheckType::Equal,
+    )?;
 
-    check_option((1, 2), new_db.database().table(&"Table test 1".to_string())?.get_entry_value_integer(&"entry2".to_string(), &"key2".to_string())?, false)?;
+    check_option(
+        (1, 2),
+        new_db
+            .database()
+            .table(&"Table test 1".to_string())?
+            .get_entry_value_integer(&"entry2".to_string(), &"key2".to_string())?,
+        false,
+    )?;
 
     Ok(())
 }

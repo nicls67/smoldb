@@ -2,7 +2,7 @@
 //! Database Model definition
 //!
 
-use rustlog::{LogSeverity, write_log};
+use rustlog::{write_log, LogSeverity};
 use serde_derive::{Deserialize, Serialize};
 
 pub use db_table::DbTable;
@@ -50,7 +50,7 @@ impl DbModel {
     /// # Arguments
     ///
     /// * `name` - The name of the table.
-    /// * `keys` - Optional keys (name and type) for the table. Type is among the following : 
+    /// * `keys` - Optional keys (name and type) for the table. Type is among the following :
     /// `Integer`, `UnsignedInt`, `Float`, `Date`, `Bool`, `String`
     ///
     /// # Returns
