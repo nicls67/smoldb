@@ -1,0 +1,68 @@
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/ee/development/cicd/templates.html
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Rust.gitlab-ci.yml
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+image: rust:latest
+
+default:
+  before_script:
+    - rustc --version 
+    - cargo --version
+    - cargo install gitlab-report
+
+stages:
+  - check
+  - test
+  - doc
+
+# Use clippy to check the project
+check:clippy:
+  stage: check
+  script:
+        - rustup component add clippy
+        - 'cargo clippy
+            --color always
+            --verbose
+            --all-targets
+            --all-features
+            --message-format=json
+            | gitlab-report -p clippy > gl-code-quality-report.json'
+
+  tags:
+    - rust
+  artifacts:
+        when: always
+        reports:
+            codequality: gl-code-quality-report.json
+        expire_in: 1 week
+
+# Use cargo to test the project
+test:nightly:
+  stage: test
+  image: rustlang/rust:nightly
+  script:
+    - cargo test --workspace --verbose -- -Z unstable-options --test-threads=1 --format json | gitlab-report -p test > report.xml
+  tags:
+    - rust
+  artifacts:
+    reports:
+      junit: report.xml
+    expire_in: 1 week
+
+# Use cargo to generate doc
+gendoc:
+  stage: doc
+  script:
+    - cargo doc --no-deps --color=always --verbose
+  tags:
+    - rust
+  artifacts:
+    name: doc
+    paths:
+      - target/doc
+    expire_in: 1 week
+

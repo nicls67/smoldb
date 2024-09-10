@@ -6,7 +6,7 @@ use std::cmp::PartialEq;
 use std::mem::discriminant;
 
 use chrono::NaiveDate;
-use rustlog::{LogSeverity, write_log};
+use rustlog::{write_log, LogSeverity};
 use serde_derive::{Deserialize, Serialize};
 
 use super::{db_entry::DbEntry, db_type::DbType};
@@ -51,7 +51,7 @@ impl DbTable {
     pub(crate) fn new(name: String, keys: Option<Vec<(String, DbType)>>) -> DbTable {
         DbTable {
             name,
-            keys: keys.unwrap_or_else(Vec::new),
+            keys: keys.unwrap_or_default(),
             entries: Vec::new(),
         }
     }
@@ -83,7 +83,7 @@ impl DbTable {
         let new_entry;
 
         // Check unicity of entry name
-        if self.entry_exists(&name) {
+        if self.entry_exists(name) {
             let msg = format!(
                 "Cannot create new entry : name {} already exists in table",
                 name
@@ -481,7 +481,7 @@ impl DbTable {
         match self
             .find_key(key_name)?
             .1
-            .check_type(&DbType::default_from_string(&"Date".to_string()).unwrap())
+            .check_type(&DbType::default_from_string(&"Date".to_string())?)
         {
             Ok(_) => (),
             Err(e) => return Err(e),
@@ -759,15 +759,11 @@ impl DbTable {
     fn get_entries_subset(&self, entries_subset_names: Option<Vec<&String>>) -> Vec<&DbEntry> {
         self.entries
             .iter()
-            .filter_map(|entry| {
+            .filter(|entry| {
                 if let Some(names) = &entries_subset_names {
-                    if names.contains(&entry.name()) {
-                        Some(entry)
-                    } else {
-                        None
-                    }
+                    names.contains(&entry.name())
                 } else {
-                    Some(entry)
+                    true
                 }
             })
             .collect::<Vec<&DbEntry>>()
@@ -833,42 +829,40 @@ impl DbTable {
             DbType::Date(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(entry_date_wrapped) = entry.get(key.0) {
-                        if let DbType::Date(entry_date) = entry_date_wrapped {
-                            let delta = (*entry_date - date1).num_days();
-                            match criteria {
-                                MatchingCriteria::IsMore => {
-                                    if delta > 0 {
-                                        output.push(entry.name().clone());
-                                    }
+                    if let Some(DbType::Date(entry_date)) = entry.get(key.0) {
+                        let delta = (*entry_date - date1).num_days();
+                        match criteria {
+                            MatchingCriteria::IsMore => {
+                                if delta > 0 {
+                                    output.push(entry.name().clone());
                                 }
-                                MatchingCriteria::IsLess => {
-                                    if delta < 0 {
-                                        output.push(entry.name().clone());
-                                    }
+                            }
+                            MatchingCriteria::IsLess => {
+                                if delta < 0 {
+                                    output.push(entry.name().clone());
                                 }
-                                MatchingCriteria::Equal => {
-                                    if delta == 0 {
-                                        output.push(entry.name().clone());
-                                    }
+                            }
+                            MatchingCriteria::Equal => {
+                                if delta == 0 {
+                                    output.push(entry.name().clone());
                                 }
-                                MatchingCriteria::Different => {
-                                    if delta != 0 {
-                                        output.push(entry.name().clone());
-                                    }
+                            }
+                            MatchingCriteria::Different => {
+                                if delta != 0 {
+                                    output.push(entry.name().clone());
                                 }
-                                MatchingCriteria::Between => {
-                                    let delta2 = (*entry_date - date2.unwrap()).num_days();
-                                    if delta >= 0 && delta2 <= 0 {
-                                        output.push(entry.name().clone());
-                                    }
+                            }
+                            MatchingCriteria::Between => {
+                                let delta2 = (*entry_date - date2.unwrap()).num_days();
+                                if delta >= 0 && delta2 <= 0 {
+                                    output.push(entry.name().clone());
                                 }
                             }
                         }
                     }
                 }
 
-                if output.len() == 0 {
+                if output.is_empty() {
                     Ok(None)
                 } else {
                     Ok(Some(output))
@@ -1030,11 +1024,9 @@ impl DbTable {
             DbType::Integer(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(entry_int_wrapped) = entry.get(key.0) {
-                        if let DbType::Integer(entry_int) = entry_int_wrapped {
-                            if Self::integer_comparison(*entry_int, &criteria, int1, int2) {
-                                output.push(entry.name().clone());
-                            }
+                    if let Some(DbType::Integer(entry_int)) = entry.get(key.0) {
+                        if Self::integer_comparison(*entry_int, &criteria, int1, int2) {
+                            output.push(entry.name().clone());
                         }
                     }
                 }
@@ -1084,11 +1076,7 @@ impl DbTable {
             return Ok(None);
         }
         // Check input compatibility
-        Self::check_input_compatibility_int(
-            &criteria,
-            int1 as i32,
-            int2.map_or(None, |v| Some(v as i32)),
-        )?;
+        Self::check_input_compatibility_int(&criteria, int1 as i32, int2.map(|v| v as i32))?;
 
         // Check selected key has an unsigned int type
         let key = self.find_key(key_name)?;
@@ -1096,16 +1084,14 @@ impl DbTable {
             DbType::UnsignedInt(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(entry_int_wrapped) = entry.get(key.0) {
-                        if let DbType::UnsignedInt(entry_int) = entry_int_wrapped {
-                            if Self::integer_comparison(
-                                *entry_int as i32,
-                                &criteria,
-                                int1 as i32,
-                                int2.map_or(None, |v| Some(v as i32)),
-                            ) {
-                                output.push(entry.name().clone());
-                            }
+                    if let Some(DbType::UnsignedInt(entry_int)) = entry.get(key.0) {
+                        if Self::integer_comparison(
+                            *entry_int as i32,
+                            &criteria,
+                            int1 as i32,
+                            int2.map(|v| v as i32),
+                        ) {
+                            output.push(entry.name().clone());
                         }
                     }
                 }
@@ -1194,35 +1180,33 @@ impl DbTable {
             DbType::Float(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(entry_float_wrapped) = entry.get(key.0) {
-                        if let DbType::Float(entry_float) = entry_float_wrapped {
-                            let delta = entry_float - float1;
-                            match criteria {
-                                MatchingCriteria::IsMore => {
-                                    if delta > 0.0 {
-                                        output.push(entry.name().clone());
-                                    }
+                    if let Some(DbType::Float(entry_float)) = entry.get(key.0) {
+                        let delta = entry_float - float1;
+                        match criteria {
+                            MatchingCriteria::IsMore => {
+                                if delta > 0.0 {
+                                    output.push(entry.name().clone());
                                 }
-                                MatchingCriteria::IsLess => {
-                                    if delta < 0.0 {
-                                        output.push(entry.name().clone());
-                                    }
+                            }
+                            MatchingCriteria::IsLess => {
+                                if delta < 0.0 {
+                                    output.push(entry.name().clone());
                                 }
-                                MatchingCriteria::Equal => {
-                                    if delta == 0.0 {
-                                        output.push(entry.name().clone());
-                                    }
+                            }
+                            MatchingCriteria::Equal => {
+                                if delta == 0.0 {
+                                    output.push(entry.name().clone());
                                 }
-                                MatchingCriteria::Different => {
-                                    if delta != 0.0 {
-                                        output.push(entry.name().clone());
-                                    }
+                            }
+                            MatchingCriteria::Different => {
+                                if delta != 0.0 {
+                                    output.push(entry.name().clone());
                                 }
-                                MatchingCriteria::Between => {
-                                    let delta2 = entry_float - float2.unwrap();
-                                    if delta >= 0.0 && delta2 <= 0.0 {
-                                        output.push(entry.name().clone());
-                                    }
+                            }
+                            MatchingCriteria::Between => {
+                                let delta2 = entry_float - float2.unwrap();
+                                if delta >= 0.0 && delta2 <= 0.0 {
+                                    output.push(entry.name().clone());
                                 }
                             }
                         }
@@ -1278,28 +1262,26 @@ impl DbTable {
             DbType::Bool(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(entry_bool_wrapped) = entry.get(key.0) {
-                        if let DbType::Bool(entry_bool) = entry_bool_wrapped {
-                            match criteria {
-                                MatchingCriteria::Equal => {
-                                    if ref_bool == *entry_bool {
-                                        output.push(entry.name().clone());
-                                    }
+                    if let Some(DbType::Bool(entry_bool)) = entry.get(key.0) {
+                        match criteria {
+                            MatchingCriteria::Equal => {
+                                if ref_bool == *entry_bool {
+                                    output.push(entry.name().clone());
                                 }
-                                MatchingCriteria::Different => {
-                                    if ref_bool != *entry_bool {
-                                        output.push(entry.name().clone());
-                                    }
+                            }
+                            MatchingCriteria::Different => {
+                                if ref_bool != *entry_bool {
+                                    output.push(entry.name().clone());
                                 }
-                                _ => {
-                                    let msg = "Only Equal and Different matching criteria are allowed for Boolean data".to_string();
-                                    write_log(
-                                        LogSeverity::Error,
-                                        &msg,
-                                        &env!("CARGO_PKG_NAME").to_string(),
-                                    );
-                                    return Err(msg);
-                                }
+                            }
+                            _ => {
+                                let msg = "Only Equal and Different matching criteria are allowed for Boolean data".to_string();
+                                write_log(
+                                    LogSeverity::Error,
+                                    &msg,
+                                    &env!("CARGO_PKG_NAME").to_string(),
+                                );
+                                return Err(msg);
                             }
                         }
                     }
@@ -1354,28 +1336,26 @@ impl DbTable {
             DbType::String(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(entry_str_wrapped) = entry.get(key.0) {
-                        if let DbType::String(entry_str) = entry_str_wrapped {
-                            match criteria {
-                                MatchingCriteria::Equal => {
-                                    if ref_str == entry_str {
-                                        output.push(entry.name().clone());
-                                    }
+                    if let Some(DbType::String(entry_str)) = entry.get(key.0) {
+                        match criteria {
+                            MatchingCriteria::Equal => {
+                                if ref_str == entry_str {
+                                    output.push(entry.name().clone());
                                 }
-                                MatchingCriteria::Different => {
-                                    if ref_str != entry_str {
-                                        output.push(entry.name().clone());
-                                    }
+                            }
+                            MatchingCriteria::Different => {
+                                if ref_str != entry_str {
+                                    output.push(entry.name().clone());
                                 }
-                                _ => {
-                                    let msg = "Only Equal and Different matching criteria are allowed for String data".to_string();
-                                    write_log(
-                                        LogSeverity::Error,
-                                        &msg,
-                                        &env!("CARGO_PKG_NAME").to_string(),
-                                    );
-                                    return Err(msg);
-                                }
+                            }
+                            _ => {
+                                let msg = "Only Equal and Different matching criteria are allowed for String data".to_string();
+                                write_log(
+                                    LogSeverity::Error,
+                                    &msg,
+                                    &env!("CARGO_PKG_NAME").to_string(),
+                                );
+                                return Err(msg);
                             }
                         }
                     }
@@ -1499,11 +1479,9 @@ impl DbTable {
             DbType::Bool(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(val_wrapped) = entry.get(key.0) {
-                        if let DbType::Bool(val) = val_wrapped {
-                            if !output.contains(val) {
-                                output.push(*val);
-                            }
+                    if let Some(DbType::Bool(val)) = entry.get(key.0) {
+                        if !output.contains(val) {
+                            output.push(*val);
                         }
                     }
                 }
@@ -1553,11 +1531,9 @@ impl DbTable {
             DbType::Integer(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(val_wrapped) = entry.get(key.0) {
-                        if let DbType::Integer(val) = val_wrapped {
-                            if !output.contains(val) {
-                                output.push(*val);
-                            }
+                    if let Some(DbType::Integer(val)) = entry.get(key.0) {
+                        if !output.contains(val) {
+                            output.push(*val);
                         }
                     }
                 }
@@ -1607,11 +1583,9 @@ impl DbTable {
             DbType::UnsignedInt(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(val_wrapped) = entry.get(key.0) {
-                        if let DbType::UnsignedInt(val) = val_wrapped {
-                            if !output.contains(val) {
-                                output.push(*val);
-                            }
+                    if let Some(DbType::UnsignedInt(val)) = entry.get(key.0) {
+                        if !output.contains(val) {
+                            output.push(*val);
                         }
                     }
                 }
@@ -1660,11 +1634,9 @@ impl DbTable {
             DbType::String(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(val_wrapped) = entry.get(key.0) {
-                        if let DbType::String(val) = val_wrapped {
-                            if !output.contains(val) {
-                                output.push(val.clone());
-                            }
+                    if let Some(DbType::String(val)) = entry.get(key.0) {
+                        if !output.contains(val) {
+                            output.push(val.clone());
                         }
                     }
                 }
@@ -1714,11 +1686,9 @@ impl DbTable {
             DbType::Float(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(val_wrapped) = entry.get(key.0) {
-                        if let DbType::Float(val) = val_wrapped {
-                            if !output.contains(val) {
-                                output.push(*val);
-                            }
+                    if let Some(DbType::Float(val)) = entry.get(key.0) {
+                        if !output.contains(val) {
+                            output.push(*val);
                         }
                     }
                 }
@@ -1769,11 +1739,9 @@ impl DbTable {
             DbType::Date(_) => {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(val_wrapped) = entry.get(key.0) {
-                        if let DbType::Date(val) = val_wrapped {
-                            if !output.contains(val) {
-                                output.push(*val);
-                            }
+                    if let Some(DbType::Date(val)) = entry.get(key.0) {
+                        if !output.contains(val) {
+                            output.push(*val);
                         }
                     }
                 }
@@ -1834,7 +1802,7 @@ mod tests {
             entries: Vec::new(),
         };
 
-        check_struct((1, 1), &table, &expected, rusttests::CheckType::Equal)?;
+        check_struct((1, 1), &table, &expected, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1852,12 +1820,7 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
 
-        check_value(
-            (1, 1),
-            &table.entries_count(),
-            &2,
-            rusttests::CheckType::Equal,
-        )?;
+        check_value((1, 1), &table.entries_count(), &2, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1880,12 +1843,7 @@ mod tests {
 
         table.add_entry(&"entry2".to_string(), None)?;
 
-        check_value(
-            (1, 2),
-            &table.entries_count(),
-            &1,
-            rusttests::CheckType::Equal,
-        )?;
+        check_value((1, 2), &table.entries_count(), &1, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1908,12 +1866,7 @@ mod tests {
 
         table.add_entry(&"entry2".to_string(), None)?;
 
-        check_value(
-            (1, 2),
-            &table.entries_count(),
-            &1,
-            rusttests::CheckType::Equal,
-        )?;
+        check_value((1, 2), &table.entries_count(), &1, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1931,12 +1884,7 @@ mod tests {
         table.add_entry(&"entry1".to_string(), new_entry)?;
 
         check_result((1, 1), table.add_entry(&"entry1".to_string(), None), false)?;
-        check_value(
-            (1, 2),
-            &table.entries_count(),
-            &1,
-            rusttests::CheckType::Equal,
-        )?;
+        check_value((1, 2), &table.entries_count(), &1, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1970,25 +1918,20 @@ mod tests {
             table.get_entry_value(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
-            .unwrap();
-        check_struct(
-            (1, 2),
-            val,
-            &DbType::Float(5.98),
-            rusttests::CheckType::Equal,
-        )?;
+        .unwrap();
+        check_struct((1, 2), val, &DbType::Float(5.98), CheckType::Equal)?;
 
         let val = check_option(
             (2, 1),
             table.get_entry_value(&"entry2".to_string(), &"key2".to_string())?,
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_struct(
             (2, 2),
             val,
             &DbType::String("Some value".to_string()),
-            rusttests::CheckType::Equal,
+            CheckType::Equal,
         )?;
         Ok(())
     }
@@ -2112,13 +2055,8 @@ mod tests {
             table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?,
             true,
         )?
-            .unwrap();
-        check_value(
-            (1, 2),
-            &val,
-            &"New value".to_string(),
-            rusttests::CheckType::Equal,
-        )?;
+        .unwrap();
+        check_value((1, 2), &val, &"New value".to_string(), CheckType::Equal)?;
         Ok(())
     }
 
@@ -2151,13 +2089,8 @@ mod tests {
             table.get_entry_value(&"entry1".to_string(), &"key1".to_string())?,
             true,
         )?
-            .unwrap();
-        check_struct(
-            (2, 2),
-            val,
-            &DbType::Integer(1),
-            rusttests::CheckType::Equal,
-        )?;
+        .unwrap();
+        check_struct((2, 2), val, &DbType::Integer(1), CheckType::Equal)?;
         Ok(())
     }
 
@@ -2210,34 +2143,24 @@ mod tests {
             table.get_entry_value_string(&"entry2".to_string(), &"key1".to_string())?,
             true,
         )?
-            .unwrap();
-        check_value(
-            (1, 2),
-            &val,
-            &"-12".to_string(),
-            rusttests::CheckType::Equal,
-        )?;
+        .unwrap();
+        check_value((1, 2), &val, &"-12".to_string(), CheckType::Equal)?;
 
         let val = check_option(
             (2, 1),
             table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())?,
             true,
         )?
-            .unwrap();
-        check_value((2, 2), &val, &"45".to_string(), rusttests::CheckType::Equal)?;
+        .unwrap();
+        check_value((2, 2), &val, &"45".to_string(), CheckType::Equal)?;
 
         let val = check_option(
             (3, 1),
             table.get_entry_value_string(&"entry2".to_string(), &"key3".to_string())?,
             true,
         )?
-            .unwrap();
-        check_value(
-            (3, 2),
-            &val,
-            &"2.23".to_string(),
-            rusttests::CheckType::Equal,
-        )?;
+        .unwrap();
+        check_value((3, 2), &val, &"2.23".to_string(), CheckType::Equal)?;
 
         check_option(
             (4, 1),
@@ -2268,8 +2191,8 @@ mod tests {
             table.get_entry_value_integer(&"entry1".to_string(), &"key1".to_string())?,
             true,
         )?
-            .unwrap();
-        check_value((1, 2), val, &-66, rusttests::CheckType::Equal)?;
+        .unwrap();
+        check_value((1, 2), val, &-66, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2320,8 +2243,8 @@ mod tests {
             table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
-            .unwrap();
-        check_value((1, 2), val, &66, rusttests::CheckType::Equal)?;
+        .unwrap();
+        check_value((1, 2), val, &66, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2368,8 +2291,8 @@ mod tests {
             table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
-            .unwrap();
-        check_value((1, 2), val, &66.99, rusttests::CheckType::Equal)?;
+        .unwrap();
+        check_value((1, 2), val, &66.99, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2416,8 +2339,8 @@ mod tests {
             table.get_entry_value_bool(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
-            .unwrap();
-        check_value((1, 2), val, &true, rusttests::CheckType::Equal)?;
+        .unwrap();
+        check_value((1, 2), val, &true, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2450,7 +2373,7 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             (
                 "key3".to_string(),
-                DbType::default_from_string(&"Date".to_string()).unwrap(),
+                DbType::default_from_string(&"Date".to_string())?,
             ),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
@@ -2471,12 +2394,12 @@ mod tests {
             table.get_entry_value_date(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_value(
             (1, 2),
             val,
             &NaiveDate::from_ymd_opt(1789, 7, 14).unwrap(),
-            rusttests::CheckType::Equal,
+            CheckType::Equal,
         )?;
         Ok(())
     }
@@ -2488,7 +2411,7 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             (
                 "key3".to_string(),
-                DbType::default_from_string(&"Date".to_string()).unwrap(),
+                DbType::default_from_string(&"Date".to_string())?,
             ),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
@@ -2576,12 +2499,7 @@ mod tests {
 
         table.remove_entry(&"entry2".to_string())?;
 
-        check_value(
-            (1, 1),
-            &table.entries_count(),
-            &2,
-            rusttests::CheckType::Equal,
-        )?;
+        check_value((1, 1), &table.entries_count(), &2, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2603,12 +2521,7 @@ mod tests {
         table.add_entry(&"entry3".to_string(), new_entry2)?;
 
         check_result((1, 1), table.remove_entry(&"entry4".to_string()), false)?;
-        check_value(
-            (1, 2),
-            &table.entries_count(),
-            &3,
-            rusttests::CheckType::Equal,
-        )?;
+        check_value((1, 2), &table.entries_count(), &3, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2675,7 +2588,7 @@ mod tests {
                 "entry5".to_string(),
                 "entry4".to_string(),
             ]),
-            rusttests::CheckType::Equal,
+            CheckType::Equal,
         )
     }
 
@@ -2688,12 +2601,7 @@ mod tests {
         ];
         let table = DbTable::new("Table".to_string(), Some(keys));
 
-        check_value(
-            (1, 1),
-            &table.get_all_entries(),
-            &None,
-            rusttests::CheckType::Equal,
-        )
+        check_value((1, 1), &table.get_all_entries(), &None, CheckType::Equal)
     }
 
     #[test]
@@ -2836,7 +2744,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2852,7 +2760,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
@@ -2873,7 +2781,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2890,7 +2798,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2912,7 +2820,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((5, 2), res, true)?.unwrap();
         check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2934,7 +2842,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -2990,7 +2898,12 @@ mod tests {
 
         // None
         let expected_vec = vec!["entry2".to_string(), "entry4".to_string()];
-        let res = check_result((1, 1), table.get_entries_none(None, &"key3".to_string()), true)?.unwrap();
+        let res = check_result(
+            (1, 1),
+            table.get_entries_none(None, &"key3".to_string()),
+            true,
+        )?
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3001,16 +2914,31 @@ mod tests {
             "entry5".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result((2, 1), table.get_entries_some(None, &"key3".to_string()), true)?.unwrap();
+        let res = check_result(
+            (2, 1),
+            table.get_entries_some(None, &"key3".to_string()),
+            true,
+        )?
+        .unwrap();
         let opt = check_option((2, 2), res, true)?.unwrap();
         check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // No Some
-        let res = check_result((3, 1), table.get_entries_some(None, &"key2".to_string()), true)?.unwrap();
+        let res = check_result(
+            (3, 1),
+            table.get_entries_some(None, &"key2".to_string()),
+            true,
+        )?
+        .unwrap();
         check_option((3, 2), res, false)?;
 
         // No None
-        let res = check_result((4, 1), table.get_entries_none(None, &"key1".to_string()), true)?.unwrap();
+        let res = check_result(
+            (4, 1),
+            table.get_entries_none(None, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
         check_option((4, 2), res, false)?;
 
         Ok(())
@@ -3038,22 +2966,42 @@ mod tests {
 
         check_result(
             (1, 1),
-            table.get_matching_entries_bool(None, &"key2".to_string(), MatchingCriteria::Equal, false),
+            table.get_matching_entries_bool(
+                None,
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                false,
+            ),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::Between, true),
+            table.get_matching_entries_bool(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                true,
+            ),
             false,
         )?;
         check_result(
             (3, 1),
-            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::IsLess, true),
+            table.get_matching_entries_bool(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::IsLess,
+                true,
+            ),
             false,
         )?;
         check_result(
             (4, 1),
-            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::IsMore, true),
+            table.get_matching_entries_bool(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::IsMore,
+                true,
+            ),
             false,
         )?;
 
@@ -3096,20 +3044,30 @@ mod tests {
         ];
         let res = check_result(
             (1, 1),
-            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::Equal, true),
+            table.get_matching_entries_bool(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                true,
+            ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         // No match
         let res = check_result(
             (2, 1),
-            table.get_matching_entries_bool(None, &"key3".to_string(), MatchingCriteria::Equal, true),
+            table.get_matching_entries_bool(
+                None,
+                &"key3".to_string(),
+                MatchingCriteria::Equal,
+                true,
+            ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
@@ -3120,10 +3078,15 @@ mod tests {
         ];
         let res = check_result(
             (3, 1),
-            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::Different, true),
+            table.get_matching_entries_bool(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Different,
+                true,
+            ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3135,10 +3098,15 @@ mod tests {
         ];
         let res = check_result(
             (4, 1),
-            table.get_matching_entries_bool(None, &"key1".to_string(), MatchingCriteria::Equal, false),
+            table.get_matching_entries_bool(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                false,
+            ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3289,7 +3257,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3304,7 +3272,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
@@ -3323,7 +3291,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3428,7 +3396,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3444,7 +3412,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
@@ -3465,7 +3433,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3486,7 +3454,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3503,7 +3471,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((5, 2), res, true)?.unwrap();
         check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3525,7 +3493,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3630,7 +3598,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3646,7 +3614,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
@@ -3667,7 +3635,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3688,7 +3656,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3705,7 +3673,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((5, 2), res, true)?.unwrap();
         check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3727,7 +3695,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3843,7 +3811,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3859,7 +3827,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((2, 2), res, false)?;
 
         // Different
@@ -3880,7 +3848,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3897,7 +3865,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3918,7 +3886,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((5, 2), res, true)?.unwrap();
         check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3939,7 +3907,7 @@ mod tests {
             ),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
@@ -3981,7 +3949,7 @@ mod tests {
             table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((3, 2), res, false)?;
 
         Ok(())
@@ -4022,7 +3990,7 @@ mod tests {
             table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
         let res = check_result(
@@ -4030,7 +3998,7 @@ mod tests {
             table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((2, 2), res, true)?.unwrap();
         check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
 
@@ -4072,7 +4040,7 @@ mod tests {
             table.get_unique_integer_values_for_key(None, &"key2".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((3, 2), res, false)?;
 
         Ok(())
@@ -4113,7 +4081,7 @@ mod tests {
             table.get_unique_unsigned_integer_values_for_key(None, &"key2".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((3, 2), res, false)?;
 
         Ok(())
@@ -4165,7 +4133,7 @@ mod tests {
             table.get_unique_integer_values_for_key(None, &"key1".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
         let res = check_result(
@@ -4173,7 +4141,7 @@ mod tests {
             table.get_unique_unsigned_integer_values_for_key(None, &"key2".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((2, 2), res, true)?.unwrap();
         check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
         Ok(())
@@ -4214,7 +4182,7 @@ mod tests {
             table.get_unique_string_values_for_key(None, &"key2".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((3, 2), res, false)?;
 
         Ok(())
@@ -4266,7 +4234,7 @@ mod tests {
             table.get_unique_string_values_for_key(None, &"key1".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
         let res = check_result(
@@ -4274,7 +4242,7 @@ mod tests {
             table.get_unique_string_values_for_key(None, &"key2".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((2, 2), res, true)?.unwrap();
         check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
         Ok(())
@@ -4315,7 +4283,7 @@ mod tests {
             table.get_unique_float_values_for_key(None, &"key2".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((3, 2), res, false)?;
 
         Ok(())
@@ -4366,7 +4334,7 @@ mod tests {
             table.get_unique_float_values_for_key(None, &"key1".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
 
@@ -4426,7 +4394,7 @@ mod tests {
             table.get_unique_date_values_for_key(None, &"key2".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         check_option((3, 2), res, false)?;
 
         Ok(())
@@ -4477,9 +4445,9 @@ mod tests {
         table.add_entry(&"entry4".to_string(), new_entry4)?;
 
         let expected_vec_1 = vec![
-            NaiveDate::from_ymd_opt(2021, 12, 01).unwrap(),
-            NaiveDate::from_ymd_opt(2021, 12, 02).unwrap(),
-            NaiveDate::from_ymd_opt(2021, 12, 03).unwrap(),
+            NaiveDate::from_ymd_opt(2021, 12, 1).unwrap(),
+            NaiveDate::from_ymd_opt(2021, 12, 2).unwrap(),
+            NaiveDate::from_ymd_opt(2021, 12, 3).unwrap(),
         ];
 
         let res = check_result(
@@ -4487,7 +4455,7 @@ mod tests {
             table.get_unique_date_values_for_key(None, &"key1".to_string()),
             true,
         )?
-            .unwrap();
+        .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
 
