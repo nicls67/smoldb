@@ -93,7 +93,7 @@ impl DbModel {
 
     /// Returns the version of the object as a string.
     ///
-    /// This function formats the version array into a string using the format "<major>.<minor>.<patch>".
+    /// This function formats the version array into a string using the format "major.minor.patch".
     ///
     /// # Arguments
     ///
