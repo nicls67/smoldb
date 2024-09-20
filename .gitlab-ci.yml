@@ -3,14 +3,11 @@
 # This specific template is located at:
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Rust.gitlab-ci.yml
 
-workflow:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 image: rust:latest
 
 default:
   before_script:
-    - rustc --version 
+    - rustc --version
     - cargo --version
     - cargo install gitlab-report
 
@@ -23,8 +20,8 @@ stages:
 check:clippy:
   stage: check
   script:
-        - rustup component add clippy
-        - 'cargo clippy
+    - rustup component add clippy
+    - 'cargo clippy
             --color always
             --verbose
             --all-targets
@@ -35,10 +32,10 @@ check:clippy:
   tags:
     - rust
   artifacts:
-        when: always
-        reports:
-            codequality: gl-code-quality-report.json
-        expire_in: 1 week
+    when: always
+    reports:
+      codequality: gl-code-quality-report.json
+    expire_in: 1 week
 
 # Use cargo to test the project
 test:nightly:
