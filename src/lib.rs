@@ -173,6 +173,17 @@ impl SmolDb {
             Err(warn_msg)
         }
     }
+
+    /// Retrieves the library version and the authors as defined in the package metadata.
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - The version of the library as a `&'static str`.
+    /// - The authors of the library as a `&'static str`.
+    pub fn get_lib_infos() -> (&'static str, &'static str) {
+        (env!("CARGO_PKG_VERSION"), env!("CARGO_PKG_AUTHORS"))
+    }
 }
 
 #[cfg(test)]
