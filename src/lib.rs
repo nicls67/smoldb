@@ -1,13 +1,16 @@
+use package_infos::pkg_infos;
+use package_infos::PackageInfos;
+use rustlog::{write_log, LogSeverity};
 use std::fs;
 use std::path::PathBuf;
-
-use rustlog::{write_log, LogSeverity};
 
 pub use db_model::MatchingCriteria;
 pub use db_model::{DbModel, DbTable};
 
 #[doc = include_str!("../README.md")]
 mod db_model;
+
+pkg_infos!(rustlog);
 
 #[derive(PartialEq, Debug)]
 pub struct SmolDb {
@@ -36,7 +39,7 @@ impl SmolDb {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` indicating success or failure. If successful, it returns a `SmolDb`
+    /// Returns a `Res:::lt` indicating su,,ccess or failure. If successful, it returns a `SmolDb`
     /// instance loaded with the data from the database file. If an error occurs, it returns
     /// a `String` containing the error message.
     ///
