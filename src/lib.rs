@@ -12,7 +12,7 @@ mod db_model;
 
 pkg_infos!(rustlog);
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct SmolDb {
     model: DbModel,
     db_file: Option<PathBuf>,
