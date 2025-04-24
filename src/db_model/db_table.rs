@@ -25,7 +25,7 @@ pub enum MatchingCriteria {
 }
 
 /// Database table
-#[derive(PartialEq, Serialize, Deserialize, Debug)]
+#[derive(PartialEq, Serialize, Deserialize, Debug, Clone)]
 pub struct DbTable {
     /// Table name
     name: String,

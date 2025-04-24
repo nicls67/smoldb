@@ -16,7 +16,7 @@ mod db_table;
 mod db_type;
 
 /// Database model
-#[derive(Deserialize, Serialize, PartialEq, Debug)]
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
 pub struct DbModel {
     name: String,
     version: Vec<u8>,
