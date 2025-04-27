@@ -151,7 +151,7 @@ impl SmolDb {
     ///
     pub fn save(&self) -> Result<(), String> {
         if let Some(db_file) = &self.db_file {
-            match serde_json::to_string(&self.model) {
+            match serde_json::to_string_pretty(&self.model) {
                 Ok(json) => match fs::write(db_file, &json) {
                     Ok(_) => {
                         let info_msg = format!("Database saved to file {}", db_file.display());
