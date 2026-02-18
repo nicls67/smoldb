@@ -117,7 +117,7 @@ table.update_entry_float( & "entry1".to_string(), & "key3".to_string(), Some(1.2
 table.update_entry_integer( & "entry1".to_string(), & "key3".to_string(), None);
 
 // Get an entry value using string
-let value: Option<String> = table.get_entry_value_string( & "entry1".to_string(), & "key2".to_string()).unwrap();
+let value: Option<String> = table.get_entry_value_string( & "entry1".to_string(), & "key1".to_string()).unwrap();
 // Get an entry value using type-specific method
 let value: Option< & f32> = table.get_entry_value_float( & "entry1".to_string(), & "key3".to_string()).unwrap();
 

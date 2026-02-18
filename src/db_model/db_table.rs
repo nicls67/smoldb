@@ -42,7 +42,7 @@ impl DbTable {
     ///
     /// * `name` - A `String` representing the name of the table.
     /// * `keys` - An optional `Vec` of tuples containing a `String` representing the name of each key,
-    ///            and a `DbType` representing the type of the key.
+    ///   and a `DbType` representing the type of the key.
     ///
     /// # Returns
     ///
@@ -62,7 +62,7 @@ impl DbTable {
     ///
     /// * `name` - The name of the entry. It must be unique within the table.
     /// * `values` - Optional values for the entry. If provided, the length must be equal to the number of keys in the table.
-    ///              Each value should be wrapped in an `Option<String>`.
+    ///   Each value should be wrapped in an `Option<String>`.
     ///
     /// # Returns
     ///
@@ -88,11 +88,7 @@ impl DbTable {
                 "Cannot create new entry : name {} already exists in table",
                 name
             );
-            write_log(
-                LogSeverity::Error,
-                &msg,
-                &env!("CARGO_PKG_NAME").to_string(),
-            );
+            write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
             return Err(msg);
         }
 
@@ -103,11 +99,7 @@ impl DbTable {
                     "Cannot create new entry : `values` parameter must have a length of {}",
                     self.keys.len()
                 );
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 return Err(msg);
             }
             // Store values after conversion
@@ -167,13 +159,24 @@ impl DbTable {
     ///
     /// * `Ok(Some(value))` - If the key exists in the entry, returns `Some(value.to_string())` where `value` is the value associated with the key.
     /// * `Ok(None)` - If the key does not exist in the entry, returns `None`.
-    /// * `Err(message)` - If an error occurs during the retrieval of the value, returns an error message as a `String`.
+    /// * `Err(message)` - If the key does not have a string type or if the entry does not exist.
     ///
     pub fn get_entry_value_string(
         &mut self,
         entry_name: &String,
         key_name: &String,
     ) -> Result<Option<String>, String> {
+        // Check that the key has a string type
+        let key = self.find_key(key_name)?;
+        match key.1 {
+            DbType::String(_) => {}
+            _ => {
+                let msg = format!("Key {} is not a string", key_name);
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
+                return Err(msg);
+            }
+        }
+
         if let Some(value) = self.get_entry_value(entry_name, key_name)? {
             Ok(Some(value.to_string()))
         } else {
@@ -515,7 +518,7 @@ impl DbTable {
         write_log(
             LogSeverity::Info,
             &format!("DELETE entry {entry_name}"),
-            &env!("CARGO_PKG_NAME").to_string(),
+            env!("CARGO_PKG_NAME"),
         );
         Ok(())
     }
@@ -550,11 +553,7 @@ impl DbTable {
         if let Some(ref db_val) = new_value {
             if discriminant(key.1) != discriminant(db_val) {
                 let msg = format!("Type of key {} is not compatible with given type", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 return Err(msg);
             }
         }
@@ -564,7 +563,7 @@ impl DbTable {
         write_log(
             LogSeverity::Verbose,
             &format!("UPDATE entry {} key {}", entry_name, key_name),
-            &env!("CARGO_PKG_NAME").to_string(),
+            env!("CARGO_PKG_NAME"),
         );
         Ok(())
     }
@@ -591,7 +590,7 @@ impl DbTable {
         write_log(
             LogSeverity::Verbose,
             &format!("GET entry {} key {}", entry_name, key_name),
-            &env!("CARGO_PKG_NAME").to_string(),
+            env!("CARGO_PKG_NAME"),
         );
         Ok(val)
     }
@@ -628,11 +627,7 @@ impl DbTable {
             "Entry {} does not exists in table {}",
             entry_name, self.name
         );
-        write_log(
-            LogSeverity::Error,
-            &msg,
-            &env!("CARGO_PKG_NAME").to_string(),
-        );
+        write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
         Err(msg)
     }
 
@@ -669,11 +664,7 @@ impl DbTable {
         }
 
         let msg = format!("Key {} does not exists in table {}", key_name, self.name);
-        write_log(
-            LogSeverity::Error,
-            &msg,
-            &env!("CARGO_PKG_NAME").to_string(),
-        );
+        write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
         Err(msg)
     }
 
@@ -699,7 +690,7 @@ impl DbTable {
         write_log(
             LogSeverity::Info,
             &format!("ADDED key {} to table {}", key_name, self.name),
-            &env!("CARGO_PKG_NAME").to_string(),
+            env!("CARGO_PKG_NAME"),
         );
         Ok(())
     }
@@ -719,7 +710,7 @@ impl DbTable {
     /// # Returns
     ///
     /// Returns `Ok(())` if the rename operation was successful, otherwise returns an `Err` with an error message.
-    pub fn rename_entry(&mut self, entry_name: &String, new_name: &String) -> Result<(), String> {
+    pub fn rename_entry(&mut self, entry_name: &String, new_name: &str) -> Result<(), String> {
         self.find_entry(entry_name)?.0.rename(new_name);
         Ok(())
     }
@@ -802,22 +793,14 @@ impl DbTable {
             if date2.is_none() {
                 let msg =
                     "Second reference date not defined for Between date comparison".to_string();
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 return Err(msg);
             }
             if let Some(date) = date2 {
                 let delta = date - date1;
                 if delta.num_days() <= 0 {
                     let msg = "Second reference date is not after first reference date".to_string();
-                    write_log(
-                        LogSeverity::Error,
-                        &msg,
-                        &env!("CARGO_PKG_NAME").to_string(),
-                    );
+                    write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                     return Err(msg);
                 }
             }
@@ -870,11 +853,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not a date", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -895,11 +874,7 @@ impl DbTable {
     fn check_and_log_error(condition: bool, msg: &'static str) -> Result<(), String> {
         if condition {
             let full_msg = format!("Incompatibility between comparison inputs: {}", msg);
-            write_log(
-                LogSeverity::Error,
-                &full_msg,
-                &env!("CARGO_PKG_NAME").to_string(),
-            );
+            write_log(LogSeverity::Error, &full_msg, env!("CARGO_PKG_NAME"));
             return Err(full_msg);
         }
         Ok(())
@@ -981,6 +956,74 @@ impl DbTable {
         }
     }
 
+    /// Checks if the input unsigned integers are compatible based on the given matching criteria.
+    ///
+    /// # Arguments
+    ///
+    /// * `criteria` - The matching criteria to determine the compatibility.
+    /// * `int1` - The first reference unsigned integer.
+    /// * `int2` - The second reference unsigned integer. This argument is an `Option` and can be `None`.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the input unsigned integers are compatible. Otherwise, returns `Err` with an error message.
+    ///
+    /// # Errors
+    ///
+    /// An error occurs in the following conditions:
+    ///
+    /// * If `MatchingCriteria::Between` is passed as `criteria`, and `int2` is `None`.
+    /// * If `MatchingCriteria::Between` is passed as `criteria`, and `int2` is defined but less than or equal to `int1`.
+    ///
+    fn check_input_compatibility_uint(
+        criteria: &MatchingCriteria,
+        int1: u32,
+        int2: Option<u32>,
+    ) -> Result<(), String> {
+        if *criteria == MatchingCriteria::Between {
+            Self::check_and_log_error(
+                int2.is_none(),
+                "Second reference integer not defined for Between integer comparison",
+            )?;
+
+            if let Some(value) = int2 {
+                Self::check_and_log_error(
+                    value <= int1,
+                    "Second reference integer is not higher than first reference integer",
+                )?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Compares an entry value with two unsigned integer values using the given matching criteria.
+    ///
+    /// # Arguments
+    ///
+    /// * `entry_value` - The unsigned integer value to compare.
+    /// * `criteria` - The matching criteria to apply.
+    /// * `int1` - The first unsigned integer value to compare.
+    /// * `int2` - An optional second unsigned integer value to compare.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the comparison satisfies the matching criteria, otherwise `false`.
+    ///
+    fn unsigned_integer_comparison(
+        entry_value: u32,
+        criteria: &MatchingCriteria,
+        int1: u32,
+        int2: Option<u32>,
+    ) -> bool {
+        match criteria {
+            MatchingCriteria::IsMore => entry_value > int1,
+            MatchingCriteria::IsLess => entry_value < int1,
+            MatchingCriteria::Equal => entry_value == int1,
+            MatchingCriteria::Different => entry_value != int1,
+            MatchingCriteria::Between => entry_value >= int1 && entry_value <= int2.unwrap(),
+        }
+    }
+
     /// Retrieves entries with a matching integer value based on the specified criteria.
     ///
     /// # Arguments
@@ -1039,11 +1082,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not an integer", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -1076,7 +1115,7 @@ impl DbTable {
             return Ok(None);
         }
         // Check input compatibility
-        Self::check_input_compatibility_int(&criteria, int1 as i32, int2.map(|v| v as i32))?;
+        Self::check_input_compatibility_uint(&criteria, int1, int2)?;
 
         // Check selected key has an unsigned int type
         let key = self.find_key(key_name)?;
@@ -1085,12 +1124,7 @@ impl DbTable {
                 let mut output = Vec::new();
                 for entry in self.get_entries_subset(entries_subset) {
                     if let Some(DbType::UnsignedInt(entry_int)) = entry.get(key.0) {
-                        if Self::integer_comparison(
-                            *entry_int as i32,
-                            &criteria,
-                            int1 as i32,
-                            int2.map(|v| v as i32),
-                        ) {
+                        if Self::unsigned_integer_comparison(*entry_int, &criteria, int1, int2) {
                             output.push(entry.name().clone());
                         }
                     }
@@ -1104,11 +1138,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not an unsigned integer", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -1153,22 +1183,14 @@ impl DbTable {
             if float2.is_none() {
                 let msg =
                     "Second reference float not defined for Between integer comparison".to_string();
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 return Err(msg);
             }
             if let Some(value) = float2 {
                 if value - float1 <= 0.0 {
                     let msg = "Second reference float is not higher than first reference float"
                         .to_string();
-                    write_log(
-                        LogSeverity::Error,
-                        &msg,
-                        &env!("CARGO_PKG_NAME").to_string(),
-                    );
+                    write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                     return Err(msg);
                 }
             }
@@ -1184,28 +1206,28 @@ impl DbTable {
                         let delta = entry_float - float1;
                         match criteria {
                             MatchingCriteria::IsMore => {
-                                if delta > 0.0 {
+                                if delta > f32::EPSILON {
                                     output.push(entry.name().clone());
                                 }
                             }
                             MatchingCriteria::IsLess => {
-                                if delta < 0.0 {
+                                if delta < -f32::EPSILON {
                                     output.push(entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Equal => {
-                                if delta == 0.0 {
+                                if delta.abs() <= f32::EPSILON {
                                     output.push(entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Different => {
-                                if delta != 0.0 {
+                                if delta.abs() > f32::EPSILON {
                                     output.push(entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Between => {
                                 let delta2 = entry_float - float2.unwrap();
-                                if delta >= 0.0 && delta2 <= 0.0 {
+                                if delta >= -f32::EPSILON && delta2 <= f32::EPSILON {
                                     output.push(entry.name().clone());
                                 }
                             }
@@ -1221,11 +1243,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not a float", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -1276,11 +1294,7 @@ impl DbTable {
                             }
                             _ => {
                                 let msg = "Only Equal and Different matching criteria are allowed for Boolean data".to_string();
-                                write_log(
-                                    LogSeverity::Error,
-                                    &msg,
-                                    &env!("CARGO_PKG_NAME").to_string(),
-                                );
+                                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                                 return Err(msg);
                             }
                         }
@@ -1295,11 +1309,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not a boolean", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -1350,11 +1360,7 @@ impl DbTable {
                             }
                             _ => {
                                 let msg = "Only Equal and Different matching criteria are allowed for String data".to_string();
-                                write_log(
-                                    LogSeverity::Error,
-                                    &msg,
-                                    &env!("CARGO_PKG_NAME").to_string(),
-                                );
+                                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                                 return Err(msg);
                             }
                         }
@@ -1369,11 +1375,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not a string", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -1494,11 +1496,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not a bool", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -1546,11 +1544,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not an integer", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -1597,11 +1591,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not an unsigned integer", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -1648,11 +1638,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not a string", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -1700,11 +1686,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not a float", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -1753,11 +1735,7 @@ impl DbTable {
             }
             _ => {
                 let msg = format!("Key {} is not a date", key_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
         }
@@ -2121,18 +2099,11 @@ mod tests {
     #[test]
     fn get_entry_string() -> Result<(), String> {
         let keys = vec![
-            ("key1".to_string(), DbType::Integer(0)),
-            ("key2".to_string(), DbType::UnsignedInt(0)),
-            ("key3".to_string(), DbType::Float(0.0)),
-            ("key4".to_string(), DbType::Float(0.0)),
+            ("key1".to_string(), DbType::String(String::new())),
+            ("key2".to_string(), DbType::String(String::new())),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
-            Some("-12".to_string()),
-            Some("45".to_string()),
-            Some("2.23".to_string()),
-            None,
-        ];
+        let mut binding = vec![Some("hello".to_string()), None];
         let new_entry = Some(&mut binding);
 
         table.add_entry(&"entry1".to_string(), None)?;
@@ -2144,27 +2115,11 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_value((1, 2), &val, &"-12".to_string(), CheckType::Equal)?;
-
-        let val = check_option(
-            (2, 1),
-            table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())?,
-            true,
-        )?
-        .unwrap();
-        check_value((2, 2), &val, &"45".to_string(), CheckType::Equal)?;
-
-        let val = check_option(
-            (3, 1),
-            table.get_entry_value_string(&"entry2".to_string(), &"key3".to_string())?,
-            true,
-        )?
-        .unwrap();
-        check_value((3, 2), &val, &"2.23".to_string(), CheckType::Equal)?;
+        check_value((1, 2), &val, &"hello".to_string(), CheckType::Equal)?;
 
         check_option(
-            (4, 1),
-            table.get_entry_value_string(&"entry2".to_string(), &"key4".to_string())?,
+            (2, 1),
+            table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())?,
             false,
         )?;
         Ok(())
@@ -2540,19 +2495,19 @@ mod tests {
         table.add_entry(&"entry2".to_string(), None)?;
         check_result(
             (1, 1),
-            table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()),
+            table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string()),
             true,
         )?;
 
-        table.rename_entry(&"entry1".to_string(), &"entry99".to_string())?;
+        table.rename_entry(&"entry1".to_string(), "entry99")?;
         check_result(
             (1, 2),
-            table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string()),
+            table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string()),
             false,
         )?;
         check_result(
             (1, 3),
-            table.get_entry_value_string(&"entry99".to_string(), &"key1".to_string()),
+            table.get_entry_value_string(&"entry99".to_string(), &"key2".to_string()),
             true,
         )?;
 

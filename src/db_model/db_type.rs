@@ -2,6 +2,8 @@
 //! Database types definition
 //!
 
+use std::fmt;
+
 use chrono::NaiveDate;
 use rustlog::{write_log, LogSeverity};
 use serde_derive::{Deserialize, Serialize};
@@ -57,18 +59,6 @@ impl DbType {
         }
     }
 
-    /// Convert the value of a DbType enum variant to a String representation.
-    pub fn to_string(&self) -> String {
-        match &self {
-            DbType::Integer(i) => i.to_string(),
-            DbType::UnsignedInt(u) => u.to_string(),
-            DbType::Float(f) => f.to_string(),
-            DbType::String(s) => s.clone(),
-            DbType::Date(d) => d.format("%d/%m/%Y").to_string(),
-            DbType::Bool(b) => b.to_string(),
-        }
-    }
-
     /// Checks if the given `new_type` is compatible with the current database type.
     ///
     /// # Arguments
@@ -93,11 +83,7 @@ impl DbType {
             Ok(())
         } else {
             let msg = "Database type incompatibility".to_string();
-            write_log(
-                LogSeverity::Error,
-                &msg,
-                &env!("CARGO_PKG_NAME").to_string(),
-            );
+            write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
             Err(msg)
         }
     }
@@ -119,17 +105,29 @@ impl DbType {
             "UnsignedInt" => Ok(DbType::UnsignedInt(0)),
             "Float" => Ok(DbType::Float(0.0)),
             "Bool" => Ok(DbType::Bool(false)),
-            "String" => Ok(DbType::String(String::from(" "))),
+            "String" => Ok(DbType::String(String::new())),
             "Date" => Ok(DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap())),
             _ => {
                 let msg = format!("Unknown database type : {}", type_name);
-                write_log(
-                    LogSeverity::Error,
-                    &msg,
-                    &env!("CARGO_PKG_NAME").to_string(),
-                );
+                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                 Err(msg)
             }
+        }
+    }
+}
+
+/// Display implementation for `DbType`.
+///
+/// Converts the value of a `DbType` enum variant to a `String` representation.
+impl fmt::Display for DbType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DbType::Integer(i) => write!(f, "{}", i),
+            DbType::UnsignedInt(u) => write!(f, "{}", u),
+            DbType::Float(fl) => write!(f, "{}", fl),
+            DbType::String(s) => write!(f, "{}", s),
+            DbType::Date(d) => write!(f, "{}", d.format("%d/%m/%Y")),
+            DbType::Bool(b) => write!(f, "{}", b),
         }
     }
 }

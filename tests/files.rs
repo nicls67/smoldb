@@ -1,5 +1,5 @@
 //!
-//! Databse files integration tests for `SmolDB` crate
+//! Database files integration tests for `SmolDB` crate
 //!
 
 use std::fs::remove_file;
@@ -23,8 +23,7 @@ fn file_ops_1() -> Result<(), String> {
         ("key3".to_string(), "Float".to_string()),
     ]);
 
-    db.database()
-        .create_table(&"Table test 1".to_string(), keys)?;
+    db.database().create_table("Table test 1", keys)?;
 
     let table = db.database().table(&"Table test 1".to_string())?;
 
