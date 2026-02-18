@@ -8,9 +8,9 @@ use smoldb::get_package_infos;
 
 #[test]
 fn test_macro() -> Result<(), String> {
-    let infos = get_package_infos();
+    let l_infos = get_package_infos();
 
-    let expected = PackageInfos {
+    let l_expected = PackageInfos {
         name: env!("CARGO_PKG_NAME"),
         version: env!("CARGO_PKG_VERSION"),
         authors: env!("CARGO_PKG_AUTHORS"),
@@ -18,10 +18,10 @@ fn test_macro() -> Result<(), String> {
         dependencies: vec![rustlog::get_package_infos()],
     };
 
-    check_value((1, 1), &infos, &expected, CheckType::Equal)?;
+    check_value((1, 1), &l_infos, &l_expected, CheckType::Equal)?;
 
     // Uncomment for debugging package infos
-    //println!("{}", infos);
+    //println!("{}", l_infos);
 
     Ok(())
 }

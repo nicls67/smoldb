@@ -40,8 +40,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `name` - A `String` representing the name of the table.
-    /// * `keys` - An optional `Vec` of tuples containing a `String` representing the name of each key,
+    /// * `p_name` - A `String` representing the name of the table.
+    /// * `p_keys` - An optional `Vec` of tuples containing a `String` representing the name of each key,
     ///   and a `DbType` representing the type of the key.
     ///
     /// # Returns
@@ -60,8 +60,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `name` - The name of the entry. It must be unique within the table.
-    /// * `values` - Optional values for the entry. If provided, the length must be equal to the number of keys in the table.
+    /// * `p_name` - The name of the entry. It must be unique within the table.
+    /// * `p_values` - Optional values for the entry. If provided, the length must be equal to the number of keys in the table.
     ///   Each value should be wrapped in an `Option<String>`.
     ///
     /// # Returns
@@ -126,9 +126,9 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// - `entry_name`: A reference to the name of the entry.
-    /// - `key_name`: A reference to the name of the key.
-    /// - `new_value`: An optional new value to update the key with. If `None`, the key will be unset.
+    /// - `p_entry_name`: A reference to the name of the entry.
+    /// - `p_key_name`: A reference to the name of the key.
+    /// - `p_new_value`: An optional new value to update the key with. If `None`, the key will be unset.
     ///
     /// # Returns
     ///
@@ -152,8 +152,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - A reference to a `String` that represents the name of the entry.
-    /// * `key_name` - A reference to a `String` that represents the name of the key.
+    /// * `p_entry_name` - A reference to a `String` that represents the name of the entry.
+    /// * `p_key_name` - A reference to a `String` that represents the name of the key.
     ///
     /// # Returns
     ///
@@ -188,9 +188,9 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - The name of the entry to update.
-    /// * `key_name` - The name of the key within the entry to update.
-    /// * `new_value` - The new integer value to set. Pass `None` to remove the value.
+    /// * `p_entry_name` - The name of the entry to update.
+    /// * `p_key_name` - The name of the key within the entry to update.
+    /// * `p_new_value` - The new integer value to set. Pass `None` to remove the value.
     ///
     /// # Returns
     ///
@@ -213,7 +213,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - The name of the entry to retrieve
+    /// * `p_entry_name` - The name of the entry to retrieve
     pub fn get_entry_value_integer(
         &mut self,
         entry_name: &String,
@@ -241,9 +241,9 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// - `entry_name`: The name of the entry to update.
-    /// - `key_name`: The name of the key within the entry to update.
-    /// - `new_value`: The new value to set for the key. Use `None` to delete the key.
+    /// - `p_entry_name`: The name of the entry to update.
+    /// - `p_key_name`: The name of the key within the entry to update.
+    /// - `p_new_value`: The new value to set for the key. Use `None` to delete the key.
     ///
     /// # Returns
     ///
@@ -266,8 +266,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - The name of the entry to retrieve the value from.
-    /// * `key_name` - The name of the key within the entry.
+    /// * `p_entry_name` - The name of the entry to retrieve the value from.
+    /// * `p_key_name` - The name of the key within the entry.
     ///
     /// # Returns
     ///
@@ -307,9 +307,9 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// - `entry_name`: A reference to the string containing the name of the entry.
-    /// - `key_name`: A reference to the string containing the name of the key in the entry.
-    /// - `new_value`: An optional `f32` value containing the new value to be set.
+    /// - `p_entry_name`: A reference to the string containing the name of the entry.
+    /// - `p_key_name`: A reference to the string containing the name of the key in the entry.
+    /// - `p_new_value`: An optional `f32` value containing the new value to be set.
     ///
     /// # Returns
     ///
@@ -333,8 +333,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - The name of the entry to retrieve from.
-    /// * `key_name` - The name of the key to retrieve the value for.
+    /// * `p_entry_name` - The name of the entry to retrieve from.
+    /// * `p_key_name` - The name of the key to retrieve the value for.
     ///
     /// # Returns
     ///
@@ -366,15 +366,15 @@ impl DbTable {
 
     /// Updates the entry with the specified key in the database.
     ///
-    /// The `entry_name` parameter is a reference to the name of the entry to be updated.
-    /// The `key_name` parameter is a reference to the name of the key in the entry to be updated.
-    /// The `new_value` parameter is an optional boolean value to be set as the new value for the key.
+    /// The `p_entry_name` parameter is a reference to the name of the entry to be updated.
+    /// The `p_key_name` parameter is a reference to the name of the key in the entry to be updated.
+    /// The `p_new_value` parameter is an optional boolean value to be set as the new value for the key.
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - The name of the entry to be updated.
-    /// * `key_name` - The name of the key in the entry to be updated.
-    /// * `new_value` - An optional boolean value to be set as the new value for the key.
+    /// * `p_entry_name` - The name of the entry to be updated.
+    /// * `p_key_name` - The name of the key in the entry to be updated.
+    /// * `p_new_value` - An optional boolean value to be set as the new value for the key.
     ///
     /// # Errors
     ///
@@ -401,8 +401,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// - `entry_name`: A reference to a `String` representing the entry name.
-    /// - `key_name`: A reference to a `String` representing the key name.
+    /// - `p_entry_name`: A reference to a `String` representing the entry name.
+    /// - `p_key_name`: A reference to a `String` representing the key name.
     ///
     /// # Returns
     ///
@@ -437,9 +437,9 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// - `entry_name`: The name of the entry to update.
-    /// - `key_name`: The name of the key within the entry to update.
-    /// - `new_value`: An optional new value for the entry date.
+    /// - `p_entry_name`: The name of the entry to update.
+    /// - `p_key_name`: The name of the key within the entry to update.
+    /// - `p_new_value`: An optional new value for the entry date.
     ///
     /// # Returns
     ///
@@ -465,8 +465,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - A reference to a String representing the name of the entry
-    /// * `key_name` - A reference to a String representing the name of the key
+    /// * `p_entry_name` - A reference to a String representing the name of the entry
+    /// * `p_key_name` - A reference to a String representing the name of the key
     ///
     /// # Returns
     ///
@@ -506,7 +506,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - The name of the entry to remove.
+    /// * `p_entry_name` - The name of the entry to remove.
     ///
     /// # Returns
     ///
@@ -527,9 +527,9 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - The name of the entry to update.
-    /// * `key_name` - The name of the key to update.
-    /// * `new_value` - The new value to assign to the key.
+    /// * `p_entry_name` - The name of the entry to update.
+    /// * `p_key_name` - The name of the key to update.
+    /// * `p_new_value` - The new value to assign to the key.
     ///
     /// # Errors
     ///
@@ -537,7 +537,7 @@ impl DbTable {
     ///
     /// # Remarks
     ///
-    /// This method finds the key by name in the database. If the `new_value` parameter is provided, it checks if the type of the key matches the type of the new value. If not, it logs an error message and returns an error. Otherwise, it updates the key with the new value in the entry identified by `entry_name`.
+    /// This method finds the key by name in the database. If the `p_new_value` parameter is provided, it checks if the type of the key matches the type of the new value. If not, it logs an error message and returns an error. Otherwise, it updates the key with the new value in the entry identified by `p_entry_name`.
     ///
     /// It also logs a verbose message indicating that an entry has been updated.
     ///
@@ -572,8 +572,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// - `entry_name`: A reference to a String representing the name of the entry.
-    /// - `key_name`: A reference to a String representing the name of the key.
+    /// - `p_entry_name`: A reference to a String representing the name of the entry.
+    /// - `p_key_name`: A reference to a String representing the name of the key.
     ///
     /// # Returns
     ///
@@ -609,7 +609,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - The name of the entry to search for.
+    /// * `p_entry_name` - The name of the entry to search for.
     ///
     /// # Returns
     ///
@@ -635,7 +635,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - The name of the entry to look for.
+    /// * `p_entry_name` - The name of the entry to look for.
     ///
     /// # Returns
     ///
@@ -649,7 +649,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `key_name` - The name of the key to find.
+    /// * `p_key_name` - The name of the key to find.
     ///
     /// # Returns
     ///
@@ -672,12 +672,12 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `key_name` - The name of the key.
-    /// * `key_type` - The data type of the key.
+    /// * `p_key_name` - The name of the key.
+    /// * `p_key_type` - The data type of the key.
     ///
     /// # Errors
     ///
-    /// Returns an error if `key_type` does not correspond to a known type.
+    /// Returns an error if `p_key_type` does not correspond to a known type.
     ///
     pub fn add_key(&mut self, key_name: &String, key_type: &String) -> Result<(), String> {
         self.keys
@@ -704,8 +704,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_name` - The name of the entry to be renamed.
-    /// * `new_name` - The new name for the entry.
+    /// * `p_entry_name` - The name of the entry to be renamed.
+    /// * `p_new_name` - The new name for the entry.
     ///
     /// # Returns
     ///
@@ -733,7 +733,7 @@ impl DbTable {
         Some(
             self.entries
                 .iter()
-                .map(|entry| entry.name().clone())
+                .map(|p_entry| p_entry.name().clone())
                 .collect(),
         )
     }
@@ -742,7 +742,7 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset_names` - An optional vector of entry names to filter the database entries.
+    /// * `p_entries_subset_names` - An optional vector of entry names to filter the database entries.
     ///
     /// # Returns
     ///
@@ -750,9 +750,9 @@ impl DbTable {
     fn get_entries_subset(&self, entries_subset_names: Option<Vec<&String>>) -> Vec<&DbEntry> {
         self.entries
             .iter()
-            .filter(|entry| {
+            .filter(|p_entry| {
                 if let Some(names) = &entries_subset_names {
-                    names.contains(&entry.name())
+                    names.contains(&p_entry.name())
                 } else {
                     true
                 }
@@ -764,11 +764,11 @@ impl DbTable {
     ///
     /// This method takes in the following parameters:
     ///
-    /// - `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// - `key_name`: A reference to a string value that represents the key used for comparison.
-    /// - `criteria`: A `MatchingCriteria` enum value that specifies the type of matching criteria to use.
-    /// - `date1`: A `NaiveDate` value representing the first reference date for comparison.
-    /// - `date2`: An optional `NaiveDate` value representing the second reference date for comparison. It is required when `criteria` is set to `MatchingCriteria::Between`.
+    /// - `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// - `p_key_name`: A reference to a string value that represents the key used for comparison.
+    /// - `p_criteria`: A `MatchingCriteria` enum value that specifies the type of matching criteria to use.
+    /// - `p_date1`: A `NaiveDate` value representing the first reference date for comparison.
+    /// - `p_date2`: An optional `NaiveDate` value representing the second reference date for comparison. It is required when `p_criteria` is set to `MatchingCriteria::Between`.
     ///
     /// The method returns a `Result<Option<Vec<String>>, String>`:
     ///
@@ -863,8 +863,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `condition` - A boolean value representing the condition to be checked.
-    /// * `msg` - A static string message to log when the condition is true.
+    /// * `p_condition` - A boolean value representing the condition to be checked.
+    /// * `p_msg` - A static string message to log when the condition is true.
     ///
     /// # Returns
     ///
@@ -884,9 +884,9 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `criteria` - The matching criteria to determine the compatibility.
-    /// * `int1` - The first reference integer.
-    /// * `int2` - The second reference integer. This argument is an `Option` and can be `None`.
+    /// * `p_criteria` - The matching criteria to determine the compatibility.
+    /// * `p_int1` - The first reference integer.
+    /// * `p_int2` - The second reference integer. This argument is an `Option` and can be `None`.
     ///
     /// # Returns
     ///
@@ -896,8 +896,8 @@ impl DbTable {
     ///
     /// An error occurs in the following conditions:
     ///
-    /// * If `MatchingCriteria::Between` is passed as `criteria`, and `int2` is `None`.
-    /// * If `MatchingCriteria::Between` is passed as `criteria`, and `int2` is defined but less than or equal to `int1`.
+    /// * If `MatchingCriteria::Between` is passed as `p_criteria`, and `p_int2` is `None`.
+    /// * If `MatchingCriteria::Between` is passed as `p_criteria`, and `p_int2` is defined but less than or equal to `p_int1`.
     ///
     fn check_input_compatibility_int(
         criteria: &MatchingCriteria,
@@ -928,10 +928,10 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_value` - The value to compare with the integer values.
-    /// * `criteria` - The matching criteria to apply.
-    /// * `int1` - The first integer value to compare.
-    /// * `int2` - An optional second integer value to compare.
+    /// * `p_entry_value` - The value to compare with the integer values.
+    /// * `p_criteria` - The matching criteria to apply.
+    /// * `p_int1` - The first integer value to compare.
+    /// * `p_int2` - An optional second integer value to compare.
     ///
     /// # Returns
     ///
@@ -960,9 +960,9 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `criteria` - The matching criteria to determine the compatibility.
-    /// * `int1` - The first reference unsigned integer.
-    /// * `int2` - The second reference unsigned integer. This argument is an `Option` and can be `None`.
+    /// * `p_criteria` - The matching criteria to determine the compatibility.
+    /// * `p_int1` - The first reference unsigned integer.
+    /// * `p_int2` - The second reference unsigned integer. This argument is an `Option` and can be `None`.
     ///
     /// # Returns
     ///
@@ -972,8 +972,8 @@ impl DbTable {
     ///
     /// An error occurs in the following conditions:
     ///
-    /// * If `MatchingCriteria::Between` is passed as `criteria`, and `int2` is `None`.
-    /// * If `MatchingCriteria::Between` is passed as `criteria`, and `int2` is defined but less than or equal to `int1`.
+    /// * If `MatchingCriteria::Between` is passed as `p_criteria`, and `p_int2` is `None`.
+    /// * If `MatchingCriteria::Between` is passed as `p_criteria`, and `p_int2` is defined but less than or equal to `p_int1`.
     ///
     fn check_input_compatibility_uint(
         criteria: &MatchingCriteria,
@@ -1000,10 +1000,10 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entry_value` - The unsigned integer value to compare.
-    /// * `criteria` - The matching criteria to apply.
-    /// * `int1` - The first unsigned integer value to compare.
-    /// * `int2` - An optional second unsigned integer value to compare.
+    /// * `p_entry_value` - The unsigned integer value to compare.
+    /// * `p_criteria` - The matching criteria to apply.
+    /// * `p_int1` - The first unsigned integer value to compare.
+    /// * `p_int2` - An optional second unsigned integer value to compare.
     ///
     /// # Returns
     ///
@@ -1028,11 +1028,11 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - The name of the key to search for.
-    /// * `criteria` - The matching criteria to use.
-    /// * `int1` - The first integer value to match.
-    /// * `int2` - An optional second integer value to match.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - The name of the key to search for.
+    /// * `p_criteria` - The matching criteria to use.
+    /// * `p_int1` - The first integer value to match.
+    /// * `p_int2` - An optional second integer value to match.
     ///
     /// # Returns
     ///
@@ -1043,9 +1043,9 @@ impl DbTable {
     /// # Errors
     ///
     /// This function may return an error message if:
-    /// * The specified `key_name` is not found in the entries.
-    /// * The specified `key_name` does not have an integer type.
-    /// * The `criteria` is incompatible with the input.
+    /// * The specified `p_key_name` is not found in the entries.
+    /// * The specified `p_key_name` does not have an integer type.
+    /// * The `p_criteria` is incompatible with the input.
     ///
     pub fn get_matching_entries_integer(
         &self,
@@ -1092,11 +1092,11 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - The name of the key to match against.
-    /// * `criteria` - The matching criteria to apply.
-    /// * `int1` - The first unsigned integer value to compare against.
-    /// * `int2` - An optional second unsigned integer value to compare against.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - The name of the key to match against.
+    /// * `p_criteria` - The matching criteria to apply.
+    /// * `p_int1` - The first unsigned integer value to compare against.
+    /// * `p_int2` - An optional second unsigned integer value to compare against.
     ///
     /// # Returns
     ///
@@ -1148,11 +1148,11 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - The name of the key to perform the comparison on.
-    /// * `criteria` - The matching criteria to use for comparison.
-    /// * `float1` - The first reference float for comparison.
-    /// * `float2` - The optional second reference float for comparison (only used for `Between` criteria).
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - The name of the key to perform the comparison on.
+    /// * `p_criteria` - The matching criteria to use for comparison.
+    /// * `p_float1` - The first reference float for comparison.
+    /// * `p_float2` - The optional second reference float for comparison (only used for `Between` criteria).
     ///
     /// # Returns
     ///
@@ -1253,10 +1253,10 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - The name of the key to match.
-    /// * `criteria` - The matching criteria (Equal or Different).
-    /// * `ref_bool` - The reference bool value for comparison.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - The name of the key to match.
+    /// * `p_criteria` - The matching criteria (Equal or Different).
+    /// * `p_ref_bool` - The reference bool value for comparison.
     ///
     /// # Returns
     ///
@@ -1319,10 +1319,10 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - The name of the key to be matched.
-    /// * `criteria` - The matching criteria to be applied.
-    /// * `ref_str` - The reference string to compare against.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - The name of the key to be matched.
+    /// * `p_criteria` - The matching criteria to be applied.
+    /// * `p_ref_str` - The reference string to compare against.
     ///
     /// # Returns
     ///
@@ -1385,8 +1385,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - The name of the key to search for.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - The name of the key to search for.
     ///
     /// # Returns
     ///
@@ -1420,8 +1420,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// - `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// - `key_name`: The name of the key to search for.
+    /// - `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// - `p_key_name`: The name of the key to search for.
     ///
     /// # Returns
     ///
@@ -1457,8 +1457,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - A reference to the name of the key.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - A reference to the name of the key.
     ///
     /// # Returns
     ///
@@ -1506,8 +1506,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - A reference to a string containing the name of the key.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - A reference to a string containing the name of the key.
     ///
     /// # Returns
     ///
@@ -1554,8 +1554,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - The name of the key to retrieve values for.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - The name of the key to retrieve values for.
     ///
     /// # Returns
     ///
@@ -1601,8 +1601,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - The name of the key for which to get the unique string values.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - The name of the key for which to get the unique string values.
     ///
     /// # Returns
     ///
@@ -1648,8 +1648,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - The name of the key to search for.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - The name of the key to search for.
     ///
     /// # Returns
     ///
@@ -1696,8 +1696,8 @@ impl DbTable {
     ///
     /// # Arguments
     ///
-    /// * `entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
-    /// * `key_name` - The name of the key for which to retrieve unique date values.
+    /// * `p_entries_subset`: An optional vector containing references to string values. It specifies a subset of entries to consider. If `None`, all entries are considered.
+    /// * `p_key_name` - The name of the key for which to retrieve unique date values.
     ///
     /// # Returns
     ///
