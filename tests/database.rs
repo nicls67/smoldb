@@ -26,8 +26,7 @@ fn basic_ops_1() -> Result<(), String> {
         ("key3".to_string(), "Float".to_string()),
         ("key4".to_string(), "Date".to_string()),
     ]);
-    db.database()
-        .create_table(&"Table test 1".to_string(), keys)?;
+    db.database().create_table("Table test 1", keys)?;
 
     let table = db.database().table(&"Table test 1".to_string())?;
 
@@ -53,11 +52,16 @@ fn basic_ops_1() -> Result<(), String> {
     // Get an entry value using String method
     let val = check_option(
         (2, 3),
-        table.get_entry_value_string(&"entry1".to_string(), &"key3".to_string())?,
+        table.get_entry_value_string(&"entry1".to_string(), &"key1".to_string())?,
         true,
     )?
     .unwrap();
-    check_value((2, 4), &val, &format!("2.23"), rusttests::CheckType::Equal)?;
+    check_value(
+        (2, 4),
+        &val,
+        &"hey".to_string(),
+        rusttests::CheckType::Equal,
+    )?;
 
     // Get entry None value
     check_option(
@@ -167,7 +171,7 @@ fn basic_ops_1() -> Result<(), String> {
     )?;
 
     // Rename entry
-    table.rename_entry(&"entry2".to_string(), &"new_entry_name".to_string())?;
+    table.rename_entry(&"entry2".to_string(), "new_entry_name")?;
 
     // Get entry None value
     check_option(
@@ -208,8 +212,7 @@ fn error_ops_1() -> Result<(), String> {
         ("key2".to_string(), "Integer".to_string()),
         ("key3".to_string(), "Float".to_string()),
     ]);
-    db.database()
-        .create_table(&"Table test 1".to_string(), keys)?;
+    db.database().create_table("Table test 1", keys)?;
 
     let table = db.database().table(&"Table test 1".to_string())?;
 

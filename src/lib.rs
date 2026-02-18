@@ -39,7 +39,7 @@ impl SmolDb {
     ///
     /// # Returns
     ///
-    /// Returns a `Res:::lt` indicating su,,ccess or failure. If successful, it returns a `SmolDb`
+    /// Returns a `Result` indicating success or failure. If successful, it returns a `SmolDb`
     /// instance loaded with the data from the database file. If an error occurs, it returns
     /// a `String` containing the error message.
     ///
@@ -73,11 +73,7 @@ impl SmolDb {
     /// The newly created error message string.
     fn log_and_create_load_err_msg(msg: String) -> String {
         let new_msg = format!("Error while opening database {}", msg);
-        write_log(
-            LogSeverity::Error,
-            &new_msg,
-            &env!("CARGO_PKG_NAME").to_string(),
-        );
+        write_log(LogSeverity::Error, &new_msg, env!("CARGO_PKG_NAME"));
         new_msg
     }
 
@@ -113,11 +109,7 @@ impl SmolDb {
     ///
     fn write_error_msg_save(msg: String) -> String {
         let msg = format!("Error while saving database : {}", msg);
-        write_log(
-            LogSeverity::Error,
-            &msg,
-            &env!("CARGO_PKG_NAME").to_string(),
-        );
+        write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
         msg
     }
 
@@ -155,11 +147,7 @@ impl SmolDb {
                 Ok(json) => match fs::write(db_file, &json) {
                     Ok(_) => {
                         let info_msg = format!("Database saved to file {}", db_file.display());
-                        write_log(
-                            LogSeverity::Info,
-                            &info_msg,
-                            &env!("CARGO_PKG_NAME").to_string(),
-                        );
+                        write_log(LogSeverity::Info, &info_msg, env!("CARGO_PKG_NAME"));
                         Ok(())
                     }
                     Err(e) => Err(Self::write_error_msg_save(e.to_string())),
@@ -168,11 +156,7 @@ impl SmolDb {
             }
         } else {
             let warn_msg = "Cannot save database, no database file configured".to_string();
-            write_log(
-                LogSeverity::Warning,
-                &warn_msg,
-                &env!("CARGO_PKG_NAME").to_string(),
-            );
+            write_log(LogSeverity::Warning, &warn_msg, env!("CARGO_PKG_NAME"));
             Err(warn_msg)
         }
     }

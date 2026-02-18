@@ -51,17 +51,27 @@ impl DbModel {
     ///
     /// * `name` - The name of the table.
     /// * `keys` - Optional keys (name and type) for the table. Type is among the following :
-    /// `Integer`, `UnsignedInt`, `Float`, `Date`, `Bool`, `String`
+    ///   `Integer`, `UnsignedInt`, `Float`, `Date`, `Bool`, `String`
     ///
     /// # Returns
     ///
     /// * `Ok(())` - if the table is created successfully.
-    /// * `Err(String)` - if there is an error during table creation.
+    /// * `Err(String)` - if there is an error during table creation or the table name already exists.
     pub fn create_table(
         &mut self,
         name: &str,
         keys: Option<Vec<(String, String)>>,
     ) -> Result<(), String> {
+        // Check unicity of table name
+        if self.tables.iter().any(|t| t.name() == name) {
+            let msg = format!(
+                "Cannot create table : name {} already exists in database {}",
+                name, self.name
+            );
+            write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
+            return Err(msg);
+        }
+
         let mut new_vec = None;
         if let Some(keys_vec) = keys {
             let mut vec_tmp = Vec::new();
@@ -75,7 +85,7 @@ impl DbModel {
         write_log(
             LogSeverity::Info,
             &format!("CREATED table {}", name),
-            &env!("CARGO_PKG_NAME").to_string(),
+            env!("CARGO_PKG_NAME"),
         );
 
         Ok(())
@@ -138,12 +148,13 @@ impl DbModel {
     /// Returns `Ok(())` if the table was successfully deleted, otherwise returns `Err` with an error message.
     pub fn delete_table(&mut self, name: &String) -> Result<(), String> {
         let index = self.find_table(name)?.0;
+        // Use swap_remove for O(1) removal. Table ordering is not guaranteed.
         self.tables.swap_remove(index);
 
         write_log(
             LogSeverity::Info,
             &format!("DELETE table {}", name),
-            &env!("CARGO_PKG_NAME").to_string(),
+            env!("CARGO_PKG_NAME"),
         );
         Ok(())
     }
@@ -167,11 +178,7 @@ impl DbModel {
         }
 
         let msg = format!("No table named {} in database {}", name, self.name);
-        write_log(
-            LogSeverity::Error,
-            &msg,
-            &env!("CARGO_PKG_NAME").to_string(),
-        );
+        write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
         Err(msg)
     }
 
@@ -211,7 +218,7 @@ mod tests {
         let mut model = DbModel::new("ModelName".to_string());
 
         model.create_table(
-            &"NewTable".to_string(),
+            "NewTable",
             Some(vec![
                 ("key1".to_string(), "String".to_string()),
                 ("key2".to_string(), "Integer".to_string()),
@@ -220,7 +227,7 @@ mod tests {
 
         check_value((1, 1), &model.tables.len(), &1, rusttests::CheckType::Equal)?;
 
-        model.create_table(&"NewTable".to_string(), None)?;
+        model.create_table("OtherTable", None)?;
 
         check_value((1, 1), &model.tables.len(), &2, rusttests::CheckType::Equal)?;
 
@@ -234,7 +241,7 @@ mod tests {
         check_result(
             (1, 1),
             model.create_table(
-                &"NewTable".to_string(),
+                "NewTable",
                 Some(vec![
                     ("key1".to_string(), "String".to_string()),
                     ("key2".to_string(), "RandomType".to_string()),
@@ -267,14 +274,14 @@ mod tests {
         let mut model = DbModel::new("ModelName".to_string());
 
         model.create_table(
-            &"NewTable".to_string(),
+            "NewTable",
             Some(vec![
                 ("key1".to_string(), "String".to_string()),
                 ("key2".to_string(), "Integer".to_string()),
             ]),
         )?;
         model.create_table(
-            &"OtherTable".to_string(),
+            "OtherTable",
             Some(vec![
                 ("key3".to_string(), "Float".to_string()),
                 ("key4".to_string(), "UnsignedInt".to_string()),
@@ -297,14 +304,14 @@ mod tests {
         let mut model = DbModel::new("ModelName".to_string());
 
         model.create_table(
-            &"NewTable".to_string(),
+            "NewTable",
             Some(vec![
                 ("key1".to_string(), "String".to_string()),
                 ("key2".to_string(), "Integer".to_string()),
             ]),
         )?;
         model.create_table(
-            &"OtherTable".to_string(),
+            "OtherTable",
             Some(vec![
                 ("key3".to_string(), "Float".to_string()),
                 ("key4".to_string(), "UnsignedInt".to_string()),
@@ -320,21 +327,21 @@ mod tests {
         let mut model = DbModel::new("ModelName".to_string());
 
         model.create_table(
-            &"NewTable".to_string(),
+            "NewTable",
             Some(vec![
                 ("key1".to_string(), "String".to_string()),
                 ("key2".to_string(), "Integer".to_string()),
             ]),
         )?;
         model.create_table(
-            &"OtherTable".to_string(),
+            "OtherTable",
             Some(vec![
                 ("key3".to_string(), "Float".to_string()),
                 ("key4".to_string(), "UnsignedInt".to_string()),
             ]),
         )?;
         model.create_table(
-            &"ThirdTable".to_string(),
+            "ThirdTable",
             Some(vec![
                 ("key5".to_string(), "Integer".to_string()),
                 ("key6".to_string(), "Float".to_string()),
@@ -357,21 +364,21 @@ mod tests {
         let mut model = DbModel::new("ModelName".to_string());
 
         model.create_table(
-            &"NewTable".to_string(),
+            "NewTable",
             Some(vec![
                 ("key1".to_string(), "String".to_string()),
                 ("key2".to_string(), "Integer".to_string()),
             ]),
         )?;
         model.create_table(
-            &"OtherTable".to_string(),
+            "OtherTable",
             Some(vec![
                 ("key3".to_string(), "Float".to_string()),
                 ("key4".to_string(), "UnsignedInt".to_string()),
             ]),
         )?;
         model.create_table(
-            &"ThirdTable".to_string(),
+            "ThirdTable",
             Some(vec![
                 ("key5".to_string(), "Integer".to_string()),
                 ("key6".to_string(), "Float".to_string()),

@@ -44,11 +44,7 @@ impl DbEntry {
                         "Values given for new entry {} does not have the correct size ({})",
                         name, fields_nb
                     );
-                    write_log(
-                        LogSeverity::Error,
-                        &msg,
-                        &env!("CARGO_PKG_NAME").to_string(),
-                    );
+                    write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
                     return Err(msg);
                 }
                 entry.append(vals);
@@ -63,7 +59,7 @@ impl DbEntry {
         write_log(
             LogSeverity::Info,
             &format!("CREATE new entry {name}"),
-            &env!("CARGO_PKG_NAME").to_string(),
+            env!("CARGO_PKG_NAME"),
         );
         Ok(DbEntry {
             name: name.clone(),
@@ -124,8 +120,8 @@ impl DbEntry {
     ///
     /// * `new_name` - The new name of the object.
     ///
-    pub fn rename(&mut self, new_name: &String) {
-        self.name = new_name.clone();
+    pub fn rename(&mut self, new_name: &str) {
+        self.name = new_name.to_owned();
     }
 }
 
@@ -276,7 +272,7 @@ mod tests {
         ];
 
         let mut entry = DbEntry::new(&name.to_string(), 4, Some(&mut some_vec))?;
-        entry.rename(&"new_name".to_string());
+        entry.rename("new_name");
 
         check_struct(
             (1, 1),
