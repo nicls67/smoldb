@@ -158,8 +158,7 @@ mod tests {
     fn check_float_ok() -> Result<(), String> {
         let l_type_float = DbType::Float(0.0);
 
-        let l_val =
-            check_result((1, 1), l_type_float.convert(&"1.23".to_string()), true)?.unwrap();
+        let l_val = check_result((1, 1), l_type_float.convert(&"1.23".to_string()), true)?.unwrap();
         check_struct(
             (1, 2),
             &l_val,
@@ -203,8 +202,7 @@ mod tests {
     fn check_uint_ok() -> Result<(), String> {
         let l_type_uint = DbType::UnsignedInt(0);
 
-        let l_val =
-            check_result((1, 1), l_type_uint.convert(&"27".to_string()), true)?.unwrap();
+        let l_val = check_result((1, 1), l_type_uint.convert(&"27".to_string()), true)?.unwrap();
         check_struct(
             (1, 2),
             &l_val,
@@ -249,16 +247,14 @@ mod tests {
     fn check_bool_ok() -> Result<(), String> {
         let l_type_bool = DbType::default_from_string(&"Bool".to_string())?;
 
-        let l_val =
-            check_result((1, 1), l_type_bool.convert(&"true".to_string()), true)?.unwrap();
+        let l_val = check_result((1, 1), l_type_bool.convert(&"true".to_string()), true)?.unwrap();
         check_struct(
             (1, 2),
             &l_val,
             &DbType::Bool(true),
             rusttests::CheckType::Equal,
         )?;
-        let l_val =
-            check_result((2, 1), l_type_bool.convert(&"false".to_string()), true)?.unwrap();
+        let l_val = check_result((2, 1), l_type_bool.convert(&"false".to_string()), true)?.unwrap();
         check_struct(
             (2, 2),
             &l_val,

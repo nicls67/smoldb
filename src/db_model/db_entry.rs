@@ -232,7 +232,10 @@ mod tests {
         let l_val = l_entry.get(2).unwrap();
 
         if *l_val != DbType::Float(3.33) {
-            return Err(format!("Entry field have wrong value : {:?}", l_entry.fields));
+            return Err(format!(
+                "Entry field have wrong value : {:?}",
+                l_entry.fields
+            ));
         }
         check_struct(
             (1, 1),
