@@ -2399,6 +2399,29 @@ mod tests {
     }
 
     #[test]
+    fn add_key_empty_table() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        // Add key to an empty table
+        table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
+
+        // Verify that the table schema was modified
+        let key_tuple = table.find_key(&"key_new".to_string())?;
+        check_value((1, 1), &key_tuple.0, &3, CheckType::Equal)?;
+        check_struct((1, 2), key_tuple.1, &DbType::UnsignedInt(0), CheckType::Equal)?;
+
+        // Ensure that entries are empty
+        check_value((2, 1), &table.entries_count(), &0, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn add_key_nominal() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
@@ -2484,6 +2507,40 @@ mod tests {
             table.add_key(&"key_new".to_string(), &"RandomType".to_string()),
             false,
         )?;
+        Ok(())
+    }
+
+    #[test]
+    fn add_entry_after_add_key() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        // Add a new key
+        table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
+
+        // Add an entry that should include the new key (total 4 fields)
+        let mut binding = vec![
+            Some("1".to_string()),
+            None,
+            Some("14.74".to_string()),
+            Some("42".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+
+        // Verify the value in the new key field of the new entry
+        let entry_val = check_option(
+            (1, 1),
+            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key_new".to_string())?,
+            true,
+        )?.unwrap();
+        check_value((1, 2), entry_val, &42, CheckType::Equal)?;
+
         Ok(())
     }
 
