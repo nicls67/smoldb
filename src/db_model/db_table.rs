@@ -4293,6 +4293,16 @@ mod tests {
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
 
+        let expected_vec_2 = vec![4.1, 5.3, 6.4, 5.5];
+        let res = check_result(
+            (2, 1),
+            table.get_unique_float_values_for_key(None, &"key2".to_string()),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+
         Ok(())
     }
 
@@ -4369,6 +4379,16 @@ mod tests {
             ("key3".to_string(), DbType::String("Test".to_string())),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        // Check with empty table
+        let res = check_result(
+            (0, 1),
+            table.get_unique_date_values_for_key(None, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((0, 2), res, false)?;
+
         let mut binding = vec![
             Some("01/12/2021".to_string()),
             Some("01/01/2022".to_string()),
@@ -4413,6 +4433,28 @@ mod tests {
         .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+
+        let expected_vec_2 = vec![
+            NaiveDate::from_ymd_opt(2022, 1, 1).unwrap(),
+            NaiveDate::from_ymd_opt(2022, 1, 2).unwrap(),
+            NaiveDate::from_ymd_opt(2022, 1, 3).unwrap(),
+        ];
+        let res = check_result(
+            (2, 1),
+            table.get_unique_date_values_for_key(None, &"key2".to_string()),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+
+        let res = check_result(
+            (3, 1),
+            table.get_unique_date_values_for_key(Some(vec![]), &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((3, 2), res, false)?;
 
         Ok(())
     }
