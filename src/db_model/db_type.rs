@@ -340,7 +340,7 @@ mod tests {
         let l_val = check_result((4, 3), DbType::default_from_string(&"Bool".to_string()), true)?.unwrap();
         check_struct((4, 4), &l_val, &DbType::Bool(false), rusttests::CheckType::Equal)?;
 
-        let l_val = check_result((4, 5), DbType::default_from_string(&"bool".to_string()), true)?.unwrap();
+        let l_val = check_result((4, 5), DbType::default_from_string(&"Boolean".to_string()), true)?.unwrap();
         check_struct((4, 6), &l_val, &DbType::Bool(false), rusttests::CheckType::Equal)?;
 
         let l_val = check_result((5, 1), DbType::default_from_string(&"string".to_string()), true)?.unwrap();
@@ -361,10 +361,12 @@ mod tests {
     #[test]
     fn check_default_from_string_ko() -> Result<(), String> {
         let l_res = DbType::default_from_string(&"Unknown".to_string());
-        check_result(
-            (1, 1),
-            l_res.clone(),
-            false,
+        check_result((1, 1), l_res.clone(), false)?;
+        check_struct(
+            (1, 2),
+            &l_res.unwrap_err(),
+            &"Unknown database type : Unknown".to_string(),
+            rusttests::CheckType::Equal,
         )?;
         check_struct(
             (1, 2),
