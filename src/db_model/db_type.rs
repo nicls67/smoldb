@@ -328,6 +328,9 @@ mod tests {
         let l_val = check_result((3, 1), DbType::default_from_string(&"float".to_string()), true)?.unwrap();
         check_struct((3, 2), &l_val, &DbType::Float(0.0), rusttests::CheckType::Equal)?;
 
+        let l_val = check_result((3, 3), DbType::default_from_string(&"Float".to_string()), true)?.unwrap();
+        check_struct((3, 4), &l_val, &DbType::Float(0.0), rusttests::CheckType::Equal)?;
+
         let l_val = check_result((4, 1), DbType::default_from_string(&"boolean".to_string()), true)?.unwrap();
         check_struct((4, 2), &l_val, &DbType::Bool(false), rusttests::CheckType::Equal)?;
 
@@ -337,8 +340,14 @@ mod tests {
         let l_val = check_result((5, 1), DbType::default_from_string(&"string".to_string()), true)?.unwrap();
         check_struct((5, 2), &l_val, &DbType::String("".to_string()), rusttests::CheckType::Equal)?;
 
+        let l_val = check_result((5, 3), DbType::default_from_string(&"String".to_string()), true)?.unwrap();
+        check_struct((5, 4), &l_val, &DbType::String("".to_string()), rusttests::CheckType::Equal)?;
+
         let l_val = check_result((6, 1), DbType::default_from_string(&"date".to_string()), true)?.unwrap();
         check_struct((6, 2), &l_val, &DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()), rusttests::CheckType::Equal)?;
+
+        let l_val = check_result((6, 3), DbType::default_from_string(&"Date".to_string()), true)?.unwrap();
+        check_struct((6, 4), &l_val, &DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()), rusttests::CheckType::Equal)?;
 
         Ok(())
     }
@@ -348,6 +357,12 @@ mod tests {
         check_result(
             (1, 1),
             DbType::default_from_string(&"Unknown".to_string()),
+            false,
+        )?;
+
+        check_result(
+            (2, 1),
+            DbType::default_from_string(&"".to_string()),
             false,
         )?;
         Ok(())
