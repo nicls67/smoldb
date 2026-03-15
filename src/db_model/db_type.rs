@@ -173,7 +173,14 @@ mod tests {
     fn check_float_ko() -> Result<(), String> {
         let l_type_float = DbType::Float(0.0);
 
-        check_result((1, 1), l_type_float.convert(&"text".to_string()), false)?;
+        let l_res = l_type_float.convert(&"text".to_string());
+        check_result((1, 1), l_res.clone(), false)?;
+        check_struct(
+            (1, 2),
+            &l_res.unwrap_err(),
+            &"text can't be interpreted as float".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
         Ok(())
     }
 
@@ -195,7 +202,14 @@ mod tests {
     fn check_int_ko() -> Result<(), String> {
         let l_type_int = DbType::Integer(0);
 
-        check_result((1, 1), l_type_int.convert(&"12.5".to_string()), false)?;
+        let l_res = l_type_int.convert(&"12.5".to_string());
+        check_result((1, 1), l_res.clone(), false)?;
+        check_struct(
+            (1, 2),
+            &l_res.unwrap_err(),
+            &"12.5 can't be interpreted as integer".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
         Ok(())
     }
 
@@ -218,7 +232,14 @@ mod tests {
     fn check_uint_ko() -> Result<(), String> {
         let l_type_uint = DbType::UnsignedInt(0);
 
-        check_result((1, 1), l_type_uint.convert(&"-4".to_string()), false)?;
+        let l_res = l_type_uint.convert(&"-4".to_string());
+        check_result((1, 1), l_res.clone(), false)?;
+        check_struct(
+            (1, 2),
+            &l_res.unwrap_err(),
+            &"-4 can't be interpreted as unsigned integer".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
         Ok(())
     }
 
@@ -241,7 +262,14 @@ mod tests {
     fn check_date_ko() -> Result<(), String> {
         let l_type_date = DbType::default_from_string(&"Date".to_string())?;
 
-        check_result((1, 1), l_type_date.convert(&"text".to_string()), false)?;
+        let l_res = l_type_date.convert(&"text".to_string());
+        check_result((1, 1), l_res.clone(), false)?;
+        check_struct(
+            (1, 2),
+            &l_res.unwrap_err(),
+            &"text can't be interpreted as a date".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
         Ok(())
     }
 
@@ -272,7 +300,14 @@ mod tests {
     fn check_bool_ko() -> Result<(), String> {
         let l_type_bool = DbType::default_from_string(&"Bool".to_string())?;
 
-        check_result((1, 1), l_type_bool.convert(&"text".to_string()), false)?;
+        let l_res = l_type_bool.convert(&"text".to_string());
+        check_result((1, 1), l_res.clone(), false)?;
+        check_struct(
+            (1, 2),
+            &l_res.unwrap_err(),
+            &"text can't be interpreted as a boolean".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
         Ok(())
     }
 
