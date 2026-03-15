@@ -5017,6 +5017,25 @@ mod tests {
     }
 
     #[test]
+    fn get_unique_boolean_values_for_key_empty() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::Bool(false)),
+            ("key3".to_string(), DbType::String("0.0".to_string())),
+        ];
+        let table = DbTable::new("Table".to_string(), Some(keys));
+
+        let res = check_result(
+            (1, 1),
+            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            true,
+        )?.unwrap();
+        check_option((1, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn get_key_values_bool() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
