@@ -4769,6 +4769,34 @@ mod tests {
     }
 
     #[test]
+    fn get_key_values_int_empty() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::Integer(0)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let table = DbTable::new("Table".to_string(), Some(keys));
+
+        let res = check_result(
+            (1, 1),
+            table.get_unique_integer_values_for_key(None, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((1, 2), res, false)?;
+
+        let res = check_result(
+            (2, 1),
+            table.get_unique_integer_values_for_key(None, &"key8".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((2, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn get_key_values_uint_error() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
