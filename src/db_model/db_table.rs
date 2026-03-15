@@ -3145,6 +3145,29 @@ mod tests {
     }
 
     #[test]
+    fn get_entries_matching_string_empty() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::String(" ".to_string())),
+        ];
+        let table = DbTable::new("Table".to_string(), Some(keys));
+
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_string(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                &"toto".to_string(),
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((1, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn get_entries_matching_string() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
@@ -3249,6 +3272,64 @@ mod tests {
         .unwrap();
         let opt = check_option((3, 2), res, true)?.unwrap();
         check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_matching_string_subset() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::String(" ".to_string())),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("tata".to_string())];
+        let mut binding2 = vec![Some("toto".to_string())];
+        let mut binding3 = vec![Some("tata".to_string())];
+        let mut binding4 = vec![Some("titi".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+
+        // With subset
+        let subset_entry = "entry3".to_string();
+        let subset_entry2 = "entry4".to_string();
+        let subset = vec![&subset_entry, &subset_entry2];
+
+        // Should only match entry3 because it's in the subset
+        let expected_vec = vec!["entry3".to_string()];
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_string(
+                Some(subset.clone()),
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                &"tata".to_string(),
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // None of the matches are in subset (e.g. searching for toto)
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_string(
+                Some(subset),
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                &"toto".to_string(),
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((2, 2), res, false)?;
 
         Ok(())
     }
