@@ -416,7 +416,11 @@ impl DbTable {
         p_key_name: &String,
     ) -> Result<Option<&bool>, String> {
         // Coherency check
-        match self.find_key(p_key_name)?.1.check_type(&DbType::Bool(false)) {
+        match self
+            .find_key(p_key_name)?
+            .1
+            .check_type(&DbType::Bool(false))
+        {
             Ok(_) => (),
             Err(e) => return Err(e),
         }
@@ -552,13 +556,18 @@ impl DbTable {
 
         if let Some(ref db_val) = p_new_value {
             if discriminant(l_key.1) != discriminant(db_val) {
-                let l_msg = format!("Type of key {} is not compatible with given type", p_key_name);
+                let l_msg = format!(
+                    "Type of key {} is not compatible with given type",
+                    p_key_name
+                );
                 write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
                 return Err(l_msg);
             }
         }
 
-        self.find_entry(p_entry_name)?.0.update(l_key_index, p_new_value);
+        self.find_entry(p_entry_name)?
+            .0
+            .update(l_key_index, p_new_value);
 
         write_log(
             LogSeverity::Verbose,
@@ -796,57 +805,58 @@ impl DbTable {
             return Ok(None);
         }
 
-        // Check input compatibility
-        if p_criteria == MatchingCriteria::Between {
-            if p_date2.is_none() {
-                let l_msg =
-                    "Second reference date not defined for Between date comparison".to_string();
-                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
-                return Err(l_msg);
-            }
-            if let Some(date) = p_date2 {
-                let l_delta = date - p_date1;
-                if l_delta.num_days() <= 0 {
-                    let l_msg = "Second reference date is not after first reference date".to_string();
-                    write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
-                    return Err(l_msg);
-                }
-            }
-        }
-
         // Check selected key has a date type
         let l_key = self.find_key(p_key_name)?;
         match l_key.1 {
             DbType::Date(_) => {
                 let mut l_output = Vec::new();
-                for entry in self.get_entries_subset(p_entries_subset) {
-                    if let Some(DbType::Date(entry_date)) = entry.get(l_key.0) {
-                        let l_delta = (*entry_date - p_date1).num_days();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::Date(l_entry_date)) = l_entry.get(l_key.0) {
+                        let l_delta = (*l_entry_date - p_date1).num_days();
                         match p_criteria {
                             MatchingCriteria::IsMore => {
                                 if l_delta > 0 {
-                                    l_output.push(entry.name().clone());
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::IsLess => {
                                 if l_delta < 0 {
-                                    l_output.push(entry.name().clone());
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Equal => {
                                 if l_delta == 0 {
-                                    l_output.push(entry.name().clone());
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Different => {
                                 if l_delta != 0 {
-                                    l_output.push(entry.name().clone());
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Between => {
-                                let l_delta2 = (*entry_date - p_date2.unwrap()).num_days();
-                                if l_delta >= 0 && l_delta2 <= 0 {
-                                    l_output.push(entry.name().clone());
+                                // Check input compatibility
+                                if let Some(l_date2) = p_date2 {
+                                    let l_delta_inputs = l_date2 - p_date1;
+                                    if l_delta_inputs.num_days() <= 0 {
+                                        let l_msg = "Second reference date is not after first reference date".to_string();
+                                        write_log(
+                                            LogSeverity::Error,
+                                            &l_msg,
+                                            env!("CARGO_PKG_NAME"),
+                                        );
+                                        return Err(l_msg);
+                                    } else {
+                                        let l_delta2 = (*l_entry_date - l_date2).num_days();
+                                        if l_delta >= 0 && l_delta2 <= 0 {
+                                            l_output.push(l_entry.name().clone());
+                                        }
+                                    }
+                                } else {
+                                    let l_msg =
+                                        "Second reference date not defined for Between date comparison".to_string();
+                                    write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                                    return Err(l_msg);
                                 }
                             }
                         }
@@ -1028,7 +1038,9 @@ impl DbTable {
             MatchingCriteria::IsLess => p_entry_value < p_int1,
             MatchingCriteria::Equal => p_entry_value == p_int1,
             MatchingCriteria::Different => p_entry_value != p_int1,
-            MatchingCriteria::Between => p_entry_value >= p_int1 && p_entry_value <= p_int2.unwrap(),
+            MatchingCriteria::Between => {
+                p_entry_value >= p_int1 && p_entry_value <= p_int2.unwrap()
+            }
         }
     }
 
@@ -1132,7 +1144,12 @@ impl DbTable {
                 let mut l_output = Vec::new();
                 for entry in self.get_entries_subset(p_entries_subset) {
                     if let Some(DbType::UnsignedInt(entry_int)) = entry.get(l_key.0) {
-                        if Self::unsigned_integer_comparison(*entry_int, &p_criteria, p_int1, p_int2) {
+                        if Self::unsigned_integer_comparison(
+                            *entry_int,
+                            &p_criteria,
+                            p_int1,
+                            p_int2,
+                        ) {
                             l_output.push(entry.name().clone());
                         }
                     }
@@ -1869,7 +1886,11 @@ mod tests {
 
         l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
 
-        check_result((1, 1), l_table.add_entry(&"entry1".to_string(), None), false)?;
+        check_result(
+            (1, 1),
+            l_table.add_entry(&"entry1".to_string(), None),
+            false,
+        )?;
         check_value((1, 2), &l_table.entries_count(), &1, CheckType::Equal)?;
         Ok(())
     }
@@ -2411,7 +2432,12 @@ mod tests {
         // Verify that the table schema was modified
         let l_key_tuple = l_table.find_key(&"key_new".to_string())?;
         check_value((1, 1), &l_key_tuple.0, &3, CheckType::Equal)?;
-        check_struct((1, 2), l_key_tuple.1, &DbType::UnsignedInt(0), CheckType::Equal)?;
+        check_struct(
+            (1, 2),
+            l_key_tuple.1,
+            &DbType::UnsignedInt(0),
+            CheckType::Equal,
+        )?;
 
         // Verify that existing entries were updated to contain None for the new key
         check_option(
@@ -2426,12 +2452,18 @@ mod tests {
         )?;
 
         // Try updating an existing entry with the new key value to ensure the entry structure was properly resized
-        l_table.update_entry_unsigned_integer(&"entry1".to_string(), &"key_new".to_string(), Some(123))?;
+        l_table.update_entry_unsigned_integer(
+            &"entry1".to_string(),
+            &"key_new".to_string(),
+            Some(123),
+        )?;
         let l_entry_val = check_option(
             (3, 1),
-            l_table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key_new".to_string())?,
+            l_table
+                .get_entry_value_unsigned_integer(&"entry1".to_string(), &"key_new".to_string())?,
             true,
-        )?.unwrap();
+        )?
+        .unwrap();
         check_value((3, 2), l_entry_val, &123, CheckType::Equal)?;
 
         Ok(())
@@ -3151,10 +3183,7 @@ mod tests {
         let l_s_name4 = "entry4".to_string();
         let l_s_name5 = "entry5".to_string();
         let l_subset_names = vec![&l_s_name1, &l_s_name4, &l_s_name5];
-        let l_expected_vec = vec![
-            "entry1".to_string(),
-            "entry5".to_string(),
-        ];
+        let l_expected_vec = vec!["entry1".to_string(), "entry5".to_string()];
         let l_res = check_result(
             (6, 1),
             l_table.get_matching_entries_bool(
@@ -3250,9 +3279,7 @@ mod tests {
 
     #[test]
     fn get_entries_matching_string_empty() -> Result<(), String> {
-        let l_keys = vec![
-            ("key1".to_string(), DbType::String(" ".to_string())),
-        ];
+        let l_keys = vec![("key1".to_string(), DbType::String(" ".to_string()))];
         let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
@@ -3382,9 +3409,7 @@ mod tests {
 
     #[test]
     fn get_entries_matching_string_subset() -> Result<(), String> {
-        let l_keys = vec![
-            ("key1".to_string(), DbType::String(" ".to_string())),
-        ];
+        let l_keys = vec![("key1".to_string(), DbType::String(" ".to_string()))];
         let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("tata".to_string())];
         let mut l_binding2 = vec![Some("toto".to_string())];
