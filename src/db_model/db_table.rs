@@ -3425,6 +3425,118 @@ mod tests {
     }
 
     #[test]
+    fn get_entries_matching_string_comprehensive() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::String(" ".to_string())),
+            ("key2".to_string(), DbType::Integer(0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        // Test empty table
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_string(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                &"tata".to_string(),
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((1, 2), res, false)?;
+
+        let mut binding = vec![Some("tata".to_string()), Some("1".to_string())];
+        let mut binding2 = vec![Some("toto".to_string()), Some("2".to_string())];
+        let mut binding3 = vec![Some("tata".to_string()), Some("3".to_string())];
+        let mut binding4 = vec![Some("titi".to_string()), Some("4".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+
+        // Test MatchingCriteria::Equal matching
+        let expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_string(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                &"tata".to_string(),
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Test MatchingCriteria::Equal no match
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_string(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                &"tutu".to_string(),
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((3, 2), res, false)?;
+
+        // Test MatchingCriteria::Different
+        let expected_vec = vec![
+            "entry2".to_string(),
+            "entry4".to_string(),
+        ];
+        let res = check_result(
+            (4, 1),
+            table.get_matching_entries_string(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Different,
+                &"tata".to_string(),
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((4, 2), res, true)?.unwrap();
+        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Test unsupported MatchingCriteria Error
+        check_result(
+            (5, 1),
+            table.get_matching_entries_string(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::IsLess,
+                &"tata".to_string(),
+            ),
+            false,
+        )?;
+
+        // Test bad type Error
+        check_result(
+            (6, 1),
+            table.get_matching_entries_string(
+                None,
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                &"tata".to_string(),
+            ),
+            false,
+        )?;
+
+        Ok(())
+    }
+
+    #[test]
     fn get_entries_matching_string_subset() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::String(" ".to_string())),
