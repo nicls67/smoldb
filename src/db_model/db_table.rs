@@ -5534,17 +5534,25 @@ mod tests {
             Some("true".to_string()),
             Some("-0.27".to_string()),
         ];
+        let mut binding4 = vec![
+            Some("true".to_string()),
+            Some("false".to_string()),
+            Some("0.0".to_string()),
+        ];
         let new_entry = Some(&mut binding);
         let new_entry2 = Some(&mut binding2);
         let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
 
         table.add_entry(&"entry1".to_string(), new_entry)?;
         table.add_entry(&"entry2".to_string(), None)?;
         table.add_entry(&"entry3".to_string(), new_entry2)?;
         table.add_entry(&"entry4".to_string(), new_entry3)?;
+        table.add_entry(&"entry5".to_string(), new_entry4)?;
 
+        // Check that only unique values are returned (duplicate `false` and `true` are filtered)
         let expected_vec_1 = vec![false, true];
-        let expected_vec_2 = vec![true];
+        let expected_vec_2 = vec![true, false];
         let res = check_result(
             (1, 1),
             table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
@@ -5561,6 +5569,37 @@ mod tests {
         .unwrap();
         let opt = check_option((2, 2), res, true)?.unwrap();
         check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_bool_none() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::Bool(false)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![None, None, Some("2.23".to_string())];
+        let mut binding2 = vec![None, None, Some("1.46".to_string())];
+        let mut binding3 = vec![None, None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        let res = check_result(
+            (1, 1),
+            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((1, 2), res, false)?;
 
         Ok(())
     }
