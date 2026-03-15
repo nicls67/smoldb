@@ -4050,6 +4050,182 @@ mod tests {
     }
 
     #[test]
+    fn get_entries_matching_int() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("-5".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("-6".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("-5".to_string()), None, Some("-0.27".to_string())];
+        let mut binding4 = vec![Some("-1".to_string()), None, Some("-0.27".to_string())];
+        let mut binding5 = vec![Some("-4".to_string()), None, Some("-0.27".to_string())];
+        let mut binding6 = vec![Some("-2".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+        let new_entry5 = Some(&mut binding5);
+        let new_entry6 = Some(&mut binding6);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        table.add_entry(&"entry5".to_string(), new_entry5)?;
+        table.add_entry(&"entry6".to_string(), new_entry6)?;
+
+        // Equality
+        let expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                -5,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // No match
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                -7,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((2, 2), res, false)?;
+
+        // Different
+        let expected_vec = vec![
+            "entry2".to_string(),
+            "entry4".to_string(),
+            "entry5".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Different,
+                -5,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((3, 2), res, true)?.unwrap();
+        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // More
+        let expected_vec = vec![
+            "entry4".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (4, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::IsMore,
+                -4,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((4, 2), res, true)?.unwrap();
+        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Less
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry3".to_string(),
+        ];
+        let res = check_result(
+            (5, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::IsLess,
+                -4,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((5, 2), res, true)?.unwrap();
+        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Between
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry3".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (6, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                -6,
+                Some(-4),
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((6, 2), res, true)?.unwrap();
+        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Between missing optional 2nd param
+        check_result(
+            (7, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                -4,
+                None,
+            ),
+            false,
+        )?;
+
+        // Between no match
+        let res = check_result(
+            (8, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                -9,
+                Some(-7),
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((8, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn get_entries_matching_float_error() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
