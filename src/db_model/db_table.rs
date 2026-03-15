@@ -4262,6 +4262,86 @@ mod tests {
     }
 
     #[test]
+    fn get_entries_matching_float_subset_and_empty() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::UnsignedInt(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        // Empty table
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_float(
+                None,
+                &"key3".to_string(),
+                MatchingCriteria::Equal,
+                2.23,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        // When table is empty, it returns Ok(None).
+        // Therefore, res is an Option containing None. We want to assert res is None.
+        check_option((1, 2), res, false)?;
+
+        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut binding4 = vec![Some("1".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+
+        let e2 = "entry2".to_string();
+        let e3 = "entry3".to_string();
+        let e4 = "entry4".to_string();
+        let subset = vec![&e2, &e3, &e4];
+
+        // Subset match
+        let expected_vec = vec!["entry3".to_string(), "entry4".to_string()];
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_float(
+                Some(subset.clone()),
+                &"key3".to_string(),
+                MatchingCriteria::Equal,
+                -0.27,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Subset no match
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_float(
+                Some(subset),
+                &"key3".to_string(),
+                MatchingCriteria::Equal,
+                10.0,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((3, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn get_key_values_bool_error() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
