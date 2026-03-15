@@ -106,6 +106,20 @@ fn basic_ops_1() -> Result<(), String> {
     .unwrap();
     check_value((3, 5), l_val, &-115, rusttests::CheckType::Equal)?;
 
+    // Get unique integer values for key2
+    let l_unique_vals = check_option(
+        (3, 6),
+        l_table.get_unique_integer_values_for_key(None, &"key2".to_string())?,
+        true,
+    )?
+    .unwrap();
+    check_value(
+        (3, 7),
+        &l_unique_vals,
+        &vec![-115],
+        rusttests::CheckType::Equal,
+    )?;
+
     // Add a 3rd entry
     let mut l_values = vec![
         Some("what".to_string()),
