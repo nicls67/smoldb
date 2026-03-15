@@ -70,6 +70,7 @@ Read the diff and focus primarily on:
   - Verify that the code is easy to understand and maintain.
   - Check all imports are used and remove unused imports.
   - Check the package version has been correctly updated (compare with previous tag)
+  - Check all tests are consistents with the code and all functions are tested
 
 ### 3) Documentation update and code cleanup. You are allowed to update the modified files for that.
 - First update documentation (or create it if it is missing) for each modified item (method, function, structure, etc...).

@@ -106,7 +106,7 @@ impl DbTable {
             let mut db_vals = Vec::new();
             for (i, val) in vals.iter().enumerate() {
                 if let Some(val_str) = val {
-                    let db_val = self.keys.get(i).unwrap().1.convert(val_str)?;
+                    let db_val = self.keys[i].1.convert(val_str)?;
                     db_vals.push(Some(db_val));
                 } else {
                     db_vals.push(None);

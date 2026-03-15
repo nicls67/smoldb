@@ -1,6 +1,6 @@
 [package]
 name = "smoldb"
-version = "1.2.1"
+version = "1.2.2"
 authors = ["Nicolas SIMON"]
 edition = "2021"
 description = "A small database library written in Rust"
@@ -8,12 +8,12 @@ description = "A small database library written in Rust"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rustlog = { git = "https://github.com/nicls67/rustlog.git", tag = "1.2.0" }
+rustlog = { git = "http://serveur-dev.home/rust-libs/rustlog.git", tag = "1.2.1" }
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 chrono = { version = "0.4.38", features = ["serde"] }
-package_infos = { git = "https://github.com/nicls67/package_infos.git", tag = "0.1.1" }
+package_infos = { git = "http://serveur-dev.home/rust-libs/package_infos.git", tag = "0.1.1" }
 
 [dev-dependencies]
-rusttests = { git = "https://github.com/nicls67/rusttests.git", tag = "1.1.1" }
+rusttests = { git = "http://serveur-dev.home/rust-libs/rusttests.git", tag = "1.1.1" }

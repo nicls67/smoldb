@@ -141,7 +141,7 @@ checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
 [[package]]
 name = "package_infos"
 version = "0.1.1"
-source = "git+https://github.com/nicls67/package_infos.git?tag=0.1.1#c1d6c224030aa3d5ea31ea54999b37b50afef74f"
+source = "git+http://serveur-dev.home/rust-libs/package_infos.git?tag=0.1.1#c1d6c224030aa3d5ea31ea54999b37b50afef74f"
 
 [[package]]
 name = "proc-macro2"
@@ -163,8 +163,8 @@ dependencies = [
 
 [[package]]
 name = "rustlog"
-version = "1.2.0"
-source = "git+https://github.com/nicls67/rustlog.git?tag=1.2.0#da8eb49ca4e2fc092762d8af701ce12e961918ac"
+version = "1.2.1"
+source = "git+http://serveur-dev.home/rust-libs/rustlog.git?tag=1.2.1#6982dfc1df23a3952bcb352023153b81c17ca5ba"
 dependencies = [
  "chrono",
  "package_infos",
@@ -173,7 +173,7 @@ dependencies = [
 [[package]]
 name = "rusttests"
 version = "1.1.1"
-source = "git+https://github.com/nicls67/rusttests.git?tag=1.1.1#5eca7c09e05e10c0f2dd8214c3d38999dae41f11"
+source = "git+http://serveur-dev.home/rust-libs/rusttests.git?tag=1.1.1#5eca7c09e05e10c0f2dd8214c3d38999dae41f11"
 
 [[package]]
 name = "rustversion"
@@ -227,7 +227,7 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "smoldb"
-version = "1.2.1"
+version = "1.2.2"
 dependencies = [
  "chrono",
  "package_infos",
