@@ -1,6 +1,6 @@
 [package]
 name = "smoldb"
-version = "1.2.2"
+version = "1.2.3"
 authors = ["Nicolas SIMON"]
 edition = "2021"
 description = "A small database library written in Rust"
