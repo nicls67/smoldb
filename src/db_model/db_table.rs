@@ -3033,6 +3033,45 @@ mod tests {
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
+        // Subset match
+        let subset_entry1 = "entry1".to_string();
+        let subset_entry3 = "entry3".to_string();
+        let subset_entry6 = "entry6".to_string();
+        let subset = vec![&subset_entry1, &subset_entry3, &subset_entry6];
+
+        let expected_vec = vec![
+            "entry1".to_string(),
+        ];
+        let res = check_result(
+            (7, 1),
+            table.get_matching_entries_float(
+                Some(subset.clone()),
+                &"key3".to_string(),
+                MatchingCriteria::Between,
+                0.45,
+                Some(2.23),
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((7, 2), res, true)?.unwrap();
+        check_value((7, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Subset no match
+        let res = check_result(
+            (8, 1),
+            table.get_matching_entries_float(
+                Some(subset),
+                &"key3".to_string(),
+                MatchingCriteria::IsLess,
+                -10.0,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((8, 2), res, false)?;
+
         Ok(())
     }
 
@@ -4141,6 +4180,79 @@ mod tests {
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 5,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((0, 2), res, false)?;
+
+        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        check_result(
+            (1, 1),
+            table.get_matching_entries_unsigned_integer(
+                None,
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                5,
+                None,
+            ),
+            false,
+        )?;
+        check_result(
+            (2, 1),
+            table.get_matching_entries_unsigned_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                5,
+                None,
+            ),
+            false,
+        )?;
+        check_result(
+            (3, 1),
+            table.get_matching_entries_unsigned_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                5,
+                Some(4),
+            ),
+            false,
+        )?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_matching_uint() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::UnsignedInt(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        // Empty table
+        let res = check_result(
+            (0, 1),
+            table.get_matching_entries_float(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                5.0,
                 None,
             ),
             true,
