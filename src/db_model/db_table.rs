@@ -4937,6 +4937,83 @@ mod tests {
     }
 
     #[test]
+    fn get_unique_string_values_for_key_empty() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::String("".to_string())),
+            ("key2".to_string(), DbType::String("".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let table = DbTable::new("Table".to_string(), Some(keys));
+
+        let res = check_result(
+            (1, 1),
+            table.get_unique_string_values_for_key(None, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((1, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_unique_string_values_for_key_subset() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::String("".to_string())),
+            ("key2".to_string(), DbType::String("".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("1".to_string()),
+            Some("4".to_string()),
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![
+            Some("2".to_string()),
+            Some("5".to_string()),
+            Some("1.46".to_string()),
+        ];
+        let mut binding3 = vec![
+            Some("3".to_string()),
+            Some("6".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let mut binding4 = vec![
+            Some("1".to_string()),
+            Some("5".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        table.add_entry(&"entry5".to_string(), new_entry4)?;
+
+        let entry1 = "entry1".to_string();
+        let entry4 = "entry4".to_string();
+        let entry5 = "entry5".to_string();
+        let subset = Some(vec![&entry1, &entry4, &entry5]);
+
+        let expected_vec_1 = vec!["1".to_string(), "3".to_string()];
+        let res = check_result(
+            (1, 1),
+            table.get_unique_string_values_for_key(subset, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn get_key_values_string_error() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::String("0".to_string())),
