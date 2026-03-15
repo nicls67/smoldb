@@ -2891,6 +2891,45 @@ mod tests {
         let opt = check_option((6, 2), res, true)?.unwrap();
         check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
+        // Subset match
+        let subset_entry1 = "entry1".to_string();
+        let subset_entry3 = "entry3".to_string();
+        let subset_entry6 = "entry6".to_string();
+        let subset = vec![&subset_entry1, &subset_entry3, &subset_entry6];
+
+        let expected_vec = vec![
+            "entry1".to_string(),
+        ];
+        let res = check_result(
+            (7, 1),
+            table.get_matching_entries_float(
+                Some(subset.clone()),
+                &"key3".to_string(),
+                MatchingCriteria::Between,
+                0.45,
+                Some(2.23),
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((7, 2), res, true)?.unwrap();
+        check_value((7, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Subset no match
+        let res = check_result(
+            (8, 1),
+            table.get_matching_entries_float(
+                Some(subset),
+                &"key3".to_string(),
+                MatchingCriteria::IsLess,
+                -10.0,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((8, 2), res, false)?;
+
         Ok(())
     }
 
@@ -3877,6 +3916,22 @@ mod tests {
             ("key3".to_string(), DbType::Float(0.0)),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        // Empty table
+        let res = check_result(
+            (0, 1),
+            table.get_matching_entries_float(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                5.0,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((0, 2), res, false)?;
+
         let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
         let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
         let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
