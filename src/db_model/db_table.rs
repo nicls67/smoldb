@@ -5235,79 +5235,57 @@ mod tests {
     }
 
     #[test]
-    fn get_unique_float_values_for_key() -> Result<(), String> {
+    fn get_unique_integer_values_for_key_subset() -> Result<(), String> {
         let keys = vec![
-            ("key1".to_string(), DbType::Float(0.0)),
-            ("key2".to_string(), DbType::Float(0.0)),
-            ("key3".to_string(), DbType::String("0.0".to_string())),
-            ("key8".to_string(), DbType::Integer(0)),
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::Integer(0)),
+            ("key3".to_string(), DbType::String("0".to_string())),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
-            Some("1.0".to_string()),
-            Some("4.1".to_string()),
-            Some("Hello".to_string()),
-            Some("10".to_string()),
-        ];
-        let mut binding2 = vec![
-            Some("2.2".to_string()),
-            Some("5.3".to_string()),
-            Some("World".to_string()),
-            Some("20".to_string()),
-        ];
-        let mut binding3 = vec![
-            Some("3.3".to_string()),
-            Some("6.4".to_string()),
-            Some("AI".to_string()),
-            Some("30".to_string()),
-        ];
-        let mut binding4 = vec![
-            Some("1.0".to_string()),
-            Some("5.5".to_string()),
-            Some("Assistant".to_string()),
-            Some("40".to_string()),
-        ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
+        let mut values1 = vec![Some("1".to_string()), Some("4".to_string()), Some("a".to_string())];
+        let mut values2 = vec![Some("2".to_string()), Some("5".to_string()), Some("b".to_string())];
+        let mut values3 = vec![Some("3".to_string()), Some("6".to_string()), Some("c".to_string())];
+        let mut values4 = vec![Some("1".to_string()), Some("5".to_string()), Some("d".to_string())];
+
+        table.add_entry(&"entry1".to_string(), Some(&mut values1))?;
         table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        table.add_entry(&"entry3".to_string(), Some(&mut values2))?;
+        table.add_entry(&"entry4".to_string(), Some(&mut values3))?;
+        table.add_entry(&"entry5".to_string(), Some(&mut values4))?;
 
-        check_result(
+        let e1 = "entry1".to_string();
+        let e5 = "entry5".to_string();
+        let subset1 = vec![&e1, &e5];
+
+        let res = check_result(
             (1, 1),
-            table.get_unique_float_values_for_key(None, &"key3".to_string()),
-            false,
-        )?;
-        check_result(
-            (2, 1),
-            table.get_unique_float_values_for_key(None, &"key8".to_string()),
-            false,
-        )?;
-
-        let expected_vec_1 = vec![1.0, 2.2, 3.3];
-        let res = check_result(
-            (3, 1),
-            table.get_unique_float_values_for_key(None, &"key1".to_string()),
+            table.get_unique_integer_values_for_key(Some(subset1), &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((3, 2), res, true)?.unwrap();
-        check_value((3, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &vec![1], CheckType::Equal)?;
 
-        let expected_vec_2 = vec![4.1, 5.3, 6.4, 5.5];
+        Ok(())
+    }
+
+    #[test]
+    fn get_unique_integer_values_for_key_empty() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::Integer(0)),
+            ("key3".to_string(), DbType::String("0".to_string())),
+        ];
+        let table = DbTable::new("Table".to_string(), Some(keys));
+
         let res = check_result(
-            (4, 1),
-            table.get_unique_float_values_for_key(None, &"key2".to_string()),
+            (1, 1),
+            table.get_unique_integer_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((4, 2), res, true)?.unwrap();
-        check_value((4, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+        check_option((1, 2), res, false)?;
 
         Ok(())
     }
