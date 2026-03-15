@@ -325,6 +325,9 @@ mod tests {
         let l_val = check_result((2, 3), DbType::default_from_string(&"UnsignedInt".to_string()), true)?.unwrap();
         check_struct((2, 4), &l_val, &DbType::UnsignedInt(0), rusttests::CheckType::Equal)?;
 
+        let l_val = check_result((2, 5), DbType::default_from_string(&"unsignedint".to_string()), true)?.unwrap();
+        check_struct((2, 6), &l_val, &DbType::UnsignedInt(0), rusttests::CheckType::Equal)?;
+
         let l_val = check_result((3, 1), DbType::default_from_string(&"float".to_string()), true)?.unwrap();
         check_struct((3, 2), &l_val, &DbType::Float(0.0), rusttests::CheckType::Equal)?;
 
@@ -333,6 +336,9 @@ mod tests {
 
         let l_val = check_result((4, 3), DbType::default_from_string(&"Bool".to_string()), true)?.unwrap();
         check_struct((4, 4), &l_val, &DbType::Bool(false), rusttests::CheckType::Equal)?;
+
+        let l_val = check_result((4, 5), DbType::default_from_string(&"bool".to_string()), true)?.unwrap();
+        check_struct((4, 6), &l_val, &DbType::Bool(false), rusttests::CheckType::Equal)?;
 
         let l_val = check_result((5, 1), DbType::default_from_string(&"string".to_string()), true)?.unwrap();
         check_struct((5, 2), &l_val, &DbType::String("".to_string()), rusttests::CheckType::Equal)?;
@@ -345,10 +351,13 @@ mod tests {
 
     #[test]
     fn check_default_from_string_ko() -> Result<(), String> {
-        check_result(
-            (1, 1),
-            DbType::default_from_string(&"Unknown".to_string()),
-            false,
+        let l_res = DbType::default_from_string(&"Unknown".to_string());
+        check_result((1, 1), l_res.clone(), false)?;
+        check_struct(
+            (1, 2),
+            &l_res.unwrap_err(),
+            &"Unknown database type : Unknown".to_string(),
+            rusttests::CheckType::Equal,
         )?;
         Ok(())
     }
