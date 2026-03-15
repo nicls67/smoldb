@@ -2573,10 +2573,13 @@ mod tests {
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
 
-        check_result(
-            (1, 1),
-            table.rename_entry(&"entry1".to_string(), "entry99"),
-            false,
+        let err = table.rename_entry(&"entry1".to_string(), "entry99").unwrap_err();
+
+        check_value(
+            (1, 2),
+            &err,
+            &"Entry entry1 does not exists in table Table".to_string(),
+            CheckType::Equal,
         )?;
 
         Ok(())
@@ -2595,10 +2598,13 @@ mod tests {
         let mut binding2 = vec![Some("2".to_string())];
         table.add_entry(&"entry2".to_string(), Some(&mut binding2))?;
 
-        check_result(
-            (1, 1),
-            table.rename_entry(&"entry1".to_string(), "entry2"),
-            false,
+        let err = table.rename_entry(&"entry1".to_string(), "entry2").unwrap_err();
+
+        check_value(
+            (1, 2),
+            &err,
+            &"DbTable - rename_entry : Could not rename entry, an entry named 'entry2' already exists".to_string(),
+            CheckType::Equal,
         )?;
 
         Ok(())
