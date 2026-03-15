@@ -719,6 +719,12 @@ impl DbTable {
     ///
     /// Returns `Ok(())` if the rename operation was successful, otherwise returns an `Err` with an error message.
     pub fn rename_entry(&mut self, entry_name: &String, new_name: &str) -> Result<(), String> {
+        if self.entry_exists(&new_name.to_string()) {
+            return Err(format!(
+                "DbTable - rename_entry : Could not rename entry, an entry named '{}' already exists",
+                new_name
+            ));
+        }
         self.find_entry(entry_name)?.0.rename(new_name);
         Ok(())
     }
@@ -2555,6 +2561,44 @@ mod tests {
             (1, 3),
             table.get_entry_value_string(&"entry99".to_string(), &"key2".to_string()),
             true,
+        )?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn rename_entry_missing() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        check_result(
+            (1, 1),
+            table.rename_entry(&"entry1".to_string(), "entry99"),
+            false,
+        )?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn rename_entry_duplicate() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        let mut binding = vec![Some("1".to_string())];
+        table.add_entry(&"entry1".to_string(), Some(&mut binding))?;
+
+        let mut binding2 = vec![Some("2".to_string())];
+        table.add_entry(&"entry2".to_string(), Some(&mut binding2))?;
+
+        check_result(
+            (1, 1),
+            table.rename_entry(&"entry1".to_string(), "entry2"),
+            false,
         )?;
 
         Ok(())
