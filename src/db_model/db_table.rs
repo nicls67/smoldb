@@ -4124,7 +4124,7 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut table = DbTable::new("Table".to_string(), Some(keys.clone()));
         let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
         let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
         let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
@@ -4144,6 +4144,22 @@ mod tests {
         table.add_entry(&"entry4".to_string(), new_entry4)?;
         table.add_entry(&"entry5".to_string(), new_entry5)?;
         table.add_entry(&"entry6".to_string(), new_entry6)?;
+
+        // Empty table
+        let empty_table = DbTable::new("EmptyTable".to_string(), Some(keys.clone()));
+        let res = check_result(
+            (0, 1),
+            empty_table.get_matching_entries_float(
+                None,
+                &"key3".to_string(),
+                MatchingCriteria::Equal,
+                -0.27,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((0, 2), res, false)?;
 
         // Equality
         let expected_vec = vec!["entry3".to_string(), "entry4".to_string()];
