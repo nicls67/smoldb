@@ -30,6 +30,13 @@ fn basic_ops_1() -> Result<(), String> {
 
     let l_table = l_db.database().table(&"Table test 1".to_string())?;
 
+    // Get unique integer values for key2 on empty table
+    check_option(
+        (1, 2),
+        l_table.get_unique_integer_values_for_key(None, &"key2".to_string())?,
+        false,
+    )?;
+
     // Add entries, 2nd has all keys set to None
     let mut l_values = vec![
         Some("hey".to_string()),
