@@ -374,6 +374,12 @@ mod tests {
             &"Unknown database type : Unknown".to_string(),
             rusttests::CheckType::Equal,
         )?;
+
+        check_result(
+            (2, 1),
+            DbType::default_from_string(&"".to_string()),
+            false,
+        )?;
         Ok(())
     }
 
