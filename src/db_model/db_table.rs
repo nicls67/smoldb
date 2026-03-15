@@ -1203,23 +1203,6 @@ impl DbTable {
         if self.entries_count() == 0 {
             return Ok(None);
         }
-        // Check input compatibility
-        if p_criteria == MatchingCriteria::Between {
-            if p_float2.is_none() {
-                let l_msg =
-                    "Second reference float not defined for Between integer comparison".to_string();
-                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
-                return Err(l_msg);
-            }
-            if let Some(value) = p_float2 {
-                if value - p_float1 <= 0.0 {
-                    let l_msg = "Second reference float is not higher than first reference float"
-                        .to_string();
-                    write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
-                    return Err(l_msg);
-                }
-            }
-        }
 
         // Check selected key has a float type
         let l_key = self.find_key(p_key_name)?;
@@ -1251,9 +1234,27 @@ impl DbTable {
                                 }
                             }
                             MatchingCriteria::Between => {
-                                let l_delta2 = entry_float - p_float2.unwrap();
-                                if l_delta >= -f32::EPSILON && l_delta2 <= f32::EPSILON {
-                                    l_output.push(entry.name().clone());
+                                // Check input compatibility
+                                if let Some(l_float2) = p_float2 {
+                                    if l_float2 - p_float1 <= 0.0 {
+                                        let l_msg = "Second reference float is not higher than first reference float".to_string();
+                                        write_log(
+                                            LogSeverity::Error,
+                                            &l_msg,
+                                            env!("CARGO_PKG_NAME"),
+                                        );
+                                        return Err(l_msg);
+                                    } else {
+                                        let l_delta2 = entry_float - l_float2;
+                                        if l_delta >= -f32::EPSILON && l_delta2 <= f32::EPSILON {
+                                            l_output.push(entry.name().clone());
+                                        }
+                                    }
+                                } else {
+                                    let l_msg =
+                                        "Second reference float not defined for Between integer comparison".to_string();
+                                    write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                                    return Err(l_msg);
                                 }
                             }
                         }
