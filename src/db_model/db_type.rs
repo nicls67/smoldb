@@ -310,7 +310,11 @@ mod tests {
 
     #[test]
     fn check_default_from_string_ko() -> Result<(), String> {
-        check_result((1, 1), DbType::default_from_string(&"Unknown".to_string()), false)?;
+        check_result(
+            (1, 1),
+            DbType::default_from_string(&"Unknown".to_string()),
+            false,
+        )?;
         Ok(())
     }
 }
