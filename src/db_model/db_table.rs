@@ -680,6 +680,14 @@ impl DbTable {
     /// Returns an error if `p_key_type` does not correspond to a known type.
     ///
     pub fn add_key(&mut self, key_name: &String, key_type: &String) -> Result<(), String> {
+        // Check key name is available
+        if self.find_key(key_name).is_ok() {
+            return Err(format!(
+                "DbTable - add_key : Key '{key_name}' already exists in table '{}'",
+                self.name
+            ));
+        }
+
         self.keys
             .push((key_name.clone(), DbType::default_from_string(key_type)?));
 
@@ -2400,14 +2408,52 @@ mod tests {
 
         table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
 
+        // Verify that the table schema was modified
+        let key_tuple = table.find_key(&"key_new".to_string())?;
+        check_value((1, 1), &key_tuple.0, &3, CheckType::Equal)?;
+        check_struct((1, 2), key_tuple.1, &DbType::UnsignedInt(0), CheckType::Equal)?;
+
+        // Verify that existing entries were updated to contain None for the new key
         check_option(
-            (1, 1),
+            (2, 1),
             table.get_entry_value(&"entry1".to_string(), &"key_new".to_string())?,
             false,
         )?;
         check_option(
-            (1, 2),
+            (2, 2),
             table.get_entry_value(&"entry2".to_string(), &"key_new".to_string())?,
+            false,
+        )?;
+
+        // Try updating an existing entry with the new key value to ensure the entry structure was properly resized
+        table.update_entry_unsigned_integer(&"entry1".to_string(), &"key_new".to_string(), Some(123))?;
+        let entry_val = check_option(
+            (3, 1),
+            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key_new".to_string())?,
+            true,
+        )?.unwrap();
+        check_value((3, 2), entry_val, &123, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn add_key_already_exists() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+
+        check_result(
+            (1, 1),
+            table.add_key(&"key2".to_string(), &"UnsignedInt".to_string()),
             false,
         )?;
         Ok(())
