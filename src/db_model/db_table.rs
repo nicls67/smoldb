@@ -680,6 +680,14 @@ impl DbTable {
     /// Returns an error if `p_key_type` does not correspond to a known type.
     ///
     pub fn add_key(&mut self, key_name: &String, key_type: &String) -> Result<(), String> {
+        // Check key name is available
+        if self.find_key(key_name).is_ok() {
+            return Err(format!(
+                "DbTable - add_key : Key '{key_name}' already exists in table '{}'",
+                self.name
+            ));
+        }
+
         self.keys
             .push((key_name.clone(), DbType::default_from_string(key_type)?));
 
@@ -2280,7 +2288,7 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut table = DbTable::new("Table".to_string(), Some(keys.clone()));
         let mut binding = vec![Some("1".to_string()), None, Some("false".to_string())];
         let new_entry = Some(&mut binding);
 
@@ -2400,14 +2408,52 @@ mod tests {
 
         table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
 
+        // Verify that the table schema was modified
+        let key_tuple = table.find_key(&"key_new".to_string())?;
+        check_value((1, 1), &key_tuple.0, &3, CheckType::Equal)?;
+        check_struct((1, 2), key_tuple.1, &DbType::UnsignedInt(0), CheckType::Equal)?;
+
+        // Verify that existing entries were updated to contain None for the new key
         check_option(
-            (1, 1),
+            (2, 1),
             table.get_entry_value(&"entry1".to_string(), &"key_new".to_string())?,
             false,
         )?;
         check_option(
-            (1, 2),
+            (2, 2),
             table.get_entry_value(&"entry2".to_string(), &"key_new".to_string())?,
+            false,
+        )?;
+
+        // Try updating an existing entry with the new key value to ensure the entry structure was properly resized
+        table.update_entry_unsigned_integer(&"entry1".to_string(), &"key_new".to_string(), Some(123))?;
+        let entry_val = check_option(
+            (3, 1),
+            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key_new".to_string())?,
+            true,
+        )?.unwrap();
+        check_value((3, 2), entry_val, &123, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn add_key_already_exists() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+
+        check_result(
+            (1, 1),
+            table.add_key(&"key2".to_string(), &"UnsignedInt".to_string()),
             false,
         )?;
         Ok(())
@@ -2970,7 +3016,7 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut table = DbTable::new("Table".to_string(), Some(keys.clone()));
         let mut binding = vec![Some("true".to_string()), None, Some("false".to_string())];
         let mut binding2 = vec![Some("true".to_string()), None, Some("false".to_string())];
         let mut binding3 = vec![Some("false".to_string()), None, Some("false".to_string())];
@@ -2990,6 +3036,21 @@ mod tests {
         table.add_entry(&"entry4".to_string(), new_entry4)?;
         table.add_entry(&"entry5".to_string(), new_entry5)?;
         table.add_entry(&"entry6".to_string(), new_entry6)?;
+
+        // Empty table
+        let empty_table = DbTable::new("EmptyTable".to_string(), Some(keys.clone()));
+        let res = check_result(
+            (0, 1),
+            empty_table.get_matching_entries_bool(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                true,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((0, 2), res, false)?;
 
         // Equality True
         let expected_vec = vec![
@@ -3064,6 +3125,49 @@ mod tests {
         .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Different False
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (5, 1),
+            table.get_matching_entries_bool(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Different,
+                false,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((5, 2), res, true)?.unwrap();
+        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // With subset
+        let s_name1 = "entry1".to_string();
+        let s_name4 = "entry4".to_string();
+        let s_name5 = "entry5".to_string();
+        let subset_names = vec![&s_name1, &s_name4, &s_name5];
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (6, 1),
+            table.get_matching_entries_bool(
+                Some(subset_names),
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                true,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((6, 2), res, true)?.unwrap();
+        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         Ok(())
     }
@@ -3306,6 +3410,86 @@ mod tests {
             ),
             false,
         )?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_matching_integer_subset_and_empty() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        // Empty table
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                5,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        // When table is empty, it returns Ok(None).
+        // Therefore, res is an Option containing None. We want to assert res is None.
+        check_option((1, 2), res, false)?;
+
+        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut binding4 = vec![Some("-8".to_string()), None, Some("-0.27".to_string())];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+
+        let e2 = "entry2".to_string();
+        let e3 = "entry3".to_string();
+        let e4 = "entry4".to_string();
+        let subset = vec![&e2, &e3, &e4];
+
+        // Subset match
+        let expected_vec = vec!["entry3".to_string()];
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_integer(
+                Some(subset.clone()),
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                5,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Subset no match
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_integer(
+                Some(subset),
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                10,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((3, 2), res, false)?;
 
         Ok(())
     }
@@ -3911,6 +4095,79 @@ mod tests {
     }
 
     #[test]
+    fn get_key_values_bool_empty() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::Bool(false)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let table = DbTable::new("Table".to_string(), Some(keys));
+
+        let res = check_result(
+            (1, 1),
+            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((1, 2), res, false)?;
+
+        let res = check_result(
+            (2, 1),
+            table.get_unique_boolean_values_for_key(None, &"key8".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((2, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_bool_subset() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::Bool(false)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("false".to_string()),
+            Some("true".to_string()),
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![
+            Some("true".to_string()),
+            Some("true".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        let expected_vec_1 = vec![false];
+        let entry1 = "entry1".to_string();
+        let entry3 = "entry3".to_string();
+        let subset_entries = vec![&entry1, &entry3];
+
+        let res = check_result(
+            (1, 1),
+            table.get_unique_boolean_values_for_key(Some(subset_entries), &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn get_key_values_bool() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
@@ -4293,6 +4550,16 @@ mod tests {
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
 
+        let expected_vec_2 = vec![4.1, 5.3, 6.4, 5.5];
+        let res = check_result(
+            (2, 1),
+            table.get_unique_float_values_for_key(None, &"key2".to_string()),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+
         Ok(())
     }
 
@@ -4369,6 +4636,16 @@ mod tests {
             ("key3".to_string(), DbType::String("Test".to_string())),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        // Check with empty table
+        let res = check_result(
+            (0, 1),
+            table.get_unique_date_values_for_key(None, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((0, 2), res, false)?;
+
         let mut binding = vec![
             Some("01/12/2021".to_string()),
             Some("01/01/2022".to_string()),
@@ -4413,6 +4690,28 @@ mod tests {
         .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+
+        let expected_vec_2 = vec![
+            NaiveDate::from_ymd_opt(2022, 1, 1).unwrap(),
+            NaiveDate::from_ymd_opt(2022, 1, 2).unwrap(),
+            NaiveDate::from_ymd_opt(2022, 1, 3).unwrap(),
+        ];
+        let res = check_result(
+            (2, 1),
+            table.get_unique_date_values_for_key(None, &"key2".to_string()),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+
+        let res = check_result(
+            (3, 1),
+            table.get_unique_date_values_for_key(Some(vec![]), &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((3, 2), res, false)?;
 
         Ok(())
     }
