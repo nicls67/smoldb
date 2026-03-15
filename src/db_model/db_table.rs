@@ -2288,7 +2288,7 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut table = DbTable::new("Table".to_string(), Some(keys.clone()));
         let mut binding = vec![Some("1".to_string()), None, Some("false".to_string())];
         let new_entry = Some(&mut binding);
 
@@ -3016,7 +3016,7 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut table = DbTable::new("Table".to_string(), Some(keys.clone()));
         let mut binding = vec![Some("true".to_string()), None, Some("false".to_string())];
         let mut binding2 = vec![Some("true".to_string()), None, Some("false".to_string())];
         let mut binding3 = vec![Some("false".to_string()), None, Some("false".to_string())];
@@ -3036,6 +3036,21 @@ mod tests {
         table.add_entry(&"entry4".to_string(), new_entry4)?;
         table.add_entry(&"entry5".to_string(), new_entry5)?;
         table.add_entry(&"entry6".to_string(), new_entry6)?;
+
+        // Empty table
+        let empty_table = DbTable::new("EmptyTable".to_string(), Some(keys.clone()));
+        let res = check_result(
+            (0, 1),
+            empty_table.get_matching_entries_bool(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                true,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((0, 2), res, false)?;
 
         // Equality True
         let expected_vec = vec![
@@ -3110,6 +3125,49 @@ mod tests {
         .unwrap();
         let opt = check_option((4, 2), res, true)?.unwrap();
         check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Different False
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (5, 1),
+            table.get_matching_entries_bool(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Different,
+                false,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((5, 2), res, true)?.unwrap();
+        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // With subset
+        let s_name1 = "entry1".to_string();
+        let s_name4 = "entry4".to_string();
+        let s_name5 = "entry5".to_string();
+        let subset_names = vec![&s_name1, &s_name4, &s_name5];
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (6, 1),
+            table.get_matching_entries_bool(
+                Some(subset_names),
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                true,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((6, 2), res, true)?.unwrap();
+        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
 
         Ok(())
     }
