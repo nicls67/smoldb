@@ -30,6 +30,13 @@ fn basic_ops_1() -> Result<(), String> {
 
     let l_table = l_db.database().table(&"Table test 1".to_string())?;
 
+    // Get unique integer values for key2 on empty table
+    check_option(
+        (1, 2),
+        l_table.get_unique_integer_values_for_key(None, &"key2".to_string())?,
+        false,
+    )?;
+
     // Add entries, 2nd has all keys set to None
     let mut l_values = vec![
         Some("hey".to_string()),
@@ -164,6 +171,70 @@ fn basic_ops_1() -> Result<(), String> {
             .unwrap(),
         &vec!["entry1".to_string()],
         CheckType::Equal,
+    )?;
+
+    // Get entries with key2 value equal to -115
+    check_value(
+        (4, 4),
+        &l_table
+            .get_matching_entries_integer(
+                None,
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                -115,
+                None,
+            )
+            .unwrap()
+            .unwrap(),
+        &vec!["entry1".to_string()],
+        CheckType::Equal,
+    )?;
+
+    // Get entries with key2 value less than 0
+    check_value(
+        (4, 5),
+        &l_table
+            .get_matching_entries_integer(
+                None,
+                &"key2".to_string(),
+                MatchingCriteria::IsLess,
+                0,
+                None,
+            )
+            .unwrap()
+            .unwrap(),
+        &vec!["entry1".to_string()],
+        CheckType::Equal,
+    )?;
+
+    // Get entries with key2 value between -200 and -100
+    check_value(
+        (4, 6),
+        &l_table
+            .get_matching_entries_integer(
+                None,
+                &"key2".to_string(),
+                MatchingCriteria::Between,
+                -200,
+                Some(-100),
+            )
+            .unwrap()
+            .unwrap(),
+        &vec!["entry1".to_string()],
+        CheckType::Equal,
+    )?;
+
+    // Get entries with key2 value greater than 0 (should be none since entry1 is -115, and entry2, entry3 are None)
+    check_option(
+        (4, 7),
+        l_table.get_matching_entries_integer(
+            None,
+            &"key2".to_string(),
+            MatchingCriteria::IsMore,
+            0,
+            None,
+        )?,
+        false,
     )?;
 
     // Remove an entry from the table
