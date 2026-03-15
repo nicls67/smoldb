@@ -340,7 +340,7 @@ mod tests {
         let l_val = check_result((4, 3), DbType::default_from_string(&"Bool".to_string()), true)?.unwrap();
         check_struct((4, 4), &l_val, &DbType::Bool(false), rusttests::CheckType::Equal)?;
 
-        let l_val = check_result((4, 5), DbType::default_from_string(&"Boolean".to_string()), true)?.unwrap();
+        let l_val = check_result((4, 5), DbType::default_from_string(&"bool".to_string()), true)?.unwrap();
         check_struct((4, 6), &l_val, &DbType::Bool(false), rusttests::CheckType::Equal)?;
 
         let l_val = check_result((5, 1), DbType::default_from_string(&"string".to_string()), true)?.unwrap();
