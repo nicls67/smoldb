@@ -173,6 +173,70 @@ fn basic_ops_1() -> Result<(), String> {
         CheckType::Equal,
     )?;
 
+    // Get entries with key2 value equal to -115
+    check_value(
+        (4, 4),
+        &l_table
+            .get_matching_entries_integer(
+                None,
+                &"key2".to_string(),
+                MatchingCriteria::Equal,
+                -115,
+                None,
+            )
+            .unwrap()
+            .unwrap(),
+        &vec!["entry1".to_string()],
+        CheckType::Equal,
+    )?;
+
+    // Get entries with key2 value less than 0
+    check_value(
+        (4, 5),
+        &l_table
+            .get_matching_entries_integer(
+                None,
+                &"key2".to_string(),
+                MatchingCriteria::IsLess,
+                0,
+                None,
+            )
+            .unwrap()
+            .unwrap(),
+        &vec!["entry1".to_string()],
+        CheckType::Equal,
+    )?;
+
+    // Get entries with key2 value between -200 and -100
+    check_value(
+        (4, 6),
+        &l_table
+            .get_matching_entries_integer(
+                None,
+                &"key2".to_string(),
+                MatchingCriteria::Between,
+                -200,
+                Some(-100),
+            )
+            .unwrap()
+            .unwrap(),
+        &vec!["entry1".to_string()],
+        CheckType::Equal,
+    )?;
+
+    // Get entries with key2 value greater than 0 (should be none since entry1 is -115, and entry2, entry3 are None)
+    check_option(
+        (4, 7),
+        l_table.get_matching_entries_integer(
+            None,
+            &"key2".to_string(),
+            MatchingCriteria::IsMore,
+            0,
+            None,
+        )?,
+        false,
+    )?;
+
     // Remove an entry from the table
     l_table.remove_entry(&"entry1".to_string())?;
 
