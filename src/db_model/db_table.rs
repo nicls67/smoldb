@@ -3911,6 +3911,79 @@ mod tests {
     }
 
     #[test]
+    fn get_key_values_bool_empty() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::Bool(false)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let table = DbTable::new("Table".to_string(), Some(keys));
+
+        let res = check_result(
+            (1, 1),
+            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((1, 2), res, false)?;
+
+        let res = check_result(
+            (2, 1),
+            table.get_unique_boolean_values_for_key(None, &"key8".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((2, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_key_values_bool_subset() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+            ("key2".to_string(), DbType::Bool(false)),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![
+            Some("false".to_string()),
+            Some("true".to_string()),
+            Some("2.23".to_string()),
+        ];
+        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![
+            Some("true".to_string()),
+            Some("true".to_string()),
+            Some("-0.27".to_string()),
+        ];
+        let new_entry = Some(&mut binding);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+        table.add_entry(&"entry2".to_string(), None)?;
+        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        table.add_entry(&"entry4".to_string(), new_entry3)?;
+
+        let expected_vec_1 = vec![false];
+        let entry1 = "entry1".to_string();
+        let entry3 = "entry3".to_string();
+        let subset_entries = vec![&entry1, &entry3];
+
+        let res = check_result(
+            (1, 1),
+            table.get_unique_boolean_values_for_key(Some(subset_entries), &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn get_key_values_bool() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
@@ -4293,6 +4366,16 @@ mod tests {
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
 
+        let expected_vec_2 = vec![4.1, 5.3, 6.4, 5.5];
+        let res = check_result(
+            (2, 1),
+            table.get_unique_float_values_for_key(None, &"key2".to_string()),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+
         Ok(())
     }
 
@@ -4369,6 +4452,16 @@ mod tests {
             ("key3".to_string(), DbType::String("Test".to_string())),
         ];
         let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        // Check with empty table
+        let res = check_result(
+            (0, 1),
+            table.get_unique_date_values_for_key(None, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((0, 2), res, false)?;
+
         let mut binding = vec![
             Some("01/12/2021".to_string()),
             Some("01/01/2022".to_string()),
@@ -4413,6 +4506,28 @@ mod tests {
         .unwrap();
         let opt = check_option((1, 2), res, true)?.unwrap();
         check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+
+        let expected_vec_2 = vec![
+            NaiveDate::from_ymd_opt(2022, 1, 1).unwrap(),
+            NaiveDate::from_ymd_opt(2022, 1, 2).unwrap(),
+            NaiveDate::from_ymd_opt(2022, 1, 3).unwrap(),
+        ];
+        let res = check_result(
+            (2, 1),
+            table.get_unique_date_values_for_key(None, &"key2".to_string()),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+
+        let res = check_result(
+            (3, 1),
+            table.get_unique_date_values_for_key(Some(vec![]), &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((3, 2), res, false)?;
 
         Ok(())
     }
