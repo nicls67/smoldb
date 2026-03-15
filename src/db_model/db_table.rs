@@ -2467,6 +2467,85 @@ mod tests {
     }
 
     #[test]
+    fn add_key_empty_table() -> Result<(), String> {
+        let mut table = DbTable::new("Table".to_string(), None);
+
+        table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
+
+        // Verify that the table schema was modified
+        let key_tuple = table.find_key(&"key_new".to_string())?;
+        check_value((1, 1), &key_tuple.0, &0, CheckType::Equal)?;
+        check_struct((1, 2), key_tuple.1, &DbType::UnsignedInt(0), CheckType::Equal)?;
+
+        // Verify table still has no entries
+        check_value((2, 1), &table.entries.len(), &0, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn add_key_multiple_keys() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        let mut binding = vec![Some("1".to_string()), None];
+        let new_entry = Some(&mut binding);
+
+        table.add_entry(&"entry1".to_string(), new_entry)?;
+
+        // Add two consecutive keys
+        table.add_key(&"key3".to_string(), &"Float".to_string())?;
+        table.add_key(&"key4".to_string(), &"Bool".to_string())?;
+
+        // Verify schema modification
+        check_value((1, 1), &table.keys.len(), &4, CheckType::Equal)?;
+
+        let key3_tuple = table.find_key(&"key3".to_string())?;
+        check_value((2, 1), &key3_tuple.0, &2, CheckType::Equal)?;
+        check_struct((2, 2), key3_tuple.1, &DbType::Float(0.0), CheckType::Equal)?;
+
+        let key4_tuple = table.find_key(&"key4".to_string())?;
+        check_value((3, 1), &key4_tuple.0, &3, CheckType::Equal)?;
+        check_struct((3, 2), key4_tuple.1, &DbType::Bool(false), CheckType::Equal)?;
+
+        // Verify entries correctly added None for the new keys
+        check_option(
+            (4, 1),
+            table.get_entry_value(&"entry1".to_string(), &"key3".to_string())?,
+            false,
+        )?;
+
+        check_option(
+            (4, 2),
+            table.get_entry_value(&"entry1".to_string(), &"key4".to_string())?,
+            false,
+        )?;
+
+        // Update the new fields to verify they are working
+        table.update_entry_float(&"entry1".to_string(), &"key3".to_string(), Some(3.14))?;
+        table.update_entry_bool(&"entry1".to_string(), &"key4".to_string(), Some(true))?;
+
+        let entry_val_3 = check_option(
+            (5, 1),
+            table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?,
+            true,
+        )?.unwrap();
+        check_value((5, 2), entry_val_3, &3.14, CheckType::Equal)?;
+
+        let entry_val_4 = check_option(
+            (6, 1),
+            table.get_entry_value_bool(&"entry1".to_string(), &"key4".to_string())?,
+            true,
+        )?.unwrap();
+        check_value((6, 2), entry_val_4, &true, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn add_key_already_exists() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
