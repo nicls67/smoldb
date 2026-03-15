@@ -2990,6 +2990,80 @@ mod tests {
     }
 
     #[test]
+    fn get_entries_matching_bool_missing_key() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("true".to_string())];
+        table.add_entry(&"entry1".to_string(), Some(&mut binding))?;
+
+        check_result(
+            (1, 1),
+            table.get_matching_entries_bool(
+                None,
+                &"key_missing".to_string(),
+                MatchingCriteria::Equal,
+                true,
+            ),
+            false,
+        )?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_matching_bool_empty_subset() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("true".to_string())];
+        table.add_entry(&"entry1".to_string(), Some(&mut binding))?;
+
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_bool(
+                Some(vec![]),
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                true,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((1, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_entries_matching_bool_subset_no_match() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Bool(false)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut binding = vec![Some("false".to_string())];
+        table.add_entry(&"entry1".to_string(), Some(&mut binding))?;
+
+        let entry1_name = "entry1".to_string();
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_bool(
+                Some(vec![&entry1_name]),
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                true,
+            ),
+            true,
+        )?
+        .unwrap();
+        check_option((1, 2), res, false)?;
+
+        Ok(())
+    }
+
+    #[test]
     fn get_entries_matching_bool_error() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
