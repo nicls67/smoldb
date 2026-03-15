@@ -29,7 +29,7 @@ pub enum MatchingCriteria {
 pub struct DbTable {
     /// Table name
     name: String,
-    /// Defines the l_keys, with name and associated type
+    /// Defines the keys, with name and associated type
     l_keys: Vec<(String, DbType)>,
     /// Table entries, each entry is a vector of entries
     entries: Vec<DbEntry>,
@@ -46,7 +46,7 @@ impl DbTable {
     ///
     /// # Returns
     ///
-    /// Returns a new `DbTable` with the specified name and l_keys.
+    /// Returns a new `DbTable` with the specified name and keys.
     ///
     pub(crate) fn new(p_name: String, l_keys: Option<Vec<(String, DbType)>>) -> DbTable {
         DbTable {
@@ -61,7 +61,7 @@ impl DbTable {
     /// # Arguments
     ///
     /// * `p_name` - The name of the entry. It must be unique within the table.
-    /// * `p_values` - Optional values for the entry. If provided, the length must be equal to the number of l_keys in the table.
+    /// * `p_values` - Optional values for the entry. If provided, the length must be equal to the number of keys in the table.
     ///   Each value should be wrapped in an `Option<String>`.
     ///
     /// # Returns
@@ -73,7 +73,7 @@ impl DbTable {
     /// Returns an error message as a `Result` if any of the following conditions are met:
     ///
     /// * The entry name already exists in the table.
-    /// * The length of the `values` vector is not equal to the number of l_keys in the table.
+    /// * The length of the `values` vector is not equal to the number of keys in the table.
     ///
     pub fn add_entry(
         &mut self,
