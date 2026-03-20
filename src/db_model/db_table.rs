@@ -41,7 +41,7 @@ impl DbTable {
     /// # Arguments
     ///
     /// * `p_name` - A `String` representing the name of the table.
-    /// * `p_keys` - An optional `Vec` of tuples containing a `String` representing the name of each key,
+    /// * `l_keys` - An optional `Vec` of tuples containing a `String` representing the name of each key,
     ///   and a `DbType` representing the type of the key.
     ///
     /// # Returns
@@ -1796,11 +1796,11 @@ mod tests {
 
     #[test]
     fn new_table_some() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_expected = DbTable {
             name: "Table".to_string(),
@@ -1817,12 +1817,12 @@ mod tests {
 
     #[test]
     fn add_entry() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -1835,12 +1835,12 @@ mod tests {
 
     #[test]
     fn add_entry_bad_type() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("text".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -1858,12 +1858,12 @@ mod tests {
 
     #[test]
     fn add_entry_bad_size() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("value1".to_string()), None];
         let l_new_entry = Some(&mut l_binding);
 
@@ -1881,12 +1881,12 @@ mod tests {
 
     #[test]
     fn add_entry_bad_name() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("2".to_string()), None, None];
         let l_new_entry = Some(&mut l_binding);
 
@@ -1903,12 +1903,12 @@ mod tests {
 
     #[test]
     fn update_entry_nominal() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -1951,12 +1951,12 @@ mod tests {
 
     #[test]
     fn update_entry_none() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -1975,12 +1975,12 @@ mod tests {
 
     #[test]
     fn update_entry_bad_name() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -1997,12 +1997,12 @@ mod tests {
 
     #[test]
     fn update_entry_bad_key() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2019,12 +2019,12 @@ mod tests {
 
     #[test]
     fn update_entry_bad_type() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2045,12 +2045,12 @@ mod tests {
 
     #[test]
     fn update_entry_string() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2075,12 +2075,12 @@ mod tests {
 
     #[test]
     fn update_entry_string_wrong_key() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2109,12 +2109,12 @@ mod tests {
 
     #[test]
     fn update_entry_string_none() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2133,11 +2133,11 @@ mod tests {
 
     #[test]
     fn get_entry_string() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::String(String::new())),
             ("key2".to_string(), DbType::String(String::new())),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("hello".to_string()), None];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2162,12 +2162,12 @@ mod tests {
 
     #[test]
     fn update_entry_integer() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2188,12 +2188,12 @@ mod tests {
 
     #[test]
     fn get_entry_integer_wrong_type() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2210,12 +2210,12 @@ mod tests {
 
     #[test]
     fn update_entry_uinteger() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::UnsignedInt(0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("12".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2240,12 +2240,12 @@ mod tests {
 
     #[test]
     fn get_entry_uinteger_wrong_type() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::UnsignedInt(0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("14".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2262,12 +2262,12 @@ mod tests {
 
     #[test]
     fn update_entry_float() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("12.56".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2288,12 +2288,12 @@ mod tests {
 
     #[test]
     fn get_entry_float_wrong_type() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2310,12 +2310,12 @@ mod tests {
 
     #[test]
     fn update_entry_bool() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys.clone()));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys.clone()));
         let mut l_binding = vec![Some("1".to_string()), None, Some("false".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2336,12 +2336,12 @@ mod tests {
 
     #[test]
     fn get_entry_bool_wrong_type() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("true".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2358,7 +2358,7 @@ mod tests {
 
     #[test]
     fn update_entry_date() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             (
@@ -2366,7 +2366,7 @@ mod tests {
                 DbType::default_from_string(&"Date".to_string())?,
             ),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("15/08/2016".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2396,7 +2396,7 @@ mod tests {
 
     #[test]
     fn get_entry_date_wrong_type() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             (
@@ -2404,7 +2404,7 @@ mod tests {
                 DbType::default_from_string(&"Date".to_string())?,
             ),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("15/08/2016".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2421,12 +2421,12 @@ mod tests {
 
     #[test]
     fn add_key_empty_table() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         // Add key to an empty l_table
         l_table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
@@ -2449,12 +2449,12 @@ mod tests {
 
     #[test]
     fn add_key_nominal() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2527,11 +2527,11 @@ mod tests {
 
     #[test]
     fn add_key_multiple_keys() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let mut l_binding = vec![Some("1".to_string()), None];
         let l_new_entry = Some(&mut l_binding);
@@ -2601,12 +2601,12 @@ mod tests {
 
     #[test]
     fn add_key_already_exists() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2623,12 +2623,12 @@ mod tests {
 
     #[test]
     fn add_key_wrong_name() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2645,12 +2645,12 @@ mod tests {
 
     #[test]
     fn add_entry_after_add_key() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         // Add a new key
         l_table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
@@ -2681,12 +2681,12 @@ mod tests {
 
     #[test]
     fn remove_entry() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
         let l_new_entry = Some(&mut l_binding);
         let mut l_binding2 = vec![Some("3".to_string()), None, Some("32".to_string())];
@@ -2704,12 +2704,12 @@ mod tests {
 
     #[test]
     fn remove_entry_wrong_name() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
         let l_new_entry = Some(&mut l_binding);
         let mut l_binding2 = vec![Some("3".to_string()), None, Some("32".to_string())];
@@ -2726,12 +2726,12 @@ mod tests {
 
     #[test]
     fn rename_entry() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let l_new_entry = Some(&mut l_binding);
 
@@ -2760,8 +2760,8 @@ mod tests {
 
     #[test]
     fn rename_entry_missing() -> Result<(), String> {
-        let keys = vec![("key1".to_string(), DbType::Integer(0))];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_keys = vec![("key1".to_string(), DbType::Integer(0))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_err = l_table
             .rename_entry(&"entry1".to_string(), "entry99")
@@ -2779,8 +2779,8 @@ mod tests {
 
     #[test]
     fn rename_entry_duplicate() -> Result<(), String> {
-        let keys = vec![("key1".to_string(), DbType::Integer(0))];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_keys = vec![("key1".to_string(), DbType::Integer(0))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let mut l_binding = vec![Some("1".to_string())];
         l_table.add_entry(&"entry1".to_string(), Some(&mut l_binding))?;
@@ -2804,12 +2804,12 @@ mod tests {
 
     #[test]
     fn get_all_entries() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let mut l_binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
         let mut l_binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
@@ -2837,19 +2837,19 @@ mod tests {
 
     #[test]
     fn get_all_entries_empty() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         check_value((1, 1), &l_table.get_all_entries(), &None, CheckType::Equal)
     }
 
     #[test]
     fn get_entries_matching_date_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             (
                 "key1".to_string(),
                 DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()),
@@ -2857,7 +2857,7 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("13/03/2014".to_string()),
             None,
@@ -2921,7 +2921,7 @@ mod tests {
 
     #[test]
     fn get_entries_matching_date() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             (
                 "key1".to_string(),
                 DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()),
@@ -2929,7 +2929,7 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("13/03/2014".to_string()),
             None,
@@ -3131,7 +3131,7 @@ mod tests {
 
     #[test]
     fn get_entries_none() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             (
                 "key1".to_string(),
                 DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()),
@@ -3139,7 +3139,7 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("13/03/2014".to_string()),
             None,
@@ -3226,8 +3226,8 @@ mod tests {
 
     #[test]
     fn get_entries_matching_bool_missing_key() -> Result<(), String> {
-        let keys = vec![("key1".to_string(), DbType::Bool(false))];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_keys = vec![("key1".to_string(), DbType::Bool(false))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("true".to_string())];
         l_table.add_entry(&"entry1".to_string(), Some(&mut l_binding))?;
 
@@ -3247,8 +3247,8 @@ mod tests {
 
     #[test]
     fn get_entries_matching_bool_empty_subset() -> Result<(), String> {
-        let keys = vec![("key1".to_string(), DbType::Bool(false))];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_keys = vec![("key1".to_string(), DbType::Bool(false))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("true".to_string())];
         l_table.add_entry(&"entry1".to_string(), Some(&mut l_binding))?;
 
@@ -3270,8 +3270,8 @@ mod tests {
 
     #[test]
     fn get_entries_matching_bool_subset_no_match() -> Result<(), String> {
-        let keys = vec![("key1".to_string(), DbType::Bool(false))];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_keys = vec![("key1".to_string(), DbType::Bool(false))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("false".to_string())];
         l_table.add_entry(&"entry1".to_string(), Some(&mut l_binding))?;
 
@@ -3294,12 +3294,12 @@ mod tests {
 
     #[test]
     fn get_entries_matching_bool_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
         let mut l_binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
         let mut l_binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
@@ -3358,12 +3358,12 @@ mod tests {
 
     #[test]
     fn get_entries_matching_bool() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys.clone()));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys.clone()));
         let mut l_binding = vec![Some("true".to_string()), None, Some("false".to_string())];
         let mut l_binding2 = vec![Some("true".to_string()), None, Some("false".to_string())];
         let mut l_binding3 = vec![Some("false".to_string()), None, Some("false".to_string())];
@@ -3385,7 +3385,7 @@ mod tests {
         l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
         // Empty l_table
-        let l_empty_table = DbTable::new("EmptyTable".to_string(), Some(keys.clone()));
+        let l_empty_table = DbTable::new("EmptyTable".to_string(), Some(l_keys.clone()));
         let l_res = check_result(
             (0, 1),
             l_empty_table.get_matching_entries_bool(
@@ -3518,12 +3518,12 @@ mod tests {
 
     #[test]
     fn get_entries_matching_string_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("true".to_string()),
             Some("toto".to_string()),
@@ -3594,8 +3594,8 @@ mod tests {
 
     #[test]
     fn get_entries_matching_string_empty() -> Result<(), String> {
-        let keys = vec![("key1".to_string(), DbType::String(" ".to_string()))];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_keys = vec![("key1".to_string(), DbType::String(" ".to_string()))];
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -3615,12 +3615,12 @@ mod tests {
 
     #[test]
     fn get_entries_matching_string() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("true".to_string()),
             Some("toto".to_string()),
@@ -3724,11 +3724,11 @@ mod tests {
 
     #[test]
     fn get_entries_matching_string_comprehensive() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::String(" ".to_string())),
             ("key2".to_string(), DbType::Integer(0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         // Test empty l_table
         let l_res = check_result(
@@ -3889,12 +3889,12 @@ mod tests {
 
     #[test]
     fn get_entries_matching_int_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         // Empty l_table
         let l_res = check_result(
@@ -3962,12 +3962,12 @@ mod tests {
 
     #[test]
     fn get_entries_matching_integer_subset_and_empty() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         // Empty l_table
         let l_res = check_result(
@@ -4408,12 +4408,12 @@ mod tests {
 
     #[test]
     fn get_entries_matching_uint_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         // Empty l_table
         let l_res = check_result(
@@ -4944,12 +4944,12 @@ mod tests {
 
     #[test]
     fn get_entries_matching_float_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
         let mut l_binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
         let mut l_binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
@@ -5012,12 +5012,12 @@ mod tests {
 
     #[test]
     fn get_entries_matching_float() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys.clone()));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys.clone()));
         let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
         let mut l_binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
         let mut l_binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
@@ -5039,7 +5039,7 @@ mod tests {
         l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
         // Empty l_table
-        let l_empty_table = DbTable::new("EmptyTable".to_string(), Some(keys.clone()));
+        let l_empty_table = DbTable::new("EmptyTable".to_string(), Some(l_keys.clone()));
         let l_res = check_result(
             (0, 1),
             l_empty_table.get_matching_entries_float(
@@ -5292,12 +5292,12 @@ mod tests {
 
     #[test]
     fn get_key_values_bool_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
         let mut l_binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
         let mut l_binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
@@ -5333,12 +5333,12 @@ mod tests {
 
     #[test]
     fn get_key_values_bool_empty() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -5381,12 +5381,12 @@ mod tests {
 
     #[test]
     fn get_unique_boolean_values_for_key_subset() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let mut l_binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
         let mut l_binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
@@ -5421,12 +5421,12 @@ mod tests {
 
     #[test]
     fn get_unique_boolean_values_for_key() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let mut l_binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
         let mut l_binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
@@ -5465,12 +5465,12 @@ mod tests {
 
     #[test]
     fn get_key_values_bool_subset() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("false".to_string()),
             Some("true".to_string()),
@@ -5510,12 +5510,12 @@ mod tests {
 
     #[test]
     fn get_unique_boolean_values_for_key_empty_2() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -5530,12 +5530,12 @@ mod tests {
 
     #[test]
     fn get_key_values_bool() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("false".to_string()),
             Some("true".to_string()),
@@ -5588,12 +5588,12 @@ mod tests {
 
     #[test]
     fn get_key_values_bool_none() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![None, None, Some("2.23".to_string())];
         let mut l_binding2 = vec![None, None, Some("1.46".to_string())];
         let mut l_binding3 = vec![None, None, Some("-0.27".to_string())];
@@ -5619,12 +5619,12 @@ mod tests {
 
     #[test]
     fn get_key_values_int_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let mut l_binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
         let mut l_binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
@@ -5660,12 +5660,12 @@ mod tests {
 
     #[test]
     fn get_unique_unsigned_integer_values_for_key_empty() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::String("0".to_string())),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -5680,12 +5680,12 @@ mod tests {
 
     #[test]
     fn get_unique_unsigned_integer_values_for_key_subset() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::String("0".to_string())),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
@@ -5736,12 +5736,12 @@ mod tests {
 
     #[test]
     fn get_key_values_uint_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let mut l_binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
         let mut l_binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
@@ -5777,12 +5777,12 @@ mod tests {
 
     #[test]
     fn get_unique_unsigned_integer_values_for_key_empty_2() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -5797,12 +5797,12 @@ mod tests {
 
     #[test]
     fn get_unique_unsigned_integer_values_for_key_subset_2() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
@@ -5857,12 +5857,12 @@ mod tests {
 
     #[test]
     fn get_unique_integer_values_for_key_empty() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -5877,12 +5877,12 @@ mod tests {
 
     #[test]
     fn get_unique_integer_values_for_key_subset() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
@@ -5934,12 +5934,12 @@ mod tests {
 
     #[test]
     fn get_key_values_int() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
@@ -5994,12 +5994,12 @@ mod tests {
 
     #[test]
     fn get_unique_boolean_values_for_key_all_none() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![None, None, Some("2.23".to_string())];
         let mut l_binding2 = vec![None, None, Some("1.46".to_string())];
         let mut l_binding3 = vec![None, None, Some("-0.27".to_string())];
@@ -6033,12 +6033,12 @@ mod tests {
 
     #[test]
     fn get_key_values_int_error_2() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -6110,12 +6110,12 @@ mod tests {
 
     #[test]
     fn get_key_values_uint() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
@@ -6161,12 +6161,12 @@ mod tests {
 
     #[test]
     fn get_unique_string_values_for_key_empty() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::String("".to_string())),
             ("key2".to_string(), DbType::String("".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -6181,12 +6181,12 @@ mod tests {
 
     #[test]
     fn get_unique_string_values_for_key_subset() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::String("".to_string())),
             ("key2".to_string(), DbType::String("".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
@@ -6238,12 +6238,12 @@ mod tests {
 
     #[test]
     fn get_key_values_string_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::String("0".to_string())),
             ("key2".to_string(), DbType::String("0".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
         let mut l_binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
         let mut l_binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
@@ -6279,12 +6279,12 @@ mod tests {
 
     #[test]
     fn get_key_values_string() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::String("".to_string())),
             ("key2".to_string(), DbType::String("".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
@@ -6339,12 +6339,12 @@ mod tests {
 
     #[test]
     fn get_key_values_float_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Float(0.0)),
             ("key2".to_string(), DbType::Float(0.0)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![Some("1.1".to_string()), None, Some("Hello".to_string())];
         let mut l_binding2 = vec![Some("2.2".to_string()), None, Some("World".to_string())];
         let mut l_binding3 = vec![Some("3.3".to_string()), None, Some("AI".to_string())];
@@ -6380,12 +6380,12 @@ mod tests {
 
     #[test]
     fn get_unique_integer_values_for_key_subset_2() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::String("0".to_string())),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let mut l_values1 = vec![
             Some("1".to_string()),
@@ -6432,12 +6432,12 @@ mod tests {
 
     #[test]
     fn get_unique_integer_values_for_key_empty_2() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::String("0".to_string())),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -6452,12 +6452,12 @@ mod tests {
 
     #[test]
     fn get_unique_float_values_for_key_empty() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Float(0.0)),
             ("key2".to_string(), DbType::Float(0.0)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -6472,12 +6472,12 @@ mod tests {
 
     #[test]
     fn get_key_values_float() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Float(0.0)),
             ("key2".to_string(), DbType::Float(0.0)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("1.0".to_string()),
             Some("4.1".to_string()),
@@ -6534,12 +6534,12 @@ mod tests {
 
     #[test]
     fn get_unique_float_values_for_key_subset() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Float(0.0)),
             ("key2".to_string(), DbType::Float(0.0)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("1.0".to_string()),
             Some("4.1".to_string()),
@@ -6591,7 +6591,7 @@ mod tests {
 
     #[test]
     fn get_unique_date_values_for_key_empty() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             (
                 "key1".to_string(),
                 DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
@@ -6602,7 +6602,7 @@ mod tests {
             ),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let l_table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         let l_res = check_result(
             (1, 1),
@@ -6617,7 +6617,7 @@ mod tests {
 
     #[test]
     fn get_unique_date_values_for_key_subset() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             (
                 "key1".to_string(),
                 DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
@@ -6628,7 +6628,7 @@ mod tests {
             ),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("01/12/2021".to_string()),
             Some("01/01/2022".to_string()),
@@ -6683,7 +6683,7 @@ mod tests {
 
     #[test]
     fn get_key_values_date_error() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             (
                 "key1".to_string(),
                 DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
@@ -6694,7 +6694,7 @@ mod tests {
             ),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("01/12/2021".to_string()),
             None,
@@ -6742,7 +6742,7 @@ mod tests {
 
     #[test]
     fn get_key_values_date() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             (
                 "key1".to_string(),
                 DbType::Date(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
@@ -6753,7 +6753,7 @@ mod tests {
             ),
             ("key3".to_string(), DbType::String("Test".to_string())),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
 
         // Check with empty l_table
         let l_res = check_result(
@@ -6836,12 +6836,12 @@ mod tests {
 
     #[test]
     fn get_entries_subset() -> Result<(), String> {
-        let keys = vec![
+        let l_keys = vec![
             ("key1".to_string(), DbType::Float(0.0)),
             ("key2".to_string(), DbType::Float(0.0)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(l_keys));
         let mut l_binding = vec![
             Some("1.0".to_string()),
             Some("4.1".to_string()),

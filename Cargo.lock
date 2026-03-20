@@ -163,8 +163,8 @@ dependencies = [
 
 [[package]]
 name = "rustlog"
-version = "1.2.0"
-source = "git+https://github.com/nicls67/rustlog.git?tag=1.2.0#da8eb49ca4e2fc092762d8af701ce12e961918ac"
+version = "1.2.1"
+source = "git+https://github.com/nicls67/rustlog.git?tag=1.2.1#8d316ce91b5245532ef2c9211e1de39d4d9245ef"
 dependencies = [
  "chrono",
  "package_infos",
