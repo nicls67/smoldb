@@ -48,10 +48,10 @@ impl DbTable {
     ///
     /// Returns a new `DbTable` with the specified name and keys.
     ///
-    pub(crate) fn new(name: String, keys: Option<Vec<(String, DbType)>>) -> DbTable {
+    pub(crate) fn new(p_name: String, p_keys: Option<Vec<(String, DbType)>>) -> DbTable {
         DbTable {
-            name,
-            keys: keys.unwrap_or_default(),
+            name: p_name,
+            keys: p_keys.unwrap_or_default(),
             entries: Vec::new(),
         }
     }
@@ -77,47 +77,47 @@ impl DbTable {
     ///
     pub fn add_entry(
         &mut self,
-        name: &String,
-        values: Option<&mut Vec<Option<String>>>,
+        p_name: &String,
+        p_values: Option<&mut Vec<Option<String>>>,
     ) -> Result<(), String> {
-        let new_entry;
+        let l_new_entry;
 
         // Check unicity of entry name
-        if self.entry_exists(name) {
-            let msg = format!(
+        if self.entry_exists(p_name) {
+            let l_msg = format!(
                 "Cannot create new entry : name {} already exists in table",
-                name
+                p_name
             );
-            write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-            return Err(msg);
+            write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+            return Err(l_msg);
         }
 
-        if let Some(vals) = values {
+        if let Some(l_vals) = p_values {
             // Check vector size
-            if vals.len() != self.keys.len() {
-                let msg = format!(
+            if l_vals.len() != self.keys.len() {
+                let l_msg = format!(
                     "Cannot create new entry : `values` parameter must have a length of {}",
                     self.keys.len()
                 );
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                return Err(msg);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                return Err(l_msg);
             }
             // Store values after conversion
-            let mut db_vals = Vec::new();
-            for (i, val) in vals.iter().enumerate() {
-                if let Some(val_str) = val {
-                    let db_val = self.keys.get(i).unwrap().1.convert(val_str)?;
-                    db_vals.push(Some(db_val));
+            let mut l_db_vals = Vec::new();
+            for (l_i, l_val) in l_vals.iter().enumerate() {
+                if let Some(l_val_str) = l_val {
+                    let l_db_val = self.keys.get(l_i).unwrap().1.convert(l_val_str)?;
+                    l_db_vals.push(Some(l_db_val));
                 } else {
-                    db_vals.push(None);
+                    l_db_vals.push(None);
                 }
             }
 
-            new_entry = DbEntry::new(name, self.keys.len(), Some(db_vals.as_mut()))?;
+            l_new_entry = DbEntry::new(p_name, self.keys.len(), Some(l_db_vals.as_mut()))?;
         } else {
-            new_entry = DbEntry::new(name, self.keys.len(), None)?;
+            l_new_entry = DbEntry::new(p_name, self.keys.len(), None)?;
         }
-        self.entries.push(new_entry);
+        self.entries.push(l_new_entry);
 
         Ok(())
     }
@@ -137,15 +137,15 @@ impl DbTable {
     ///
     pub fn update_entry_string(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
-        new_value: Option<String>,
+        p_entry_name: &String,
+        p_key_name: &String,
+        p_new_value: Option<String>,
     ) -> Result<(), String> {
-        let mut db_value = None;
-        if let Some(value) = new_value {
-            db_value = Some(self.find_key(key_name)?.1.convert(&value)?);
+        let mut l_db_value = None;
+        if let Some(l_value) = p_new_value {
+            l_db_value = Some(self.find_key(p_key_name)?.1.convert(&l_value)?);
         }
-        self.update_entry(entry_name, key_name, db_value)
+        self.update_entry(p_entry_name, p_key_name, l_db_value)
     }
 
     /// Returns the value of a specific key in an entry as a string.
@@ -163,22 +163,22 @@ impl DbTable {
     ///
     pub fn get_entry_value_string(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
+        p_entry_name: &String,
+        p_key_name: &String,
     ) -> Result<Option<String>, String> {
         // Check that the key has a string type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::String(_) => {}
             _ => {
-                let msg = format!("Key {} is not a string", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                return Err(msg);
+                let l_msg = format!("Key {} is not a string", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                return Err(l_msg);
             }
         }
 
-        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
-            Ok(Some(value.to_string()))
+        if let Some(l_value) = self.get_entry_value(p_entry_name, p_key_name)? {
+            Ok(Some(l_value.to_string()))
         } else {
             Ok(None)
         }
@@ -198,15 +198,15 @@ impl DbTable {
     ///
     pub fn update_entry_integer(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
-        new_value: Option<i32>,
+        p_entry_name: &String,
+        p_key_name: &String,
+        p_new_value: Option<i32>,
     ) -> Result<(), String> {
-        let mut db_value = None;
-        if let Some(value) = new_value {
-            db_value = Some(DbType::Integer(value));
+        let mut l_db_value = None;
+        if let Some(l_value) = p_new_value {
+            l_db_value = Some(DbType::Integer(l_value));
         }
-        self.update_entry(entry_name, key_name, db_value)
+        self.update_entry(p_entry_name, p_key_name, l_db_value)
     }
 
     /// Retrieves the value of an entry as an integer.
@@ -216,18 +216,18 @@ impl DbTable {
     /// * `p_entry_name` - The name of the entry to retrieve
     pub fn get_entry_value_integer(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
+        p_entry_name: &String,
+        p_key_name: &String,
     ) -> Result<Option<&i32>, String> {
         // Coherency check
-        match self.find_key(key_name)?.1.check_type(&DbType::Integer(0)) {
+        match self.find_key(p_key_name)?.1.check_type(&DbType::Integer(0)) {
             Ok(_) => (),
             Err(e) => return Err(e),
         }
 
-        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
-            if let DbType::Integer(s) = value {
-                Ok(Some(s))
+        if let Some(l_value) = self.get_entry_value(p_entry_name, p_key_name)? {
+            if let DbType::Integer(l_s) = l_value {
+                Ok(Some(l_s))
             } else {
                 // Impossible case
                 Ok(None)
@@ -251,15 +251,15 @@ impl DbTable {
     ///
     pub fn update_entry_unsigned_integer(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
-        new_value: Option<u32>,
+        p_entry_name: &String,
+        p_key_name: &String,
+        p_new_value: Option<u32>,
     ) -> Result<(), String> {
-        let mut db_value = None;
-        if let Some(value) = new_value {
-            db_value = Some(DbType::UnsignedInt(value));
+        let mut l_db_value = None;
+        if let Some(l_value) = p_new_value {
+            l_db_value = Some(DbType::UnsignedInt(l_value));
         }
-        self.update_entry(entry_name, key_name, db_value)
+        self.update_entry(p_entry_name, p_key_name, l_db_value)
     }
 
     /// Retrieves the value of an entry with an unsigned integer type, given the entry name and key name.
@@ -278,12 +278,12 @@ impl DbTable {
     /// Returns an error if a coherency check fails or an error occurs while retrieving the value.
     pub fn get_entry_value_unsigned_integer(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
+        p_entry_name: &String,
+        p_key_name: &String,
     ) -> Result<Option<&u32>, String> {
         // Coherency check
         match self
-            .find_key(key_name)?
+            .find_key(p_key_name)?
             .1
             .check_type(&DbType::UnsignedInt(0))
         {
@@ -291,9 +291,9 @@ impl DbTable {
             Err(e) => return Err(e),
         }
 
-        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
-            if let DbType::UnsignedInt(s) = value {
-                Ok(Some(s))
+        if let Some(l_value) = self.get_entry_value(p_entry_name, p_key_name)? {
+            if let DbType::UnsignedInt(l_s) = l_value {
+                Ok(Some(l_s))
             } else {
                 // Impossible case
                 Ok(None)
@@ -318,15 +318,15 @@ impl DbTable {
     ///
     pub fn update_entry_float(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
-        new_value: Option<f32>,
+        p_entry_name: &String,
+        p_key_name: &String,
+        p_new_value: Option<f32>,
     ) -> Result<(), String> {
-        let mut db_value = None;
-        if let Some(value) = new_value {
-            db_value = Some(DbType::Float(value));
+        let mut l_db_value = None;
+        if let Some(l_value) = p_new_value {
+            l_db_value = Some(DbType::Float(l_value));
         }
-        self.update_entry(entry_name, key_name, db_value)
+        self.update_entry(p_entry_name, p_key_name, l_db_value)
     }
 
     /// Retrieves the floating-point value of an entry given its name and key name.
@@ -343,18 +343,18 @@ impl DbTable {
     ///
     pub fn get_entry_value_float(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
+        p_entry_name: &String,
+        p_key_name: &String,
     ) -> Result<Option<&f32>, String> {
         // Coherency check
-        match self.find_key(key_name)?.1.check_type(&DbType::Float(0.0)) {
+        match self.find_key(p_key_name)?.1.check_type(&DbType::Float(0.0)) {
             Ok(_) => (),
             Err(e) => return Err(e),
         }
 
-        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
-            if let DbType::Float(s) = value {
-                Ok(Some(s))
+        if let Some(l_value) = self.get_entry_value(p_entry_name, p_key_name)? {
+            if let DbType::Float(l_s) = l_value {
+                Ok(Some(l_s))
             } else {
                 // Impossible case
                 Ok(None)
@@ -382,15 +382,15 @@ impl DbTable {
     ///
     pub fn update_entry_bool(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
-        new_value: Option<bool>,
+        p_entry_name: &String,
+        p_key_name: &String,
+        p_new_value: Option<bool>,
     ) -> Result<(), String> {
-        let mut db_value = None;
-        if let Some(value) = new_value {
-            db_value = Some(DbType::Bool(value));
+        let mut l_db_value = None;
+        if let Some(l_value) = p_new_value {
+            l_db_value = Some(DbType::Bool(l_value));
         }
-        self.update_entry(entry_name, key_name, db_value)
+        self.update_entry(p_entry_name, p_key_name, l_db_value)
     }
 
     /// Gets the value of a boolean entry.
@@ -412,18 +412,22 @@ impl DbTable {
     /// - `Err(String)` if an error occurred during the coherency check or while retrieving the value.
     pub fn get_entry_value_bool(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
+        p_entry_name: &String,
+        p_key_name: &String,
     ) -> Result<Option<&bool>, String> {
         // Coherency check
-        match self.find_key(key_name)?.1.check_type(&DbType::Bool(false)) {
+        match self
+            .find_key(p_key_name)?
+            .1
+            .check_type(&DbType::Bool(false))
+        {
             Ok(_) => (),
             Err(e) => return Err(e),
         }
 
-        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
-            if let DbType::Bool(b) = value {
-                Ok(Some(b))
+        if let Some(l_value) = self.get_entry_value(p_entry_name, p_key_name)? {
+            if let DbType::Bool(l_b) = l_value {
+                Ok(Some(l_b))
             } else {
                 // Impossible case
                 Ok(None)
@@ -447,15 +451,15 @@ impl DbTable {
     /// - `Err(String)` if there was an error updating the entry.
     pub fn update_entry_date(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
-        new_value: Option<NaiveDate>,
+        p_entry_name: &String,
+        p_key_name: &String,
+        p_new_value: Option<NaiveDate>,
     ) -> Result<(), String> {
-        let mut db_value = None;
-        if let Some(value) = new_value {
-            db_value = Some(DbType::Date(value));
+        let mut l_db_value = None;
+        if let Some(l_value) = p_new_value {
+            l_db_value = Some(DbType::Date(l_value));
         }
-        self.update_entry(entry_name, key_name, db_value)
+        self.update_entry(p_entry_name, p_key_name, l_db_value)
     }
 
     /// Retrieves the value of a specified key in a given entry
@@ -477,12 +481,12 @@ impl DbTable {
     ///
     pub fn get_entry_value_date(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
+        p_entry_name: &String,
+        p_key_name: &String,
     ) -> Result<Option<&NaiveDate>, String> {
         // Coherency check
         match self
-            .find_key(key_name)?
+            .find_key(p_key_name)?
             .1
             .check_type(&DbType::default_from_string(&"Date".to_string())?)
         {
@@ -490,9 +494,9 @@ impl DbTable {
             Err(e) => return Err(e),
         }
 
-        if let Some(value) = self.get_entry_value(entry_name, key_name)? {
-            if let DbType::Date(d) = value {
-                Ok(Some(d))
+        if let Some(l_value) = self.get_entry_value(p_entry_name, p_key_name)? {
+            if let DbType::Date(l_d) = l_value {
+                Ok(Some(l_d))
             } else {
                 // Impossible case
                 Ok(None)
@@ -511,13 +515,13 @@ impl DbTable {
     /// # Returns
     ///
     /// Returns `Ok(())` if the entry is successfully removed. Otherwise, returns `Err(String)` with an error message.
-    pub fn remove_entry(&mut self, entry_name: &String) -> Result<(), String> {
-        let index = self.find_entry(entry_name)?.1;
-        self.entries.swap_remove(index);
+    pub fn remove_entry(&mut self, p_entry_name: &String) -> Result<(), String> {
+        let l_index = self.find_entry(p_entry_name)?.1;
+        self.entries.swap_remove(l_index);
 
         write_log(
             LogSeverity::Info,
-            &format!("DELETE entry {entry_name}"),
+            &format!("DELETE entry {p_entry_name}"),
             env!("CARGO_PKG_NAME"),
         );
         Ok(())
@@ -543,26 +547,31 @@ impl DbTable {
     ///
     fn update_entry(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
-        new_value: Option<DbType>,
+        p_entry_name: &String,
+        p_key_name: &String,
+        p_new_value: Option<DbType>,
     ) -> Result<(), String> {
-        let key = self.find_key(key_name)?;
-        let key_index = key.0;
+        let l_key = self.find_key(p_key_name)?;
+        let l_key_index = l_key.0;
 
-        if let Some(ref db_val) = new_value {
-            if discriminant(key.1) != discriminant(db_val) {
-                let msg = format!("Type of key {} is not compatible with given type", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                return Err(msg);
+        if let Some(ref l_db_val) = p_new_value {
+            if discriminant(l_key.1) != discriminant(l_db_val) {
+                let l_msg = format!(
+                    "Type of key {} is not compatible with given type",
+                    p_key_name
+                );
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                return Err(l_msg);
             }
         }
 
-        self.find_entry(entry_name)?.0.update(key_index, new_value);
+        self.find_entry(p_entry_name)?
+            .0
+            .update(l_key_index, p_new_value);
 
         write_log(
             LogSeverity::Verbose,
-            &format!("UPDATE entry {} key {}", entry_name, key_name),
+            &format!("UPDATE entry {} key {}", p_entry_name, p_key_name),
             env!("CARGO_PKG_NAME"),
         );
         Ok(())
@@ -582,17 +591,17 @@ impl DbTable {
     ///
     fn get_entry_value(
         &mut self,
-        entry_name: &String,
-        key_name: &String,
+        p_entry_name: &String,
+        p_key_name: &String,
     ) -> Result<Option<&DbType>, String> {
-        let key_index = self.find_key(key_name)?.0;
-        let val = self.find_entry(entry_name)?.0.get(key_index);
+        let l_key_index = self.find_key(p_key_name)?.0;
+        let l_val = self.find_entry(p_entry_name)?.0.get(l_key_index);
         write_log(
             LogSeverity::Verbose,
-            &format!("GET entry {} key {}", entry_name, key_name),
+            &format!("GET entry {} key {}", p_entry_name, p_key_name),
             env!("CARGO_PKG_NAME"),
         );
-        Ok(val)
+        Ok(l_val)
     }
 
     /// Returns the number of entries in the collection.
@@ -616,19 +625,19 @@ impl DbTable {
     /// Returns a Result containing a mutable reference to the found DbEntry and its index within the entries vector if found.
     /// If the entry is not found, an Err is returned containing an error message.
     ///
-    fn find_entry(&mut self, entry_name: &String) -> Result<(&mut DbEntry, usize), String> {
-        for (index, entry) in self.entries.iter_mut().enumerate() {
-            if entry.name() == entry_name {
-                return Ok((entry, index));
+    fn find_entry(&mut self, p_entry_name: &String) -> Result<(&mut DbEntry, usize), String> {
+        for (l_index, l_entry) in self.entries.iter_mut().enumerate() {
+            if l_entry.name() == p_entry_name {
+                return Ok((l_entry, l_index));
             }
         }
 
-        let msg = format!(
+        let l_msg = format!(
             "Entry {} does not exists in table {}",
-            entry_name, self.name
+            p_entry_name, self.name
         );
-        write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-        Err(msg)
+        write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+        Err(l_msg)
     }
 
     /// Checks if an entry with the given name exists in the data structure.
@@ -641,8 +650,8 @@ impl DbTable {
     ///
     /// * `true` - If an entry with the given name exists.
     /// * `false` - If no entry with the given name exists.
-    fn entry_exists(&mut self, entry_name: &String) -> bool {
-        self.find_entry(entry_name).is_ok()
+    fn entry_exists(&mut self, p_entry_name: &String) -> bool {
+        self.find_entry(p_entry_name).is_ok()
     }
 
     /// Finds a key in the database table based on its name.
@@ -656,16 +665,16 @@ impl DbTable {
     /// Returns a `Result` containing a tuple `(usize, &DbType)` with the index and a reference to the key,
     /// or a `String` with an error message if the key does not exist.
     ///
-    fn find_key(&self, key_name: &String) -> Result<(usize, &DbType), String> {
-        for (index, key) in self.keys.iter().enumerate() {
-            if &key.0 == key_name {
-                return Ok((index, &key.1));
+    fn find_key(&self, p_key_name: &String) -> Result<(usize, &DbType), String> {
+        for (l_index, l_key) in self.keys.iter().enumerate() {
+            if &l_key.0 == p_key_name {
+                return Ok((l_index, &l_key.1));
             }
         }
 
-        let msg = format!("Key {} does not exists in table {}", key_name, self.name);
-        write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-        Err(msg)
+        let l_msg = format!("Key {} does not exists in table {}", p_key_name, self.name);
+        write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+        Err(l_msg)
     }
 
     /// Adds a key to the table.
@@ -679,25 +688,25 @@ impl DbTable {
     ///
     /// Returns an error if `p_key_type` does not correspond to a known type.
     ///
-    pub fn add_key(&mut self, key_name: &String, key_type: &String) -> Result<(), String> {
+    pub fn add_key(&mut self, p_key_name: &String, p_key_type: &String) -> Result<(), String> {
         // Check key name is available
-        if self.find_key(key_name).is_ok() {
+        if self.find_key(p_key_name).is_ok() {
             return Err(format!(
-                "DbTable - add_key : Key '{key_name}' already exists in table '{}'",
+                "DbTable - add_key : Key '{p_key_name}' already exists in table '{}'",
                 self.name
             ));
         }
 
         self.keys
-            .push((key_name.clone(), DbType::default_from_string(key_type)?));
+            .push((p_key_name.clone(), DbType::default_from_string(p_key_type)?));
 
-        for entry in self.entries.iter_mut() {
-            entry.add_field(None)
+        for l_entry in self.entries.iter_mut() {
+            l_entry.add_field(None)
         }
 
         write_log(
             LogSeverity::Info,
-            &format!("ADDED key {} to table {}", key_name, self.name),
+            &format!("ADDED key {} to table {}", p_key_name, self.name),
             env!("CARGO_PKG_NAME"),
         );
         Ok(())
@@ -718,14 +727,14 @@ impl DbTable {
     /// # Returns
     ///
     /// Returns `Ok(())` if the rename operation was successful, otherwise returns an `Err` with an error message.
-    pub fn rename_entry(&mut self, entry_name: &String, new_name: &str) -> Result<(), String> {
-        if self.entry_exists(&new_name.to_string()) {
+    pub fn rename_entry(&mut self, p_entry_name: &String, p_new_name: &str) -> Result<(), String> {
+        if self.entry_exists(&p_new_name.to_string()) {
             return Err(format!(
                 "DbTable - rename_entry : Could not rename entry, an entry named '{}' already exists",
-                new_name
+                p_new_name
             ));
         }
-        self.find_entry(entry_name)?.0.rename(new_name);
+        self.find_entry(p_entry_name)?.0.rename(p_new_name);
         Ok(())
     }
 
@@ -761,12 +770,12 @@ impl DbTable {
     /// # Returns
     ///
     /// A vector of references to database entries that match the given entry names.
-    fn get_entries_subset(&self, entries_subset_names: Option<Vec<&String>>) -> Vec<&DbEntry> {
+    fn get_entries_subset(&self, p_entries_subset_names: Option<Vec<&String>>) -> Vec<&DbEntry> {
         self.entries
             .iter()
             .filter(|p_entry| {
-                if let Some(names) = &entries_subset_names {
-                    names.contains(&p_entry.name())
+                if let Some(l_names) = &p_entries_subset_names {
+                    l_names.contains(&p_entry.name())
                 } else {
                     true
                 }
@@ -792,83 +801,84 @@ impl DbTable {
     ///
     pub fn get_matching_entries_date(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
-        criteria: MatchingCriteria,
-        date1: NaiveDate,
-        date2: Option<NaiveDate>,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
+        p_criteria: MatchingCriteria,
+        p_date1: NaiveDate,
+        p_date2: Option<NaiveDate>,
     ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() == 0 {
             return Ok(None);
         }
 
         // Check input compatibility
-        if criteria == MatchingCriteria::Between {
-            if date2.is_none() {
-                let msg =
+        if p_criteria == MatchingCriteria::Between {
+            if p_date2.is_none() {
+                let l_msg =
                     "Second reference date not defined for Between date comparison".to_string();
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                return Err(msg);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                return Err(l_msg);
             }
-            if let Some(date) = date2 {
-                let delta = date - date1;
-                if delta.num_days() <= 0 {
-                    let msg = "Second reference date is not after first reference date".to_string();
-                    write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                    return Err(msg);
+            if let Some(l_date) = p_date2 {
+                let l_delta = l_date - p_date1;
+                if l_delta.num_days() <= 0 {
+                    let l_msg =
+                        "Second reference date is not after first reference date".to_string();
+                    write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                    return Err(l_msg);
                 }
             }
         }
 
         // Check selected key has a date type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::Date(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::Date(entry_date)) = entry.get(key.0) {
-                        let delta = (*entry_date - date1).num_days();
-                        match criteria {
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::Date(l_entry_date)) = l_entry.get(l_key.0) {
+                        let l_delta = (*l_entry_date - p_date1).num_days();
+                        match p_criteria {
                             MatchingCriteria::IsMore => {
-                                if delta > 0 {
-                                    output.push(entry.name().clone());
+                                if l_delta > 0 {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::IsLess => {
-                                if delta < 0 {
-                                    output.push(entry.name().clone());
+                                if l_delta < 0 {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Equal => {
-                                if delta == 0 {
-                                    output.push(entry.name().clone());
+                                if l_delta == 0 {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Different => {
-                                if delta != 0 {
-                                    output.push(entry.name().clone());
+                                if l_delta != 0 {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Between => {
-                                let delta2 = (*entry_date - date2.unwrap()).num_days();
-                                if delta >= 0 && delta2 <= 0 {
-                                    output.push(entry.name().clone());
+                                let l_delta2 = (*l_entry_date - p_date2.unwrap()).num_days();
+                                if l_delta >= 0 && l_delta2 <= 0 {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                         }
                     }
                 }
 
-                if output.is_empty() {
+                if l_output.is_empty() {
                     Ok(None)
                 } else {
-                    Ok(Some(output))
+                    Ok(Some(l_output))
                 }
             }
             _ => {
-                let msg = format!("Key {} is not a date", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not a date", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -885,11 +895,11 @@ impl DbTable {
     /// * `Ok(())` - If the condition is false.
     /// * `Err(String)` - If the condition is true, containing the formatted error message.
     ///
-    fn check_and_log_error(condition: bool, msg: &'static str) -> Result<(), String> {
-        if condition {
-            let full_msg = format!("Incompatibility between comparison inputs: {}", msg);
-            write_log(LogSeverity::Error, &full_msg, env!("CARGO_PKG_NAME"));
-            return Err(full_msg);
+    fn check_and_log_error(p_condition: bool, p_msg: &'static str) -> Result<(), String> {
+        if p_condition {
+            let l_full_msg = format!("Incompatibility between comparison inputs: {}", p_msg);
+            write_log(LogSeverity::Error, &l_full_msg, env!("CARGO_PKG_NAME"));
+            return Err(l_full_msg);
         }
         Ok(())
     }
@@ -914,19 +924,19 @@ impl DbTable {
     /// * If `MatchingCriteria::Between` is passed as `p_criteria`, and `p_int2` is defined but less than or equal to `p_int1`.
     ///
     fn check_input_compatibility_int(
-        criteria: &MatchingCriteria,
-        int1: i32,
-        int2: Option<i32>,
+        p_criteria: &MatchingCriteria,
+        p_int1: i32,
+        p_int2: Option<i32>,
     ) -> Result<(), String> {
-        if *criteria == MatchingCriteria::Between {
+        if *p_criteria == MatchingCriteria::Between {
             Self::check_and_log_error(
-                int2.is_none(),
+                p_int2.is_none(),
                 "Second reference integer not defined for Between integer comparison",
             )?;
 
-            if let Some(value) = int2 {
+            if let Some(l_value) = p_int2 {
                 Self::check_and_log_error(
-                    value - int1 <= 0,
+                    l_value - p_int1 <= 0,
                     "Second reference integer is not higher than first reference integer",
                 )?;
             }
@@ -952,20 +962,20 @@ impl DbTable {
     /// Returns `true` if the comparison satisfies the matching criteria, otherwise `false`.
     ///
     fn integer_comparison(
-        entry_value: i32,
-        criteria: &MatchingCriteria,
-        int1: i32,
-        int2: Option<i32>,
+        p_entry_value: i32,
+        p_criteria: &MatchingCriteria,
+        p_int1: i32,
+        p_int2: Option<i32>,
     ) -> bool {
-        let delta = entry_value - int1;
-        match criteria {
-            MatchingCriteria::IsMore => delta > 0,
-            MatchingCriteria::IsLess => delta < 0,
-            MatchingCriteria::Equal => delta == 0,
-            MatchingCriteria::Different => delta != 0,
+        let l_delta = p_entry_value - p_int1;
+        match p_criteria {
+            MatchingCriteria::IsMore => l_delta > 0,
+            MatchingCriteria::IsLess => l_delta < 0,
+            MatchingCriteria::Equal => l_delta == 0,
+            MatchingCriteria::Different => l_delta != 0,
             MatchingCriteria::Between => {
-                let delta2 = entry_value - int2.unwrap();
-                delta >= 0 && delta2 <= 0
+                let l_delta2 = p_entry_value - p_int2.unwrap();
+                l_delta >= 0 && l_delta2 <= 0
             }
         }
     }
@@ -990,19 +1000,19 @@ impl DbTable {
     /// * If `MatchingCriteria::Between` is passed as `p_criteria`, and `p_int2` is defined but less than or equal to `p_int1`.
     ///
     fn check_input_compatibility_uint(
-        criteria: &MatchingCriteria,
-        int1: u32,
-        int2: Option<u32>,
+        p_criteria: &MatchingCriteria,
+        p_int1: u32,
+        p_int2: Option<u32>,
     ) -> Result<(), String> {
-        if *criteria == MatchingCriteria::Between {
+        if *p_criteria == MatchingCriteria::Between {
             Self::check_and_log_error(
-                int2.is_none(),
+                p_int2.is_none(),
                 "Second reference integer not defined for Between integer comparison",
             )?;
 
-            if let Some(value) = int2 {
+            if let Some(l_value) = p_int2 {
                 Self::check_and_log_error(
-                    value <= int1,
+                    l_value <= p_int1,
                     "Second reference integer is not higher than first reference integer",
                 )?;
             }
@@ -1024,17 +1034,19 @@ impl DbTable {
     /// Returns `true` if the comparison satisfies the matching criteria, otherwise `false`.
     ///
     fn unsigned_integer_comparison(
-        entry_value: u32,
-        criteria: &MatchingCriteria,
-        int1: u32,
-        int2: Option<u32>,
+        p_entry_value: u32,
+        p_criteria: &MatchingCriteria,
+        p_int1: u32,
+        p_int2: Option<u32>,
     ) -> bool {
-        match criteria {
-            MatchingCriteria::IsMore => entry_value > int1,
-            MatchingCriteria::IsLess => entry_value < int1,
-            MatchingCriteria::Equal => entry_value == int1,
-            MatchingCriteria::Different => entry_value != int1,
-            MatchingCriteria::Between => entry_value >= int1 && entry_value <= int2.unwrap(),
+        match p_criteria {
+            MatchingCriteria::IsMore => p_entry_value > p_int1,
+            MatchingCriteria::IsLess => p_entry_value < p_int1,
+            MatchingCriteria::Equal => p_entry_value == p_int1,
+            MatchingCriteria::Different => p_entry_value != p_int1,
+            MatchingCriteria::Between => {
+                p_entry_value >= p_int1 && p_entry_value <= p_int2.unwrap()
+            }
         }
     }
 
@@ -1063,41 +1075,41 @@ impl DbTable {
     ///
     pub fn get_matching_entries_integer(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
-        criteria: MatchingCriteria,
-        int1: i32,
-        int2: Option<i32>,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
+        p_criteria: MatchingCriteria,
+        p_int1: i32,
+        p_int2: Option<i32>,
     ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() == 0 {
             return Ok(None);
         }
         // Check input compatibility
-        Self::check_input_compatibility_int(&criteria, int1, int2)?;
+        Self::check_input_compatibility_int(&p_criteria, p_int1, p_int2)?;
 
         // Check selected key has an integer type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::Integer(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::Integer(entry_int)) = entry.get(key.0) {
-                        if Self::integer_comparison(*entry_int, &criteria, int1, int2) {
-                            output.push(entry.name().clone());
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::Integer(l_entry_int)) = l_entry.get(l_key.0) {
+                        if Self::integer_comparison(*l_entry_int, &p_criteria, p_int1, p_int2) {
+                            l_output.push(l_entry.name().clone());
                         }
                     }
                 }
 
-                if output.is_empty() {
+                if l_output.is_empty() {
                     Ok(None)
                 } else {
-                    Ok(Some(output))
+                    Ok(Some(l_output))
                 }
             }
             _ => {
-                let msg = format!("Key {} is not an integer", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not an integer", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1119,41 +1131,46 @@ impl DbTable {
     ///
     pub fn get_matching_entries_unsigned_integer(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
-        criteria: MatchingCriteria,
-        int1: u32,
-        int2: Option<u32>,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
+        p_criteria: MatchingCriteria,
+        p_int1: u32,
+        p_int2: Option<u32>,
     ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() == 0 {
             return Ok(None);
         }
         // Check input compatibility
-        Self::check_input_compatibility_uint(&criteria, int1, int2)?;
+        Self::check_input_compatibility_uint(&p_criteria, p_int1, p_int2)?;
 
         // Check selected key has an unsigned int type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::UnsignedInt(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::UnsignedInt(entry_int)) = entry.get(key.0) {
-                        if Self::unsigned_integer_comparison(*entry_int, &criteria, int1, int2) {
-                            output.push(entry.name().clone());
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::UnsignedInt(l_entry_int)) = l_entry.get(l_key.0) {
+                        if Self::unsigned_integer_comparison(
+                            *l_entry_int,
+                            &p_criteria,
+                            p_int1,
+                            p_int2,
+                        ) {
+                            l_output.push(l_entry.name().clone());
                         }
                     }
                 }
 
-                if output.is_empty() {
+                if l_output.is_empty() {
                     Ok(None)
                 } else {
-                    Ok(Some(output))
+                    Ok(Some(l_output))
                 }
             }
             _ => {
-                let msg = format!("Key {} is not an unsigned integer", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not an unsigned integer", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1183,82 +1200,82 @@ impl DbTable {
     ///
     pub fn get_matching_entries_float(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
-        criteria: MatchingCriteria,
-        float1: f32,
-        float2: Option<f32>,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
+        p_criteria: MatchingCriteria,
+        p_float1: f32,
+        p_float2: Option<f32>,
     ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() == 0 {
             return Ok(None);
         }
         // Check input compatibility
-        if criteria == MatchingCriteria::Between {
-            if float2.is_none() {
-                let msg =
+        if p_criteria == MatchingCriteria::Between {
+            if p_float2.is_none() {
+                let l_msg =
                     "Second reference float not defined for Between integer comparison".to_string();
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                return Err(msg);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                return Err(l_msg);
             }
-            if let Some(value) = float2 {
-                if value - float1 <= 0.0 {
-                    let msg = "Second reference float is not higher than first reference float"
+            if let Some(l_value) = p_float2 {
+                if l_value - p_float1 <= 0.0 {
+                    let l_msg = "Second reference float is not higher than first reference float"
                         .to_string();
-                    write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                    return Err(msg);
+                    write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                    return Err(l_msg);
                 }
             }
         }
 
         // Check selected key has a float type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::Float(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::Float(entry_float)) = entry.get(key.0) {
-                        let delta = entry_float - float1;
-                        match criteria {
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::Float(l_entry_float)) = l_entry.get(l_key.0) {
+                        let l_delta = l_entry_float - p_float1;
+                        match p_criteria {
                             MatchingCriteria::IsMore => {
-                                if delta > f32::EPSILON {
-                                    output.push(entry.name().clone());
+                                if l_delta > f32::EPSILON {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::IsLess => {
-                                if delta < -f32::EPSILON {
-                                    output.push(entry.name().clone());
+                                if l_delta < -f32::EPSILON {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Equal => {
-                                if delta.abs() <= f32::EPSILON {
-                                    output.push(entry.name().clone());
+                                if l_delta.abs() <= f32::EPSILON {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Different => {
-                                if delta.abs() > f32::EPSILON {
-                                    output.push(entry.name().clone());
+                                if l_delta.abs() > f32::EPSILON {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Between => {
-                                let delta2 = entry_float - float2.unwrap();
-                                if delta >= -f32::EPSILON && delta2 <= f32::EPSILON {
-                                    output.push(entry.name().clone());
+                                let l_delta2 = l_entry_float - p_float2.unwrap();
+                                if l_delta >= -f32::EPSILON && l_delta2 <= f32::EPSILON {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                         }
                     }
                 }
 
-                if output.is_empty() {
+                if l_output.is_empty() {
                     Ok(None)
                 } else {
-                    Ok(Some(output))
+                    Ok(Some(l_output))
                 }
             }
             _ => {
-                let msg = format!("Key {} is not a float", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not a float", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1280,51 +1297,51 @@ impl DbTable {
     ///
     pub fn get_matching_entries_bool(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
-        criteria: MatchingCriteria,
-        ref_bool: bool,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
+        p_criteria: MatchingCriteria,
+        p_ref_bool: bool,
     ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() == 0 {
             return Ok(None);
         }
         // Check selected key has a bool type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::Bool(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::Bool(entry_bool)) = entry.get(key.0) {
-                        match criteria {
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::Bool(l_entry_bool)) = l_entry.get(l_key.0) {
+                        match p_criteria {
                             MatchingCriteria::Equal => {
-                                if ref_bool == *entry_bool {
-                                    output.push(entry.name().clone());
+                                if p_ref_bool == *l_entry_bool {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Different => {
-                                if ref_bool != *entry_bool {
-                                    output.push(entry.name().clone());
+                                if p_ref_bool != *l_entry_bool {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             _ => {
-                                let msg = "Only Equal and Different matching criteria are allowed for Boolean data".to_string();
-                                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                                return Err(msg);
+                                let l_msg = "Only Equal and Different matching criteria are allowed for Boolean data".to_string();
+                                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                                return Err(l_msg);
                             }
                         }
                     }
                 }
 
-                if output.is_empty() {
+                if l_output.is_empty() {
                     Ok(None)
                 } else {
-                    Ok(Some(output))
+                    Ok(Some(l_output))
                 }
             }
             _ => {
-                let msg = format!("Key {} is not a boolean", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not a boolean", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1346,51 +1363,51 @@ impl DbTable {
     ///
     pub fn get_matching_entries_string(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
-        criteria: MatchingCriteria,
-        ref_str: &String,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
+        p_criteria: MatchingCriteria,
+        p_ref_str: &String,
     ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() == 0 {
             return Ok(None);
         }
         // Check selected key has a String type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::String(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::String(entry_str)) = entry.get(key.0) {
-                        match criteria {
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::String(l_entry_str)) = l_entry.get(l_key.0) {
+                        match p_criteria {
                             MatchingCriteria::Equal => {
-                                if ref_str == entry_str {
-                                    output.push(entry.name().clone());
+                                if p_ref_str == l_entry_str {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             MatchingCriteria::Different => {
-                                if ref_str != entry_str {
-                                    output.push(entry.name().clone());
+                                if p_ref_str != l_entry_str {
+                                    l_output.push(l_entry.name().clone());
                                 }
                             }
                             _ => {
-                                let msg = "Only Equal and Different matching criteria are allowed for String data".to_string();
-                                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                                return Err(msg);
+                                let l_msg = "Only Equal and Different matching criteria are allowed for String data".to_string();
+                                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                                return Err(l_msg);
                             }
                         }
                     }
                 }
 
-                if output.is_empty() {
+                if l_output.is_empty() {
                     Ok(None)
                 } else {
-                    Ok(Some(output))
+                    Ok(Some(l_output))
                 }
             }
             _ => {
-                let msg = format!("Key {} is not a string", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not a string", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1408,25 +1425,25 @@ impl DbTable {
     ///
     pub fn get_entries_none(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
     ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() == 0 {
             return Ok(None);
         }
-        let key = self.find_key(key_name)?;
-        let mut output = Vec::new();
+        let l_key = self.find_key(p_key_name)?;
+        let mut l_output = Vec::new();
 
-        for entry in self.get_entries_subset(entries_subset) {
-            if entry.get(key.0).is_none() {
-                output.push(entry.name().clone())
+        for l_entry in self.get_entries_subset(p_entries_subset) {
+            if l_entry.get(l_key.0).is_none() {
+                l_output.push(l_entry.name().clone())
             }
         }
 
-        if output.is_empty() {
+        if l_output.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(output))
+            Ok(Some(l_output))
         }
     }
 
@@ -1445,25 +1462,25 @@ impl DbTable {
     ///
     pub fn get_entries_some(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
     ) -> Result<Option<Vec<String>>, String> {
         if self.entries_count() == 0 {
             return Ok(None);
         }
-        let key = self.find_key(key_name)?;
-        let mut output = Vec::new();
+        let l_key = self.find_key(p_key_name)?;
+        let mut l_output = Vec::new();
 
-        for entry in self.get_entries_subset(entries_subset) {
-            if entry.get(key.0).is_some() {
-                output.push(entry.name().clone())
+        for l_entry in self.get_entries_subset(p_entries_subset) {
+            if l_entry.get(l_key.0).is_some() {
+                l_output.push(l_entry.name().clone())
             }
         }
 
-        if output.is_empty() {
+        if l_output.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(output))
+            Ok(Some(l_output))
         }
     }
 
@@ -1482,36 +1499,36 @@ impl DbTable {
     ///
     pub fn get_unique_boolean_values_for_key(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
     ) -> Result<Option<Vec<bool>>, String> {
         if self.entries.is_empty() {
             return Ok(None);
         }
 
         // Check selected key has a bool type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::Bool(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::Bool(val)) = entry.get(key.0) {
-                        if !output.contains(val) {
-                            output.push(*val);
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::Bool(l_val)) = l_entry.get(l_key.0) {
+                        if !l_output.contains(l_val) {
+                            l_output.push(*l_val);
                         }
                     }
                 }
 
-                if !output.is_empty() {
-                    Ok(Some(output))
+                if !l_output.is_empty() {
+                    Ok(Some(l_output))
                 } else {
                     Ok(None)
                 }
             }
             _ => {
-                let msg = format!("Key {} is not a bool", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not a bool", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1530,36 +1547,36 @@ impl DbTable {
     /// * `Err(String)` - If the key is found but is not of type `Integer`, returns an error message.
     pub fn get_unique_integer_values_for_key(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
     ) -> Result<Option<Vec<i32>>, String> {
         if self.entries.is_empty() {
             return Ok(None);
         }
 
         // Check selected key has a bool type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::Integer(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::Integer(val)) = entry.get(key.0) {
-                        if !output.contains(val) {
-                            output.push(*val);
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::Integer(l_val)) = l_entry.get(l_key.0) {
+                        if !l_output.contains(l_val) {
+                            l_output.push(*l_val);
                         }
                     }
                 }
 
-                if !output.is_empty() {
-                    Ok(Some(output))
+                if !l_output.is_empty() {
+                    Ok(Some(l_output))
                 } else {
                     Ok(None)
                 }
             }
             _ => {
-                let msg = format!("Key {} is not an integer", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not an integer", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1579,34 +1596,34 @@ impl DbTable {
     ///
     pub fn get_unique_unsigned_integer_values_for_key(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
     ) -> Result<Option<Vec<u32>>, String> {
         if self.entries.is_empty() {
             return Ok(None);
         }
         // Check the selected key has an unsigned int type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::UnsignedInt(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::UnsignedInt(val)) = entry.get(key.0) {
-                        if !output.contains(val) {
-                            output.push(*val);
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::UnsignedInt(l_val)) = l_entry.get(l_key.0) {
+                        if !l_output.contains(l_val) {
+                            l_output.push(*l_val);
                         }
                     }
                 }
-                if !output.is_empty() {
-                    Ok(Some(output))
+                if !l_output.is_empty() {
+                    Ok(Some(l_output))
                 } else {
                     Ok(None)
                 }
             }
             _ => {
-                let msg = format!("Key {} is not an unsigned integer", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not an unsigned integer", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1626,34 +1643,34 @@ impl DbTable {
     ///
     pub fn get_unique_string_values_for_key(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
     ) -> Result<Option<Vec<String>>, String> {
         if self.entries.is_empty() {
             return Ok(None);
         }
         // Check the selected key has a string type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::String(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::String(val)) = entry.get(key.0) {
-                        if !output.contains(val) {
-                            output.push(val.clone());
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::String(l_val)) = l_entry.get(l_key.0) {
+                        if !l_output.contains(l_val) {
+                            l_output.push(l_val.clone());
                         }
                     }
                 }
-                if !output.is_empty() {
-                    Ok(Some(output))
+                if !l_output.is_empty() {
+                    Ok(Some(l_output))
                 } else {
                     Ok(None)
                 }
             }
             _ => {
-                let msg = format!("Key {} is not a string", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not a string", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1673,35 +1690,35 @@ impl DbTable {
     ///
     pub fn get_unique_float_values_for_key(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
     ) -> Result<Option<Vec<f32>>, String> {
         if self.entries.is_empty() {
             return Ok(None);
         }
 
         // Check the selected key has a float type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::Float(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::Float(val)) = entry.get(key.0) {
-                        if !output.contains(val) {
-                            output.push(*val);
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::Float(l_val)) = l_entry.get(l_key.0) {
+                        if !l_output.contains(l_val) {
+                            l_output.push(*l_val);
                         }
                     }
                 }
-                if !output.is_empty() {
-                    Ok(Some(output))
+                if !l_output.is_empty() {
+                    Ok(Some(l_output))
                 } else {
                     Ok(None)
                 }
             }
             _ => {
-                let msg = format!("Key {} is not a float", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not a float", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1723,34 +1740,34 @@ impl DbTable {
     ///
     pub fn get_unique_date_values_for_key(
         &self,
-        entries_subset: Option<Vec<&String>>,
-        key_name: &String,
+        p_entries_subset: Option<Vec<&String>>,
+        p_key_name: &String,
     ) -> Result<Option<Vec<NaiveDate>>, String> {
         if self.entries.is_empty() {
             return Ok(None);
         }
         // Check the selected key has a date type
-        let key = self.find_key(key_name)?;
-        match key.1 {
+        let l_key = self.find_key(p_key_name)?;
+        match l_key.1 {
             DbType::Date(_) => {
-                let mut output = Vec::new();
-                for entry in self.get_entries_subset(entries_subset) {
-                    if let Some(DbType::Date(val)) = entry.get(key.0) {
-                        if !output.contains(val) {
-                            output.push(*val);
+                let mut l_output = Vec::new();
+                for l_entry in self.get_entries_subset(p_entries_subset) {
+                    if let Some(DbType::Date(l_val)) = l_entry.get(l_key.0) {
+                        if !l_output.contains(l_val) {
+                            l_output.push(*l_val);
                         }
                     }
                 }
-                if !output.is_empty() {
-                    Ok(Some(output))
+                if !l_output.is_empty() {
+                    Ok(Some(l_output))
                 } else {
                     Ok(None)
                 }
             }
             _ => {
-                let msg = format!("Key {} is not a date", key_name);
-                write_log(LogSeverity::Error, &msg, env!("CARGO_PKG_NAME"));
-                Err(msg)
+                let l_msg = format!("Key {} is not a date", p_key_name);
+                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                Err(l_msg)
             }
         }
     }
@@ -1765,15 +1782,15 @@ mod tests {
 
     #[test]
     fn new_table_none() -> Result<(), String> {
-        let table = DbTable::new("Table".to_string(), None);
+        let l_table = DbTable::new("Table".to_string(), None);
 
-        let expected = DbTable {
+        let l_expected = DbTable {
             name: "Table".to_string(),
             keys: Vec::new(),
             entries: Vec::new(),
         };
 
-        check_struct((1, 1), &table, &expected, CheckType::Equal)?;
+        check_struct((1, 1), &l_table, &l_expected, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1783,9 +1800,9 @@ mod tests {
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let expected = DbTable {
+        let l_expected = DbTable {
             name: "Table".to_string(),
             keys: vec![
                 ("key1".to_string(), DbType::Integer(0)),
@@ -1794,7 +1811,7 @@ mod tests {
             entries: Vec::new(),
         };
 
-        check_struct((1, 1), &table, &expected, CheckType::Equal)?;
+        check_struct((1, 1), &l_table, &l_expected, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1805,14 +1822,14 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        check_value((1, 1), &table.entries_count(), &2, CheckType::Equal)?;
+        check_value((1, 1), &l_table.entries_count(), &2, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1823,19 +1840,19 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("text".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("text".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
         check_result(
             (1, 1),
-            table.add_entry(&"entry1".to_string(), new_entry),
+            l_table.add_entry(&"entry1".to_string(), l_new_entry),
             false,
         )?;
 
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        check_value((1, 2), &table.entries_count(), &1, CheckType::Equal)?;
+        check_value((1, 2), &l_table.entries_count(), &1, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1846,19 +1863,19 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("value1".to_string()), None];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("value1".to_string()), None];
+        let l_new_entry = Some(&mut l_binding);
 
         check_result(
             (1, 1),
-            table.add_entry(&"entry1".to_string(), new_entry),
+            l_table.add_entry(&"entry1".to_string(), l_new_entry),
             false,
         )?;
 
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        check_value((1, 2), &table.entries_count(), &1, CheckType::Equal)?;
+        check_value((1, 2), &l_table.entries_count(), &1, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1869,14 +1886,18 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("2".to_string()), None, None];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("2".to_string()), None, None];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
 
-        check_result((1, 1), table.add_entry(&"entry1".to_string(), None), false)?;
-        check_value((1, 2), &table.entries_count(), &1, CheckType::Equal)?;
+        check_result(
+            (1, 1),
+            l_table.add_entry(&"entry1".to_string(), None),
+            false,
+        )?;
+        check_value((1, 2), &l_table.entries_count(), &1, CheckType::Equal)?;
         Ok(())
     }
 
@@ -1887,41 +1908,41 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        table.update_entry(
+        l_table.update_entry(
             &"entry1".to_string(),
             &"key3".to_string(),
             Some(DbType::Float(5.98)),
         )?;
-        table.update_entry(
+        l_table.update_entry(
             &"entry2".to_string(),
             &"key2".to_string(),
             Some(DbType::String("Some value".to_string())),
         )?;
 
-        let val = check_option(
+        let l_val = check_option(
             (1, 1),
-            table.get_entry_value(&"entry1".to_string(), &"key3".to_string())?,
+            l_table.get_entry_value(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
         .unwrap();
-        check_struct((1, 2), val, &DbType::Float(5.98), CheckType::Equal)?;
+        check_struct((1, 2), l_val, &DbType::Float(5.98), CheckType::Equal)?;
 
-        let val = check_option(
+        let l_val = check_option(
             (2, 1),
-            table.get_entry_value(&"entry2".to_string(), &"key2".to_string())?,
+            l_table.get_entry_value(&"entry2".to_string(), &"key2".to_string())?,
             true,
         )?
         .unwrap();
         check_struct(
             (2, 2),
-            val,
+            l_val,
             &DbType::String("Some value".to_string()),
             CheckType::Equal,
         )?;
@@ -1935,18 +1956,18 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        table.update_entry(&"entry1".to_string(), &"key1".to_string(), None)?;
+        l_table.update_entry(&"entry1".to_string(), &"key1".to_string(), None)?;
 
         check_option(
             (1, 1),
-            table.get_entry_value(&"entry1".to_string(), &"key1".to_string())?,
+            l_table.get_entry_value(&"entry1".to_string(), &"key1".to_string())?,
             false,
         )?;
         Ok(())
@@ -1959,16 +1980,16 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.update_entry(&"entry5".to_string(), &"key2".to_string(), None),
+            l_table.update_entry(&"entry5".to_string(), &"key2".to_string(), None),
             false,
         )?;
         Ok(())
@@ -1981,16 +2002,16 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.update_entry(&"entry2".to_string(), &"key4".to_string(), None),
+            l_table.update_entry(&"entry2".to_string(), &"key4".to_string(), None),
             false,
         )?;
         Ok(())
@@ -2003,16 +2024,16 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.update_entry(
+            l_table.update_entry(
                 &"entry2".to_string(),
                 &"key1".to_string(),
                 Some(DbType::Float(0.25)),
@@ -2029,26 +2050,26 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        table.update_entry_string(
+        l_table.update_entry_string(
             &"entry1".to_string(),
             &"key2".to_string(),
             Some("New value".to_string()),
         )?;
 
-        let val = check_option(
+        let l_val = check_option(
             (1, 1),
-            table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?,
+            l_table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?,
             true,
         )?
         .unwrap();
-        check_value((1, 2), &val, &"New value".to_string(), CheckType::Equal)?;
+        check_value((1, 2), &l_val, &"New value".to_string(), CheckType::Equal)?;
         Ok(())
     }
 
@@ -2059,16 +2080,16 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.update_entry_string(
+            l_table.update_entry_string(
                 &"entry1".to_string(),
                 &"key1".to_string(),
                 Some("New value".to_string()),
@@ -2076,13 +2097,13 @@ mod tests {
             false,
         )?;
 
-        let val = check_option(
+        let l_val = check_option(
             (2, 1),
-            table.get_entry_value(&"entry1".to_string(), &"key1".to_string())?,
+            l_table.get_entry_value(&"entry1".to_string(), &"key1".to_string())?,
             true,
         )?
         .unwrap();
-        check_struct((2, 2), val, &DbType::Integer(1), CheckType::Equal)?;
+        check_struct((2, 2), l_val, &DbType::Integer(1), CheckType::Equal)?;
         Ok(())
     }
 
@@ -2093,18 +2114,18 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        table.update_entry_string(&"entry1".to_string(), &"key2".to_string(), None)?;
+        l_table.update_entry_string(&"entry1".to_string(), &"key2".to_string(), None)?;
 
         check_option(
             (1, 1),
-            table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?,
+            l_table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string())?,
             false,
         )?;
         Ok(())
@@ -2116,24 +2137,24 @@ mod tests {
             ("key1".to_string(), DbType::String(String::new())),
             ("key2".to_string(), DbType::String(String::new())),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("hello".to_string()), None];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("hello".to_string()), None];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), None)?;
-        table.add_entry(&"entry2".to_string(), new_entry)?;
+        l_table.add_entry(&"entry1".to_string(), None)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry)?;
 
-        let val = check_option(
+        let l_val = check_option(
             (1, 1),
-            table.get_entry_value_string(&"entry2".to_string(), &"key1".to_string())?,
+            l_table.get_entry_value_string(&"entry2".to_string(), &"key1".to_string())?,
             true,
         )?
         .unwrap();
-        check_value((1, 2), &val, &"hello".to_string(), CheckType::Equal)?;
+        check_value((1, 2), &l_val, &"hello".to_string(), CheckType::Equal)?;
 
         check_option(
             (2, 1),
-            table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())?,
+            l_table.get_entry_value_string(&"entry2".to_string(), &"key2".to_string())?,
             false,
         )?;
         Ok(())
@@ -2146,22 +2167,22 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        table.update_entry_integer(&"entry1".to_string(), &"key1".to_string(), Some(-66))?;
+        l_table.update_entry_integer(&"entry1".to_string(), &"key1".to_string(), Some(-66))?;
 
-        let val = check_option(
+        let l_val = check_option(
             (1, 1),
-            table.get_entry_value_integer(&"entry1".to_string(), &"key1".to_string())?,
+            l_table.get_entry_value_integer(&"entry1".to_string(), &"key1".to_string())?,
             true,
         )?
         .unwrap();
-        check_value((1, 2), val, &-66, CheckType::Equal)?;
+        check_value((1, 2), l_val, &-66, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2172,16 +2193,16 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.get_entry_value_integer(&"entry1".to_string(), &"key2".to_string()),
+            l_table.get_entry_value_integer(&"entry1".to_string(), &"key2".to_string()),
             false,
         )?;
         Ok(())
@@ -2194,26 +2215,26 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::UnsignedInt(0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("12".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("12".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        table.update_entry_unsigned_integer(
+        l_table.update_entry_unsigned_integer(
             &"entry1".to_string(),
             &"key3".to_string(),
             Some(66),
         )?;
 
-        let val = check_option(
+        let l_val = check_option(
             (1, 1),
-            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key3".to_string())?,
+            l_table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
         .unwrap();
-        check_value((1, 2), val, &66, CheckType::Equal)?;
+        check_value((1, 2), l_val, &66, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2224,16 +2245,16 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::UnsignedInt(0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("14".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("14".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key2".to_string()),
+            l_table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key2".to_string()),
             false,
         )?;
         Ok(())
@@ -2246,22 +2267,22 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("12.56".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("12.56".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        table.update_entry_float(&"entry1".to_string(), &"key3".to_string(), Some(66.99))?;
+        l_table.update_entry_float(&"entry1".to_string(), &"key3".to_string(), Some(66.99))?;
 
-        let val = check_option(
+        let l_val = check_option(
             (1, 1),
-            table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?,
+            l_table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
         .unwrap();
-        check_value((1, 2), val, &66.99, CheckType::Equal)?;
+        check_value((1, 2), l_val, &66.99, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2272,16 +2293,16 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.get_entry_value_float(&"entry1".to_string(), &"key2".to_string()),
+            l_table.get_entry_value_float(&"entry1".to_string(), &"key2".to_string()),
             false,
         )?;
         Ok(())
@@ -2294,22 +2315,22 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys.clone()));
-        let mut binding = vec![Some("1".to_string()), None, Some("false".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys.clone()));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("false".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        table.update_entry_bool(&"entry1".to_string(), &"key3".to_string(), Some(true))?;
+        l_table.update_entry_bool(&"entry1".to_string(), &"key3".to_string(), Some(true))?;
 
-        let val = check_option(
+        let l_val = check_option(
             (1, 1),
-            table.get_entry_value_bool(&"entry1".to_string(), &"key3".to_string())?,
+            l_table.get_entry_value_bool(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
         .unwrap();
-        check_value((1, 2), val, &true, CheckType::Equal)?;
+        check_value((1, 2), l_val, &true, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2320,16 +2341,16 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("true".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("true".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.get_entry_value_bool(&"entry1".to_string(), &"key2".to_string()),
+            l_table.get_entry_value_bool(&"entry1".to_string(), &"key2".to_string()),
             false,
         )?;
         Ok(())
@@ -2345,28 +2366,28 @@ mod tests {
                 DbType::default_from_string(&"Date".to_string())?,
             ),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("15/08/2016".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("15/08/2016".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        table.update_entry_date(
+        l_table.update_entry_date(
             &"entry1".to_string(),
             &"key3".to_string(),
             Some(NaiveDate::from_ymd_opt(1789, 7, 14).unwrap()),
         )?;
 
-        let val = check_option(
+        let l_val = check_option(
             (1, 1),
-            table.get_entry_value_date(&"entry1".to_string(), &"key3".to_string())?,
+            l_table.get_entry_value_date(&"entry1".to_string(), &"key3".to_string())?,
             true,
         )?
         .unwrap();
         check_value(
             (1, 2),
-            val,
+            l_val,
             &NaiveDate::from_ymd_opt(1789, 7, 14).unwrap(),
             CheckType::Equal,
         )?;
@@ -2383,16 +2404,16 @@ mod tests {
                 DbType::default_from_string(&"Date".to_string())?,
             ),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("15/08/2016".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("15/08/2016".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.get_entry_value_date(&"entry1".to_string(), &"key2".to_string()),
+            l_table.get_entry_value_date(&"entry1".to_string(), &"key2".to_string()),
             false,
         )?;
         Ok(())
@@ -2405,18 +2426,23 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Add key to an empty table
-        table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
+        // Add key to an empty l_table
+        l_table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
 
-        // Verify that the table schema was modified
-        let key_tuple = table.find_key(&"key_new".to_string())?;
-        check_value((1, 1), &key_tuple.0, &3, CheckType::Equal)?;
-        check_struct((1, 2), key_tuple.1, &DbType::UnsignedInt(0), CheckType::Equal)?;
+        // Verify that the l_table schema was modified
+        let l_key_tuple = l_table.find_key(&"key_new".to_string())?;
+        check_value((1, 1), &l_key_tuple.0, &3, CheckType::Equal)?;
+        check_struct(
+            (1, 2),
+            l_key_tuple.1,
+            &DbType::UnsignedInt(0),
+            CheckType::Equal,
+        )?;
 
         // Ensure that entries are empty
-        check_value((2, 1), &table.entries_count(), &0, CheckType::Equal)?;
+        check_value((2, 1), &l_table.entries_count(), &0, CheckType::Equal)?;
 
         Ok(())
     }
@@ -2428,57 +2454,73 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
-        table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
+        l_table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
 
-        // Verify that the table schema was modified
-        let key_tuple = table.find_key(&"key_new".to_string())?;
-        check_value((1, 1), &key_tuple.0, &3, CheckType::Equal)?;
-        check_struct((1, 2), key_tuple.1, &DbType::UnsignedInt(0), CheckType::Equal)?;
+        // Verify that the l_table schema was modified
+        let l_key_tuple = l_table.find_key(&"key_new".to_string())?;
+        check_value((1, 1), &l_key_tuple.0, &3, CheckType::Equal)?;
+        check_struct(
+            (1, 2),
+            l_key_tuple.1,
+            &DbType::UnsignedInt(0),
+            CheckType::Equal,
+        )?;
 
         // Verify that existing entries were updated to contain None for the new key
         check_option(
             (2, 1),
-            table.get_entry_value(&"entry1".to_string(), &"key_new".to_string())?,
+            l_table.get_entry_value(&"entry1".to_string(), &"key_new".to_string())?,
             false,
         )?;
         check_option(
             (2, 2),
-            table.get_entry_value(&"entry2".to_string(), &"key_new".to_string())?,
+            l_table.get_entry_value(&"entry2".to_string(), &"key_new".to_string())?,
             false,
         )?;
 
         // Try updating an existing entry with the new key value to ensure the entry structure was properly resized
-        table.update_entry_unsigned_integer(&"entry1".to_string(), &"key_new".to_string(), Some(123))?;
-        let entry_val = check_option(
+        l_table.update_entry_unsigned_integer(
+            &"entry1".to_string(),
+            &"key_new".to_string(),
+            Some(123),
+        )?;
+        let l_entry_val = check_option(
             (3, 1),
-            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key_new".to_string())?,
+            l_table
+                .get_entry_value_unsigned_integer(&"entry1".to_string(), &"key_new".to_string())?,
             true,
-        )?.unwrap();
-        check_value((3, 2), entry_val, &123, CheckType::Equal)?;
+        )?
+        .unwrap();
+        check_value((3, 2), l_entry_val, &123, CheckType::Equal)?;
 
         Ok(())
     }
 
     #[test]
-    fn add_key_empty_table() -> Result<(), String> {
-        let mut table = DbTable::new("Table".to_string(), None);
+    fn add_key_empty_table_2() -> Result<(), String> {
+        let mut l_table = DbTable::new("Table".to_string(), None);
 
-        table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
+        l_table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
 
-        // Verify that the table schema was modified
-        let key_tuple = table.find_key(&"key_new".to_string())?;
-        check_value((1, 1), &key_tuple.0, &0, CheckType::Equal)?;
-        check_struct((1, 2), key_tuple.1, &DbType::UnsignedInt(0), CheckType::Equal)?;
+        // Verify that the l_table schema was modified
+        let l_key_tuple = l_table.find_key(&"key_new".to_string())?;
+        check_value((1, 1), &l_key_tuple.0, &0, CheckType::Equal)?;
+        check_struct(
+            (1, 2),
+            l_key_tuple.1,
+            &DbType::UnsignedInt(0),
+            CheckType::Equal,
+        )?;
 
-        // Verify table still has no entries
-        check_value((2, 1), &table.entries.len(), &0, CheckType::Equal)?;
+        // Verify l_table still has no entries
+        check_value((2, 1), &l_table.entries.len(), &0, CheckType::Equal)?;
 
         Ok(())
     }
@@ -2489,58 +2531,70 @@ mod tests {
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let mut binding = vec![Some("1".to_string()), None];
-        let new_entry = Some(&mut binding);
+        let mut l_binding = vec![Some("1".to_string()), None];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
 
         // Add two consecutive keys
-        table.add_key(&"key3".to_string(), &"Float".to_string())?;
-        table.add_key(&"key4".to_string(), &"Bool".to_string())?;
+        l_table.add_key(&"key3".to_string(), &"Float".to_string())?;
+        l_table.add_key(&"key4".to_string(), &"Bool".to_string())?;
 
         // Verify schema modification
-        check_value((1, 1), &table.keys.len(), &4, CheckType::Equal)?;
+        check_value((1, 1), &l_table.keys.len(), &4, CheckType::Equal)?;
 
-        let key3_tuple = table.find_key(&"key3".to_string())?;
-        check_value((2, 1), &key3_tuple.0, &2, CheckType::Equal)?;
-        check_struct((2, 2), key3_tuple.1, &DbType::Float(0.0), CheckType::Equal)?;
+        let l_key3_tuple = l_table.find_key(&"key3".to_string())?;
+        check_value((2, 1), &l_key3_tuple.0, &2, CheckType::Equal)?;
+        check_struct(
+            (2, 2),
+            l_key3_tuple.1,
+            &DbType::Float(0.0),
+            CheckType::Equal,
+        )?;
 
-        let key4_tuple = table.find_key(&"key4".to_string())?;
-        check_value((3, 1), &key4_tuple.0, &3, CheckType::Equal)?;
-        check_struct((3, 2), key4_tuple.1, &DbType::Bool(false), CheckType::Equal)?;
+        let l_key4_tuple = l_table.find_key(&"key4".to_string())?;
+        check_value((3, 1), &l_key4_tuple.0, &3, CheckType::Equal)?;
+        check_struct(
+            (3, 2),
+            l_key4_tuple.1,
+            &DbType::Bool(false),
+            CheckType::Equal,
+        )?;
 
         // Verify entries correctly added None for the new keys
         check_option(
             (4, 1),
-            table.get_entry_value(&"entry1".to_string(), &"key3".to_string())?,
+            l_table.get_entry_value(&"entry1".to_string(), &"key3".to_string())?,
             false,
         )?;
 
         check_option(
             (4, 2),
-            table.get_entry_value(&"entry1".to_string(), &"key4".to_string())?,
+            l_table.get_entry_value(&"entry1".to_string(), &"key4".to_string())?,
             false,
         )?;
 
         // Update the new fields to verify they are working
-        table.update_entry_float(&"entry1".to_string(), &"key3".to_string(), Some(3.14))?;
-        table.update_entry_bool(&"entry1".to_string(), &"key4".to_string(), Some(true))?;
+        l_table.update_entry_float(&"entry1".to_string(), &"key3".to_string(), Some(3.23))?;
+        l_table.update_entry_bool(&"entry1".to_string(), &"key4".to_string(), Some(true))?;
 
-        let entry_val_3 = check_option(
+        let l_entry_val_3 = check_option(
             (5, 1),
-            table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?,
+            l_table.get_entry_value_float(&"entry1".to_string(), &"key3".to_string())?,
             true,
-        )?.unwrap();
-        check_value((5, 2), entry_val_3, &3.14, CheckType::Equal)?;
+        )?
+        .unwrap();
+        check_value((5, 2), l_entry_val_3, &3.23, CheckType::Equal)?;
 
-        let entry_val_4 = check_option(
+        let l_entry_val_4 = check_option(
             (6, 1),
-            table.get_entry_value_bool(&"entry1".to_string(), &"key4".to_string())?,
+            l_table.get_entry_value_bool(&"entry1".to_string(), &"key4".to_string())?,
             true,
-        )?.unwrap();
-        check_value((6, 2), entry_val_4, &true, CheckType::Equal)?;
+        )?
+        .unwrap();
+        check_value((6, 2), l_entry_val_4, &true, CheckType::Equal)?;
 
         Ok(())
     }
@@ -2552,16 +2606,16 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.add_key(&"key2".to_string(), &"UnsignedInt".to_string()),
+            l_table.add_key(&"key2".to_string(), &"UnsignedInt".to_string()),
             false,
         )?;
         Ok(())
@@ -2574,16 +2628,16 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
 
         check_result(
             (1, 1),
-            table.add_key(&"key_new".to_string(), &"RandomType".to_string()),
+            l_table.add_key(&"key_new".to_string(), &"RandomType".to_string()),
             false,
         )?;
         Ok(())
@@ -2596,29 +2650,31 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
         // Add a new key
-        table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
+        l_table.add_key(&"key_new".to_string(), &"UnsignedInt".to_string())?;
 
         // Add an entry that should include the new key (total 4 fields)
-        let mut binding = vec![
+        let mut l_binding = vec![
             Some("1".to_string()),
             None,
             Some("14.74".to_string()),
             Some("42".to_string()),
         ];
-        let new_entry = Some(&mut binding);
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
 
         // Verify the value in the new key field of the new entry
-        let entry_val = check_option(
+        let l_entry_val = check_option(
             (1, 1),
-            table.get_entry_value_unsigned_integer(&"entry1".to_string(), &"key_new".to_string())?,
+            l_table
+                .get_entry_value_unsigned_integer(&"entry1".to_string(), &"key_new".to_string())?,
             true,
-        )?.unwrap();
-        check_value((1, 2), entry_val, &42, CheckType::Equal)?;
+        )?
+        .unwrap();
+        check_value((1, 2), l_entry_val, &42, CheckType::Equal)?;
 
         Ok(())
     }
@@ -2630,19 +2686,19 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
-        let new_entry = Some(&mut binding);
-        let mut binding2 = vec![Some("3".to_string()), None, Some("32".to_string())];
-        let new_entry2 = Some(&mut binding2);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let mut l_binding2 = vec![Some("3".to_string()), None, Some("32".to_string())];
+        let l_new_entry2 = Some(&mut l_binding2);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
 
-        table.remove_entry(&"entry2".to_string())?;
+        l_table.remove_entry(&"entry2".to_string())?;
 
-        check_value((1, 1), &table.entries_count(), &2, CheckType::Equal)?;
+        check_value((1, 1), &l_table.entries_count(), &2, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2653,18 +2709,18 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
-        let new_entry = Some(&mut binding);
-        let mut binding2 = vec![Some("3".to_string()), None, Some("32".to_string())];
-        let new_entry2 = Some(&mut binding2);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("14.74".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let mut l_binding2 = vec![Some("3".to_string()), None, Some("32".to_string())];
+        let l_new_entry2 = Some(&mut l_binding2);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
 
-        check_result((1, 1), table.remove_entry(&"entry4".to_string()), false)?;
-        check_value((1, 2), &table.entries_count(), &3, CheckType::Equal)?;
+        check_result((1, 1), l_table.remove_entry(&"entry4".to_string()), false)?;
+        check_value((1, 2), &l_table.entries_count(), &3, CheckType::Equal)?;
         Ok(())
     }
 
@@ -2675,27 +2731,27 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let new_entry = Some(&mut binding);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
         check_result(
             (1, 1),
-            table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string()),
+            l_table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string()),
             true,
         )?;
 
-        table.rename_entry(&"entry1".to_string(), "entry99")?;
+        l_table.rename_entry(&"entry1".to_string(), "entry99")?;
         check_result(
             (1, 2),
-            table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string()),
+            l_table.get_entry_value_string(&"entry1".to_string(), &"key2".to_string()),
             false,
         )?;
         check_result(
             (1, 3),
-            table.get_entry_value_string(&"entry99".to_string(), &"key2".to_string()),
+            l_table.get_entry_value_string(&"entry99".to_string(), &"key2".to_string()),
             true,
         )?;
 
@@ -2704,16 +2760,16 @@ mod tests {
 
     #[test]
     fn rename_entry_missing() -> Result<(), String> {
-        let keys = vec![
-            ("key1".to_string(), DbType::Integer(0)),
-        ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let keys = vec![("key1".to_string(), DbType::Integer(0))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let err = table.rename_entry(&"entry1".to_string(), "entry99").unwrap_err();
+        let l_err = l_table
+            .rename_entry(&"entry1".to_string(), "entry99")
+            .unwrap_err();
 
         check_value(
             (1, 2),
-            &err,
+            &l_err,
             &"Entry entry1 does not exists in table Table".to_string(),
             CheckType::Equal,
         )?;
@@ -2723,22 +2779,22 @@ mod tests {
 
     #[test]
     fn rename_entry_duplicate() -> Result<(), String> {
-        let keys = vec![
-            ("key1".to_string(), DbType::Integer(0)),
-        ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let keys = vec![("key1".to_string(), DbType::Integer(0))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let mut binding = vec![Some("1".to_string())];
-        table.add_entry(&"entry1".to_string(), Some(&mut binding))?;
+        let mut l_binding = vec![Some("1".to_string())];
+        l_table.add_entry(&"entry1".to_string(), Some(&mut l_binding))?;
 
-        let mut binding2 = vec![Some("2".to_string())];
-        table.add_entry(&"entry2".to_string(), Some(&mut binding2))?;
+        let mut l_binding2 = vec![Some("2".to_string())];
+        l_table.add_entry(&"entry2".to_string(), Some(&mut l_binding2))?;
 
-        let err = table.rename_entry(&"entry1".to_string(), "entry2").unwrap_err();
+        let l_err = l_table
+            .rename_entry(&"entry1".to_string(), "entry2")
+            .unwrap_err();
 
         check_value(
             (1, 2),
-            &err,
+            &l_err,
             &"DbTable - rename_entry : Could not rename entry, an entry named 'entry2' already exists".to_string(),
             CheckType::Equal,
         )?;
@@ -2753,22 +2809,22 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry5".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_value(
             (1, 1),
-            &table.get_all_entries(),
+            &l_table.get_all_entries(),
             &Some(vec![
                 "entry1".to_string(),
                 "entry2".to_string(),
@@ -2786,9 +2842,9 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        check_value((1, 1), &table.get_all_entries(), &None, CheckType::Equal)
+        check_value((1, 1), &l_table.get_all_entries(), &None, CheckType::Equal)
     }
 
     #[test]
@@ -2801,34 +2857,34 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("13/03/2014".to_string()),
             None,
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("14/03/2014".to_string()),
             None,
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("13/08/2024".to_string()),
             None,
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_matching_entries_date(
+            l_table.get_matching_entries_date(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
@@ -2839,7 +2895,7 @@ mod tests {
         )?;
         check_result(
             (2, 1),
-            table.get_matching_entries_date(
+            l_table.get_matching_entries_date(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -2850,7 +2906,7 @@ mod tests {
         )?;
         check_result(
             (3, 1),
-            table.get_matching_entries_date(
+            l_table.get_matching_entries_date(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -2873,56 +2929,56 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("13/03/2014".to_string()),
             None,
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("14/03/2014".to_string()),
             None,
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("13/08/2024".to_string()),
             None,
             Some("-0.27".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("13/03/2014".to_string()),
             None,
             Some("-0.27".to_string()),
         ];
-        let mut binding5 = vec![
+        let mut l_binding5 = vec![
             Some("10/03/2014".to_string()),
             None,
             Some("-0.27".to_string()),
         ];
-        let mut binding6 = vec![
+        let mut l_binding6 = vec![
             Some("15/03/2014".to_string()),
             None,
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
-        let new_entry5 = Some(&mut binding5);
-        let new_entry6 = Some(&mut binding6);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
+        let l_new_entry5 = Some(&mut l_binding5);
+        let l_new_entry6 = Some(&mut l_binding6);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
-        table.add_entry(&"entry5".to_string(), new_entry5)?;
-        table.add_entry(&"entry6".to_string(), new_entry6)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry5)?;
+        l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
         // Equality
-        let expected_vec = vec!["entry1".to_string(), "entry4".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry1".to_string(), "entry4".to_string()];
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_date(
+            l_table.get_matching_entries_date(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -2932,13 +2988,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_date(
+            l_table.get_matching_entries_date(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -2948,18 +3004,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((2, 2), res, false)?;
+        check_option((2, 2), l_res, false)?;
 
         // Different
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry2".to_string(),
             "entry3".to_string(),
             "entry5".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_date(
+            l_table.get_matching_entries_date(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Different,
@@ -2969,14 +3025,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((3, 2), res, true)?.unwrap();
-        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((3, 2), l_res, true)?.unwrap();
+        check_value((3, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // After
-        let expected_vec = vec!["entry3".to_string(), "entry6".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry3".to_string(), "entry6".to_string()];
+        let l_res = check_result(
             (4, 1),
-            table.get_matching_entries_date(
+            l_table.get_matching_entries_date(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsMore,
@@ -2986,19 +3042,19 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((4, 2), res, true)?.unwrap();
-        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((4, 2), l_res, true)?.unwrap();
+        check_value((4, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Before
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry4".to_string(),
             "entry5".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (5, 1),
-            table.get_matching_entries_date(
+            l_table.get_matching_entries_date(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsLess,
@@ -3008,19 +3064,19 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((5, 2), res, true)?.unwrap();
-        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((5, 2), l_res, true)?.unwrap();
+        check_value((5, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Between
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry4".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (6, 1),
-            table.get_matching_entries_date(
+            l_table.get_matching_entries_date(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -3030,22 +3086,20 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((6, 2), res, true)?.unwrap();
-        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((6, 2), l_res, true)?.unwrap();
+        check_value((6, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Subset match
-        let subset_entry1 = "entry1".to_string();
-        let subset_entry3 = "entry3".to_string();
-        let subset_entry6 = "entry6".to_string();
-        let subset = vec![&subset_entry1, &subset_entry3, &subset_entry6];
+        let l_subset_entry1 = "entry1".to_string();
+        let l_subset_entry3 = "entry3".to_string();
+        let l_subset_entry6 = "entry6".to_string();
+        let l_subset = vec![&l_subset_entry1, &l_subset_entry3, &l_subset_entry6];
 
-        let expected_vec = vec![
-            "entry1".to_string(),
-        ];
-        let res = check_result(
+        let l_expected_vec = vec!["entry1".to_string()];
+        let l_res = check_result(
             (7, 1),
-            table.get_matching_entries_float(
-                Some(subset.clone()),
+            l_table.get_matching_entries_float(
+                Some(l_subset.clone()),
                 &"key3".to_string(),
                 MatchingCriteria::Between,
                 0.45,
@@ -3054,14 +3108,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((7, 2), res, true)?.unwrap();
-        check_value((7, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((7, 2), l_res, true)?.unwrap();
+        check_value((7, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Subset no match
-        let res = check_result(
+        let l_res = check_result(
             (8, 1),
-            table.get_matching_entries_float(
-                Some(subset),
+            l_table.get_matching_entries_float(
+                Some(l_subset),
                 &"key3".to_string(),
                 MatchingCriteria::IsLess,
                 -10.0,
@@ -3070,7 +3124,7 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((8, 2), res, false)?;
+        check_option((8, 2), l_res, false)?;
 
         Ok(())
     }
@@ -3085,103 +3139,101 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("13/03/2014".to_string()),
             None,
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![Some("14/03/2014".to_string()), None, None];
-        let mut binding3 = vec![
+        let mut l_binding2 = vec![Some("14/03/2014".to_string()), None, None];
+        let mut l_binding3 = vec![
             Some("13/08/2024".to_string()),
             None,
             Some("-0.27".to_string()),
         ];
-        let mut binding4 = vec![Some("13/03/2014".to_string()), None, None];
-        let mut binding5 = vec![
+        let mut l_binding4 = vec![Some("13/03/2014".to_string()), None, None];
+        let mut l_binding5 = vec![
             Some("10/03/2014".to_string()),
             None,
             Some("-0.27".to_string()),
         ];
-        let mut binding6 = vec![
+        let mut l_binding6 = vec![
             Some("15/03/2014".to_string()),
             None,
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
-        let new_entry5 = Some(&mut binding5);
-        let new_entry6 = Some(&mut binding6);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
+        let l_new_entry5 = Some(&mut l_binding5);
+        let l_new_entry6 = Some(&mut l_binding6);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
-        table.add_entry(&"entry5".to_string(), new_entry5)?;
-        table.add_entry(&"entry6".to_string(), new_entry6)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry5)?;
+        l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
         // None
-        let expected_vec = vec!["entry2".to_string(), "entry4".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry2".to_string(), "entry4".to_string()];
+        let l_res = check_result(
             (1, 1),
-            table.get_entries_none(None, &"key3".to_string()),
+            l_table.get_entries_none(None, &"key3".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Some
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry3".to_string(),
             "entry5".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_entries_some(None, &"key3".to_string()),
+            l_table.get_entries_some(None, &"key3".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // No Some
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_entries_some(None, &"key2".to_string()),
+            l_table.get_entries_some(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         // No None
-        let res = check_result(
+        let l_res = check_result(
             (4, 1),
-            table.get_entries_none(None, &"key1".to_string()),
+            l_table.get_entries_none(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((4, 2), res, false)?;
+        check_option((4, 2), l_res, false)?;
 
         Ok(())
     }
 
     #[test]
     fn get_entries_matching_bool_missing_key() -> Result<(), String> {
-        let keys = vec![
-            ("key1".to_string(), DbType::Bool(false)),
-        ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("true".to_string())];
-        table.add_entry(&"entry1".to_string(), Some(&mut binding))?;
+        let keys = vec![("key1".to_string(), DbType::Bool(false))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("true".to_string())];
+        l_table.add_entry(&"entry1".to_string(), Some(&mut l_binding))?;
 
         check_result(
             (1, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 None,
                 &"key_missing".to_string(),
                 MatchingCriteria::Equal,
@@ -3195,16 +3247,14 @@ mod tests {
 
     #[test]
     fn get_entries_matching_bool_empty_subset() -> Result<(), String> {
-        let keys = vec![
-            ("key1".to_string(), DbType::Bool(false)),
-        ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("true".to_string())];
-        table.add_entry(&"entry1".to_string(), Some(&mut binding))?;
+        let keys = vec![("key1".to_string(), DbType::Bool(false))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("true".to_string())];
+        l_table.add_entry(&"entry1".to_string(), Some(&mut l_binding))?;
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 Some(vec![]),
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3213,25 +3263,23 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
 
     #[test]
     fn get_entries_matching_bool_subset_no_match() -> Result<(), String> {
-        let keys = vec![
-            ("key1".to_string(), DbType::Bool(false)),
-        ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("false".to_string())];
-        table.add_entry(&"entry1".to_string(), Some(&mut binding))?;
+        let keys = vec![("key1".to_string(), DbType::Bool(false))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("false".to_string())];
+        l_table.add_entry(&"entry1".to_string(), Some(&mut l_binding))?;
 
-        let entry1_name = "entry1".to_string();
-        let res = check_result(
+        let l_entry1_name = "entry1".to_string();
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_bool(
-                Some(vec![&entry1_name]),
+            l_table.get_matching_entries_bool(
+                Some(vec![&l_entry1_name]),
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 true,
@@ -3239,7 +3287,7 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -3251,22 +3299,22 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
@@ -3276,7 +3324,7 @@ mod tests {
         )?;
         check_result(
             (2, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -3286,7 +3334,7 @@ mod tests {
         )?;
         check_result(
             (3, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsLess,
@@ -3296,7 +3344,7 @@ mod tests {
         )?;
         check_result(
             (4, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsMore,
@@ -3315,32 +3363,32 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys.clone()));
-        let mut binding = vec![Some("true".to_string()), None, Some("false".to_string())];
-        let mut binding2 = vec![Some("true".to_string()), None, Some("false".to_string())];
-        let mut binding3 = vec![Some("false".to_string()), None, Some("false".to_string())];
-        let mut binding4 = vec![Some("false".to_string()), None, Some("false".to_string())];
-        let mut binding5 = vec![Some("true".to_string()), None, Some("false".to_string())];
-        let mut binding6 = vec![Some("false".to_string()), None, Some("false".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
-        let new_entry5 = Some(&mut binding5);
-        let new_entry6 = Some(&mut binding6);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys.clone()));
+        let mut l_binding = vec![Some("true".to_string()), None, Some("false".to_string())];
+        let mut l_binding2 = vec![Some("true".to_string()), None, Some("false".to_string())];
+        let mut l_binding3 = vec![Some("false".to_string()), None, Some("false".to_string())];
+        let mut l_binding4 = vec![Some("false".to_string()), None, Some("false".to_string())];
+        let mut l_binding5 = vec![Some("true".to_string()), None, Some("false".to_string())];
+        let mut l_binding6 = vec![Some("false".to_string()), None, Some("false".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
+        let l_new_entry5 = Some(&mut l_binding5);
+        let l_new_entry6 = Some(&mut l_binding6);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
-        table.add_entry(&"entry5".to_string(), new_entry5)?;
-        table.add_entry(&"entry6".to_string(), new_entry6)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry5)?;
+        l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
-        // Empty table
-        let empty_table = DbTable::new("EmptyTable".to_string(), Some(keys.clone()));
-        let res = check_result(
+        // Empty l_table
+        let l_empty_table = DbTable::new("EmptyTable".to_string(), Some(keys.clone()));
+        let l_res = check_result(
             (0, 1),
-            empty_table.get_matching_entries_bool(
+            l_empty_table.get_matching_entries_bool(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3349,17 +3397,17 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((0, 2), res, false)?;
+        check_option((0, 2), l_res, false)?;
 
         // Equality True
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry5".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3368,13 +3416,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::Equal,
@@ -3383,17 +3431,17 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((2, 2), res, false)?;
+        check_option((2, 2), l_res, false)?;
 
         // Different
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry3".to_string(),
             "entry4".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Different,
@@ -3402,18 +3450,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((3, 2), res, true)?.unwrap();
-        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((3, 2), l_res, true)?.unwrap();
+        check_value((3, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Equality False
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry3".to_string(),
             "entry4".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (4, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3422,18 +3470,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((4, 2), res, true)?.unwrap();
-        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((4, 2), l_res, true)?.unwrap();
+        check_value((4, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Different False
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry5".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (5, 1),
-            table.get_matching_entries_bool(
+            l_table.get_matching_entries_bool(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Different,
@@ -3442,22 +3490,19 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((5, 2), res, true)?.unwrap();
-        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((5, 2), l_res, true)?.unwrap();
+        check_value((5, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
-        // With subset
-        let s_name1 = "entry1".to_string();
-        let s_name4 = "entry4".to_string();
-        let s_name5 = "entry5".to_string();
-        let subset_names = vec![&s_name1, &s_name4, &s_name5];
-        let expected_vec = vec![
-            "entry1".to_string(),
-            "entry5".to_string(),
-        ];
-        let res = check_result(
+        // With l_subset
+        let l_s_name1 = "entry1".to_string();
+        let l_s_name4 = "entry4".to_string();
+        let l_s_name5 = "entry5".to_string();
+        let l_subset_names = vec![&l_s_name1, &l_s_name4, &l_s_name5];
+        let l_expected_vec = vec!["entry1".to_string(), "entry5".to_string()];
+        let l_res = check_result(
             (6, 1),
-            table.get_matching_entries_bool(
-                Some(subset_names),
+            l_table.get_matching_entries_bool(
+                Some(l_subset_names),
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 true,
@@ -3465,8 +3510,8 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((6, 2), res, true)?.unwrap();
-        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((6, 2), l_res, true)?.unwrap();
+        check_value((6, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         Ok(())
     }
@@ -3478,34 +3523,34 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("true".to_string()),
             Some("toto".to_string()),
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("false".to_string()),
             Some("tata".to_string()),
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("true".to_string()),
             Some("titi".to_string()),
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3515,7 +3560,7 @@ mod tests {
         )?;
         check_result(
             (2, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Between,
@@ -3525,7 +3570,7 @@ mod tests {
         )?;
         check_result(
             (3, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::IsLess,
@@ -3535,7 +3580,7 @@ mod tests {
         )?;
         check_result(
             (4, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::IsMore,
@@ -3549,14 +3594,12 @@ mod tests {
 
     #[test]
     fn get_entries_matching_string_empty() -> Result<(), String> {
-        let keys = vec![
-            ("key1".to_string(), DbType::String(" ".to_string())),
-        ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let keys = vec![("key1".to_string(), DbType::String(" ".to_string()))];
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3565,7 +3608,7 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -3577,60 +3620,60 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Bool(false)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("true".to_string()),
             Some("toto".to_string()),
             Some("false".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("true".to_string()),
             Some("tata".to_string()),
             Some("false".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("false".to_string()),
             Some("titi".to_string()),
             Some("false".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("false".to_string()),
             Some("tutu".to_string()),
             Some("false".to_string()),
         ];
-        let mut binding5 = vec![
+        let mut l_binding5 = vec![
             Some("true".to_string()),
             Some("tata".to_string()),
             Some("false".to_string()),
         ];
-        let mut binding6 = vec![
+        let mut l_binding6 = vec![
             Some("false".to_string()),
             Some("tata".to_string()),
             Some("false".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
-        let new_entry5 = Some(&mut binding5);
-        let new_entry6 = Some(&mut binding6);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
+        let l_new_entry5 = Some(&mut l_binding5);
+        let l_new_entry6 = Some(&mut l_binding6);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
-        table.add_entry(&"entry5".to_string(), new_entry5)?;
-        table.add_entry(&"entry6".to_string(), new_entry6)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry5)?;
+        l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
         // Equality
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry2".to_string(),
             "entry5".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
@@ -3639,13 +3682,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
@@ -3654,17 +3697,17 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((2, 2), res, false)?;
+        check_option((2, 2), l_res, false)?;
 
         // Different
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry3".to_string(),
             "entry4".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Different,
@@ -3673,8 +3716,8 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((3, 2), res, true)?.unwrap();
-        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((3, 2), l_res, true)?.unwrap();
+        check_value((3, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         Ok(())
     }
@@ -3685,12 +3728,12 @@ mod tests {
             ("key1".to_string(), DbType::String(" ".to_string())),
             ("key2".to_string(), DbType::Integer(0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Test empty table
-        let res = check_result(
+        // Test empty l_table
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3699,27 +3742,27 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
-        let mut binding = vec![Some("tata".to_string()), Some("1".to_string())];
-        let mut binding2 = vec![Some("toto".to_string()), Some("2".to_string())];
-        let mut binding3 = vec![Some("tata".to_string()), Some("3".to_string())];
-        let mut binding4 = vec![Some("titi".to_string()), Some("4".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let mut l_binding = vec![Some("tata".to_string()), Some("1".to_string())];
+        let mut l_binding2 = vec![Some("toto".to_string()), Some("2".to_string())];
+        let mut l_binding3 = vec![Some("tata".to_string()), Some("3".to_string())];
+        let mut l_binding4 = vec![Some("titi".to_string()), Some("4".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
 
         // Test MatchingCriteria::Equal matching
-        let expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3728,13 +3771,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Test MatchingCriteria::Equal no match
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3743,16 +3786,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         // Test MatchingCriteria::Different
-        let expected_vec = vec![
-            "entry2".to_string(),
-            "entry4".to_string(),
-        ];
-        let res = check_result(
+        let l_expected_vec = vec!["entry2".to_string(), "entry4".to_string()];
+        let l_res = check_result(
             (4, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Different,
@@ -3761,13 +3801,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((4, 2), res, true)?.unwrap();
-        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((4, 2), l_res, true)?.unwrap();
+        check_value((4, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Test unsupported MatchingCriteria Error
         check_result(
             (5, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsLess,
@@ -3779,7 +3819,7 @@ mod tests {
         // Test bad type Error
         check_result(
             (6, 1),
-            table.get_matching_entries_string(
+            l_table.get_matching_entries_string(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
@@ -3793,35 +3833,33 @@ mod tests {
 
     #[test]
     fn get_entries_matching_string_subset() -> Result<(), String> {
-        let keys = vec![
-            ("key1".to_string(), DbType::String(" ".to_string())),
-        ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("tata".to_string())];
-        let mut binding2 = vec![Some("toto".to_string())];
-        let mut binding3 = vec![Some("tata".to_string())];
-        let mut binding4 = vec![Some("titi".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let keys = vec![("key1".to_string(), DbType::String(" ".to_string()))];
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("tata".to_string())];
+        let mut l_binding2 = vec![Some("toto".to_string())];
+        let mut l_binding3 = vec![Some("tata".to_string())];
+        let mut l_binding4 = vec![Some("titi".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
 
-        // With subset
-        let subset_entry = "entry3".to_string();
-        let subset_entry2 = "entry4".to_string();
-        let subset = vec![&subset_entry, &subset_entry2];
+        // With l_subset
+        let l_subset_entry = "entry3".to_string();
+        let l_subset_entry2 = "entry4".to_string();
+        let l_subset = vec![&l_subset_entry, &l_subset_entry2];
 
-        // Should only match entry3 because it's in the subset
-        let expected_vec = vec!["entry3".to_string()];
-        let res = check_result(
+        // Should only match l_entry3 because it's in the l_subset
+        let l_expected_vec = vec!["entry3".to_string()];
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_string(
-                Some(subset.clone()),
+            l_table.get_matching_entries_string(
+                Some(l_subset.clone()),
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 &"tata".to_string(),
@@ -3829,14 +3867,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
-        // None of the matches are in subset (e.g. searching for toto)
-        let res = check_result(
+        // None of the matches are in l_subset (e.g. searching for toto)
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_string(
-                Some(subset),
+            l_table.get_matching_entries_string(
+                Some(l_subset),
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 &"toto".to_string(),
@@ -3844,7 +3882,7 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((2, 2), res, false)?;
+        check_option((2, 2), l_res, false)?;
 
         Ok(())
     }
@@ -3856,12 +3894,12 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Empty table
-        let res = check_result(
+        // Empty l_table
+        let l_res = check_result(
             (0, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3871,23 +3909,23 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((0, 2), res, false)?;
+        check_option((0, 2), l_res, false)?;
 
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
@@ -3898,7 +3936,7 @@ mod tests {
         )?;
         check_result(
             (2, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -3909,7 +3947,7 @@ mod tests {
         )?;
         check_result(
             (3, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -3929,12 +3967,12 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Empty table
-        let res = check_result(
+        // Empty l_table
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -3944,35 +3982,35 @@ mod tests {
             true,
         )?
         .unwrap();
-        // When table is empty, it returns Ok(None).
-        // Therefore, res is an Option containing None. We want to assert res is None.
-        check_option((1, 2), res, false)?;
+        // When l_table is empty, it returns Ok(None).
+        // Therefore, l_res is an Option containing None. We want to assert l_res is None.
+        check_option((1, 2), l_res, false)?;
 
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![Some("-8".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding4 = vec![Some("-8".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
 
-        let e2 = "entry2".to_string();
-        let e3 = "entry3".to_string();
-        let e4 = "entry4".to_string();
-        let subset = vec![&e2, &e3, &e4];
+        let l_e2 = "entry2".to_string();
+        let l_e3 = "entry3".to_string();
+        let l_e4 = "entry4".to_string();
+        let l_subset = vec![&l_e2, &l_e3, &l_e4];
 
         // Subset match
-        let expected_vec = vec!["entry3".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry3".to_string()];
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_integer(
-                Some(subset.clone()),
+            l_table.get_matching_entries_integer(
+                Some(l_subset.clone()),
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 5,
@@ -3981,14 +4019,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Subset no match
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_integer(
-                Some(subset),
+            l_table.get_matching_entries_integer(
+                Some(l_subset),
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 10,
@@ -3997,7 +4035,7 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         Ok(())
     }
@@ -4009,12 +4047,12 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Empty table
-        let res = check_result(
+        // Empty l_table
+        let l_res = check_result(
             (0, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4024,33 +4062,33 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((0, 2), res, false)?;
+        check_option((0, 2), l_res, false)?;
 
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![Some("-8".to_string()), None, Some("-0.27".to_string())];
-        let mut binding5 = vec![Some("4".to_string()), None, Some("-0.27".to_string())];
-        let mut binding6 = vec![Some("2".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
-        let new_entry5 = Some(&mut binding5);
-        let new_entry6 = Some(&mut binding6);
+        let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding4 = vec![Some("-8".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding5 = vec![Some("4".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding6 = vec![Some("2".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
+        let l_new_entry5 = Some(&mut l_binding5);
+        let l_new_entry6 = Some(&mut l_binding6);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
-        table.add_entry(&"entry5".to_string(), new_entry5)?;
-        table.add_entry(&"entry6".to_string(), new_entry6)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry5)?;
+        l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
         // Equality
-        let expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4060,13 +4098,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4076,18 +4114,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((2, 2), res, false)?;
+        check_option((2, 2), l_res, false)?;
 
         // Different
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry2".to_string(),
             "entry4".to_string(),
             "entry5".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Different,
@@ -4097,18 +4135,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((3, 2), res, true)?.unwrap();
-        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((3, 2), l_res, true)?.unwrap();
+        check_value((3, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // More
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry3".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (4, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsMore,
@@ -4118,14 +4156,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((4, 2), res, true)?.unwrap();
-        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((4, 2), l_res, true)?.unwrap();
+        check_value((4, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Less
-        let expected_vec = vec!["entry4".to_string(), "entry6".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry4".to_string(), "entry6".to_string()];
+        let l_res = check_result(
             (5, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsLess,
@@ -4135,19 +4173,19 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((5, 2), res, true)?.unwrap();
-        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((5, 2), l_res, true)?.unwrap();
+        check_value((5, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Between
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry3".to_string(),
             "entry5".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (6, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -4157,8 +4195,8 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((6, 2), res, true)?.unwrap();
-        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((6, 2), l_res, true)?.unwrap();
+        check_value((6, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         Ok(())
     }
@@ -4170,12 +4208,12 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Empty table
-        let res = check_result(
+        // Empty l_table
+        let l_res = check_result(
             (0, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4185,23 +4223,23 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((0, 2), res, false)?;
+        check_option((0, 2), l_res, false)?;
 
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
@@ -4212,7 +4250,7 @@ mod tests {
         )?;
         check_result(
             (2, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -4223,7 +4261,7 @@ mod tests {
         )?;
         check_result(
             (3, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -4236,166 +4274,6 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn get_entries_matching_uint() -> Result<(), String> {
-        let keys = vec![
-            ("key1".to_string(), DbType::UnsignedInt(0)),
-            ("key2".to_string(), DbType::String(" ".to_string())),
-            ("key3".to_string(), DbType::Float(0.0)),
-        ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-
-        // Empty table
-        let res = check_result(
-            (0, 1),
-            table.get_matching_entries_float(
-                None,
-                &"key1".to_string(),
-                MatchingCriteria::Equal,
-                5.0,
-                None,
-            ),
-            true,
-        )?
-        .unwrap();
-        check_option((0, 2), res, false)?;
-
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![Some("-8".to_string()), None, Some("-0.27".to_string())];
-        let mut binding5 = vec![Some("4".to_string()), None, Some("-0.27".to_string())];
-        let mut binding6 = vec![Some("2".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
-        let new_entry5 = Some(&mut binding5);
-        let new_entry6 = Some(&mut binding6);
-
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
-        table.add_entry(&"entry5".to_string(), new_entry5)?;
-        table.add_entry(&"entry6".to_string(), new_entry6)?;
-
-        // Equality
-        let expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
-        let res = check_result(
-            (1, 1),
-            table.get_matching_entries_integer(
-                None,
-                &"key1".to_string(),
-                MatchingCriteria::Equal,
-                5,
-                None,
-            ),
-            true,
-        )?
-        .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
-
-        // No match
-        let res = check_result(
-            (2, 1),
-            table.get_matching_entries_integer(
-                None,
-                &"key1".to_string(),
-                MatchingCriteria::Equal,
-                7,
-                None,
-            ),
-            true,
-        )?
-        .unwrap();
-        check_option((2, 2), res, false)?;
-
-        // Different
-        let expected_vec = vec![
-            "entry2".to_string(),
-            "entry4".to_string(),
-            "entry5".to_string(),
-            "entry6".to_string(),
-        ];
-        let res = check_result(
-            (3, 1),
-            table.get_matching_entries_integer(
-                None,
-                &"key1".to_string(),
-                MatchingCriteria::Different,
-                5,
-                None,
-            ),
-            true,
-        )?
-        .unwrap();
-        let opt = check_option((3, 2), res, true)?.unwrap();
-        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
-
-        // More
-        let expected_vec = vec![
-            "entry1".to_string(),
-            "entry2".to_string(),
-            "entry3".to_string(),
-        ];
-        let res = check_result(
-            (4, 1),
-            table.get_matching_entries_integer(
-                None,
-                &"key1".to_string(),
-                MatchingCriteria::IsMore,
-                4,
-                None,
-            ),
-            true,
-        )?
-        .unwrap();
-        let opt = check_option((4, 2), res, true)?.unwrap();
-        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
-
-        // Less
-        let expected_vec = vec!["entry4".to_string(), "entry6".to_string()];
-        let res = check_result(
-            (5, 1),
-            table.get_matching_entries_integer(
-                None,
-                &"key1".to_string(),
-                MatchingCriteria::IsLess,
-                4,
-                None,
-            ),
-            true,
-        )?
-        .unwrap();
-        let opt = check_option((5, 2), res, true)?.unwrap();
-        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
-
-        // Between
-        let expected_vec = vec![
-            "entry1".to_string(),
-            "entry2".to_string(),
-            "entry3".to_string(),
-            "entry5".to_string(),
-        ];
-        let res = check_result(
-            (6, 1),
-            table.get_matching_entries_integer(
-                None,
-                &"key1".to_string(),
-                MatchingCriteria::Between,
-                4,
-                Some(6),
-            ),
-            true,
-        )?
-        .unwrap();
-        let opt = check_option((6, 2), res, true)?.unwrap();
-        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
-
-        Ok(())
-    }
 
 
     #[test]
@@ -4405,33 +4283,33 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let mut binding1 = vec![Some("-5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("0".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![Some("-8".to_string()), None, Some("-0.27".to_string())];
-        let mut binding5 = vec![Some("-1".to_string()), None, Some("-0.27".to_string())];
-        let mut binding6 = vec![Some("2".to_string()), None, Some("-0.27".to_string())];
-        let new_entry1 = Some(&mut binding1);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
-        let new_entry5 = Some(&mut binding5);
-        let new_entry6 = Some(&mut binding6);
+        let mut l_binding1 = vec![Some("-5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("0".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding4 = vec![Some("-8".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding5 = vec![Some("-1".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding6 = vec![Some("2".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry1 = Some(&mut l_binding1);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
+        let l_new_entry5 = Some(&mut l_binding5);
+        let l_new_entry6 = Some(&mut l_binding6);
 
-        table.add_entry(&"entry1".to_string(), new_entry1)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
-        table.add_entry(&"entry5".to_string(), new_entry5)?;
-        table.add_entry(&"entry6".to_string(), new_entry6)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry1)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry5)?;
+        l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
         // Equality with negative
-        let expected_vec = vec!["entry1".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry1".to_string()];
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4441,14 +4319,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Equality with zero
-        let expected_vec = vec!["entry2".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry2".to_string()];
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4458,18 +4336,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // IsLess than zero
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry4".to_string(),
             "entry5".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsLess,
@@ -4479,19 +4357,19 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((3, 2), res, true)?.unwrap();
-        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((3, 2), l_res, true)?.unwrap();
+        check_value((3, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // IsMore than negative
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry2".to_string(),
             "entry3".to_string(),
             "entry5".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (4, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsMore,
@@ -4501,18 +4379,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((4, 2), res, true)?.unwrap();
-        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((4, 2), l_res, true)?.unwrap();
+        check_value((4, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Between negative and zero
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry5".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (5, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -4522,8 +4400,8 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((5, 2), res, true)?.unwrap();
-        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((5, 2), l_res, true)?.unwrap();
+        check_value((5, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         Ok(())
     }
@@ -4535,12 +4413,12 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Empty table
-        let res = check_result(
+        // Empty l_table
+        let l_res = check_result(
             (0, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4550,23 +4428,23 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((0, 2), res, false)?;
+        check_option((0, 2), l_res, false)?;
 
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
@@ -4577,7 +4455,7 @@ mod tests {
         )?;
         check_result(
             (2, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -4588,7 +4466,7 @@ mod tests {
         )?;
         check_result(
             (3, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -4608,12 +4486,12 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Empty table
-        let res = check_result(
+        // Empty l_table
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4623,33 +4501,33 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![Some("8".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding4 = vec![Some("8".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
 
-        let e2 = "entry2".to_string();
-        let e3 = "entry3".to_string();
-        let e4 = "entry4".to_string();
-        let subset = vec![&e2, &e3, &e4];
+        let l_e2 = "entry2".to_string();
+        let l_e3 = "entry3".to_string();
+        let l_e4 = "entry4".to_string();
+        let l_subset = vec![&l_e2, &l_e3, &l_e4];
 
         // Subset match
-        let expected_vec = vec!["entry3".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry3".to_string()];
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_unsigned_integer(
-                Some(subset.clone()),
+            l_table.get_matching_entries_unsigned_integer(
+                Some(l_subset.clone()),
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 5,
@@ -4658,14 +4536,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Subset no match
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_unsigned_integer(
-                Some(subset),
+            l_table.get_matching_entries_unsigned_integer(
+                Some(l_subset),
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
                 10,
@@ -4674,12 +4552,12 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
-        // Empty subset
-        let res = check_result(
+        // Empty l_subset
+        let l_res = check_result(
             (4, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 Some(vec![]),
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4689,24 +4567,24 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((4, 2), res, false)?;
+        check_option((4, 2), l_res, false)?;
 
         Ok(())
     }
 
     #[test]
-    fn get_entries_matching_uint() -> Result<(), String> {
+    fn get_entries_matching_uint_2() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Empty table
-        let res = check_result(
+        // Empty l_table
+        let l_res = check_result(
             (0, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4716,33 +4594,33 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((0, 2), res, false)?;
+        check_option((0, 2), l_res, false)?;
 
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![Some("1".to_string()), None, Some("-0.27".to_string())];
-        let mut binding5 = vec![Some("4".to_string()), None, Some("-0.27".to_string())];
-        let mut binding6 = vec![Some("2".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
-        let new_entry5 = Some(&mut binding5);
-        let new_entry6 = Some(&mut binding6);
+        let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding4 = vec![Some("1".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding5 = vec![Some("4".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding6 = vec![Some("2".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
+        let l_new_entry5 = Some(&mut l_binding5);
+        let l_new_entry6 = Some(&mut l_binding6);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
-        table.add_entry(&"entry5".to_string(), new_entry5)?;
-        table.add_entry(&"entry6".to_string(), new_entry6)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry5)?;
+        l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
         // Equality
-        let expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4752,13 +4630,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4768,18 +4646,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((2, 2), res, false)?;
+        check_option((2, 2), l_res, false)?;
 
         // Different
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry2".to_string(),
             "entry4".to_string(),
             "entry5".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Different,
@@ -4789,18 +4667,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((3, 2), res, true)?.unwrap();
-        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((3, 2), l_res, true)?.unwrap();
+        check_value((3, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // More
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry3".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (4, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsMore,
@@ -4810,14 +4688,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((4, 2), res, true)?.unwrap();
-        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((4, 2), l_res, true)?.unwrap();
+        check_value((4, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Less
-        let expected_vec = vec!["entry4".to_string(), "entry6".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry4".to_string(), "entry6".to_string()];
+        let l_res = check_result(
             (5, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsLess,
@@ -4827,19 +4705,19 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((5, 2), res, true)?.unwrap();
-        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((5, 2), l_res, true)?.unwrap();
+        check_value((5, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Between
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry3".to_string(),
             "entry5".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (6, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -4849,18 +4727,19 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((6, 2), res, true)?.unwrap();
-        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((6, 2), l_res, true)?.unwrap();
+        check_value((6, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Subset
-        let expected_vec = vec![
-            "entry1".to_string(),
-            "entry3".to_string(),
-        ];
-        let res = check_result(
+        let l_expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
+        let l_res = check_result(
             (7, 1),
-            table.get_matching_entries_unsigned_integer(
-                Some(vec![&"entry1".to_string(), &"entry3".to_string(), &"entry6".to_string()]),
+            l_table.get_matching_entries_unsigned_integer(
+                Some(vec![
+                    &"entry1".to_string(),
+                    &"entry3".to_string(),
+                    &"entry6".to_string(),
+                ]),
                 &"key1".to_string(),
                 MatchingCriteria::Between,
                 4,
@@ -4869,13 +4748,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((7, 2), res, true)?.unwrap();
-        check_value((7, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((7, 2), l_res, true)?.unwrap();
+        check_value((7, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Subset No match
-        let res = check_result(
+        let l_res = check_result(
             (8, 1),
-            table.get_matching_entries_unsigned_integer(
+            l_table.get_matching_entries_unsigned_integer(
                 Some(vec![&"entry4".to_string(), &"entry6".to_string()]),
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -4885,7 +4764,7 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((8, 2), res, false)?;
+        check_option((8, 2), l_res, false)?;
 
         Ok(())
     }
@@ -4897,32 +4776,32 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("-5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("-6".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("-5".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![Some("-1".to_string()), None, Some("-0.27".to_string())];
-        let mut binding5 = vec![Some("-4".to_string()), None, Some("-0.27".to_string())];
-        let mut binding6 = vec![Some("-2".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
-        let new_entry5 = Some(&mut binding5);
-        let new_entry6 = Some(&mut binding6);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("-5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("-6".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("-5".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding4 = vec![Some("-1".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding5 = vec![Some("-4".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding6 = vec![Some("-2".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
+        let l_new_entry5 = Some(&mut l_binding5);
+        let l_new_entry6 = Some(&mut l_binding6);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
-        table.add_entry(&"entry5".to_string(), new_entry5)?;
-        table.add_entry(&"entry6".to_string(), new_entry6)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry5)?;
+        l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
         // Equality
-        let expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry1".to_string(), "entry3".to_string()];
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4932,13 +4811,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Equal,
@@ -4948,18 +4827,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((2, 2), res, false)?;
+        check_option((2, 2), l_res, false)?;
 
         // Different
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry2".to_string(),
             "entry4".to_string(),
             "entry5".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Different,
@@ -4969,17 +4848,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((3, 2), res, true)?.unwrap();
-        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((3, 2), l_res, true)?.unwrap();
+        check_value((3, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // More
-        let expected_vec = vec![
-            "entry4".to_string(),
-            "entry6".to_string(),
-        ];
-        let res = check_result(
+        let l_expected_vec = vec!["entry4".to_string(), "entry6".to_string()];
+        let l_res = check_result(
             (4, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsMore,
@@ -4989,18 +4865,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((4, 2), res, true)?.unwrap();
-        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((4, 2), l_res, true)?.unwrap();
+        check_value((4, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Less
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry3".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (5, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::IsLess,
@@ -5010,19 +4886,19 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((5, 2), res, true)?.unwrap();
-        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((5, 2), l_res, true)?.unwrap();
+        check_value((5, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Between
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry3".to_string(),
             "entry5".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (6, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -5032,13 +4908,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((6, 2), res, true)?.unwrap();
-        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((6, 2), l_res, true)?.unwrap();
+        check_value((6, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Between missing optional 2nd param
         check_result(
             (7, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -5049,9 +4925,9 @@ mod tests {
         )?;
 
         // Between no match
-        let res = check_result(
+        let l_res = check_result(
             (8, 1),
-            table.get_matching_entries_integer(
+            l_table.get_matching_entries_integer(
                 None,
                 &"key1".to_string(),
                 MatchingCriteria::Between,
@@ -5061,7 +4937,7 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((8, 2), res, false)?;
+        check_option((8, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5073,22 +4949,22 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("12".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("16".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key2".to_string(),
                 MatchingCriteria::Equal,
@@ -5099,7 +4975,7 @@ mod tests {
         )?;
         check_result(
             (2, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::Between,
@@ -5110,7 +4986,7 @@ mod tests {
         )?;
         check_result(
             (3, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::Between,
@@ -5121,7 +4997,7 @@ mod tests {
         )?;
         check_result(
             (4, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::Between,
@@ -5141,32 +5017,32 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys.clone()));
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![Some("1".to_string()), None, Some("-0.27".to_string())];
-        let mut binding5 = vec![Some("4".to_string()), None, Some("0.45".to_string())];
-        let mut binding6 = vec![Some("2".to_string()), None, Some("5.23".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
-        let new_entry5 = Some(&mut binding5);
-        let new_entry6 = Some(&mut binding6);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys.clone()));
+        let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding4 = vec![Some("1".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding5 = vec![Some("4".to_string()), None, Some("0.45".to_string())];
+        let mut l_binding6 = vec![Some("2".to_string()), None, Some("5.23".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
+        let l_new_entry5 = Some(&mut l_binding5);
+        let l_new_entry6 = Some(&mut l_binding6);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
-        table.add_entry(&"entry5".to_string(), new_entry5)?;
-        table.add_entry(&"entry6".to_string(), new_entry6)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry5)?;
+        l_table.add_entry(&"entry6".to_string(), l_new_entry6)?;
 
-        // Empty table
-        let empty_table = DbTable::new("EmptyTable".to_string(), Some(keys.clone()));
-        let res = check_result(
+        // Empty l_table
+        let l_empty_table = DbTable::new("EmptyTable".to_string(), Some(keys.clone()));
+        let l_res = check_result(
             (0, 1),
-            empty_table.get_matching_entries_float(
+            l_empty_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::Equal,
@@ -5176,13 +5052,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((0, 2), res, false)?;
+        check_option((0, 2), l_res, false)?;
 
         // Equality
-        let expected_vec = vec!["entry3".to_string(), "entry4".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry3".to_string(), "entry4".to_string()];
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::Equal,
@@ -5192,13 +5068,13 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // No match
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::Equal,
@@ -5208,18 +5084,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((2, 2), res, false)?;
+        check_option((2, 2), l_res, false)?;
 
         // Different
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry5".to_string(),
             "entry6".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::Different,
@@ -5229,14 +5105,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((3, 2), res, true)?.unwrap();
-        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((3, 2), l_res, true)?.unwrap();
+        check_value((3, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // More
-        let expected_vec = vec!["entry1".to_string(), "entry6".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry1".to_string(), "entry6".to_string()];
+        let l_res = check_result(
             (4, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::IsMore,
@@ -5246,18 +5122,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((4, 2), res, true)?.unwrap();
-        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((4, 2), l_res, true)?.unwrap();
+        check_value((4, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Less
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry3".to_string(),
             "entry4".to_string(),
             "entry5".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (5, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::IsLess,
@@ -5267,18 +5143,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((5, 2), res, true)?.unwrap();
-        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((5, 2), l_res, true)?.unwrap();
+        check_value((5, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Between
-        let expected_vec = vec![
+        let l_expected_vec = vec![
             "entry1".to_string(),
             "entry2".to_string(),
             "entry5".to_string(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (6, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::Between,
@@ -5288,18 +5164,19 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((6, 2), res, true)?.unwrap();
-        check_value((6, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((6, 2), l_res, true)?.unwrap();
+        check_value((6, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Subset
-        let expected_vec = vec![
-            "entry1".to_string(),
-            "entry2".to_string(),
-        ];
-        let res = check_result(
+        let l_expected_vec = vec!["entry1".to_string(), "entry2".to_string()];
+        let l_res = check_result(
             (7, 1),
-            table.get_matching_entries_float(
-                Some(vec![&"entry1".to_string(), &"entry2".to_string(), &"entry4".to_string()]),
+            l_table.get_matching_entries_float(
+                Some(vec![
+                    &"entry1".to_string(),
+                    &"entry2".to_string(),
+                    &"entry4".to_string(),
+                ]),
                 &"key3".to_string(),
                 MatchingCriteria::Between,
                 0.45,
@@ -5308,14 +5185,18 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((7, 2), res, true)?.unwrap();
-        check_value((7, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((7, 2), l_res, true)?.unwrap();
+        check_value((7, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Subset No match
-        let res = check_result(
+        let l_res = check_result(
             (8, 1),
-            table.get_matching_entries_float(
-                Some(vec![&"entry3".to_string(), &"entry4".to_string(), &"entry6".to_string()]),
+            l_table.get_matching_entries_float(
+                Some(vec![
+                    &"entry3".to_string(),
+                    &"entry4".to_string(),
+                    &"entry6".to_string(),
+                ]),
                 &"key3".to_string(),
                 MatchingCriteria::Between,
                 0.45,
@@ -5324,7 +5205,7 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((8, 2), res, false)?;
+        check_option((8, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5336,12 +5217,12 @@ mod tests {
             ("key2".to_string(), DbType::String(" ".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Empty table
-        let res = check_result(
+        // Empty l_table
+        let l_res = check_result(
             (1, 1),
-            table.get_matching_entries_float(
+            l_table.get_matching_entries_float(
                 None,
                 &"key3".to_string(),
                 MatchingCriteria::Equal,
@@ -5351,35 +5232,35 @@ mod tests {
             true,
         )?
         .unwrap();
-        // When table is empty, it returns Ok(None).
-        // Therefore, res is an Option containing None. We want to assert res is None.
-        check_option((1, 2), res, false)?;
+        // When l_table is empty, it returns Ok(None).
+        // Therefore, l_res is an Option containing None. We want to assert l_res is None.
+        check_option((1, 2), l_res, false)?;
 
-        let mut binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![Some("1".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let mut l_binding = vec![Some("5".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("6".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding4 = vec![Some("1".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
 
-        let e2 = "entry2".to_string();
-        let e3 = "entry3".to_string();
-        let e4 = "entry4".to_string();
-        let subset = vec![&e2, &e3, &e4];
+        let l_e2 = "entry2".to_string();
+        let l_e3 = "entry3".to_string();
+        let l_e4 = "entry4".to_string();
+        let l_subset = vec![&l_e2, &l_e3, &l_e4];
 
         // Subset match
-        let expected_vec = vec!["entry3".to_string(), "entry4".to_string()];
-        let res = check_result(
+        let l_expected_vec = vec!["entry3".to_string(), "entry4".to_string()];
+        let l_res = check_result(
             (2, 1),
-            table.get_matching_entries_float(
-                Some(subset.clone()),
+            l_table.get_matching_entries_float(
+                Some(l_subset.clone()),
                 &"key3".to_string(),
                 MatchingCriteria::Equal,
                 -0.27,
@@ -5388,14 +5269,14 @@ mod tests {
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         // Subset no match
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_matching_entries_float(
-                Some(subset),
+            l_table.get_matching_entries_float(
+                Some(l_subset),
                 &"key3".to_string(),
                 MatchingCriteria::Equal,
                 10.0,
@@ -5404,7 +5285,7 @@ mod tests {
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5416,36 +5297,36 @@ mod tests {
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(None, &"key3".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_boolean_values_for_key(None, &"key8".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key8".to_string()),
             false,
         )?;
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5457,23 +5338,23 @@ mod tests {
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_unique_boolean_values_for_key(None, &"key8".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key8".to_string()),
             true,
         )?
         .unwrap();
-        check_option((2, 2), res, false)?;
+        check_option((2, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5485,15 +5366,15 @@ mod tests {
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5505,35 +5386,35 @@ mod tests {
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let mut binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![None, None, Some("0.0".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let mut l_binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding4 = vec![None, None, Some("0.0".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
 
-        let entry1 = "entry1".to_string();
-        let entry3 = "entry3".to_string();
-        let subset_entries = vec![&entry1, &entry3];
+        let l_entry1 = "entry1".to_string();
+        let l_entry3 = "entry3".to_string();
+        let l_subset_entries = vec![&l_entry1, &l_entry3];
 
-        let expected_vec = vec![true];
-        let res = check_result(
+        let l_expected_vec = vec![true];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(Some(subset_entries), &"key1".to_string()),
+            l_table.get_unique_boolean_values_for_key(Some(l_subset_entries), &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
         Ok(())
     }
@@ -5545,39 +5426,39 @@ mod tests {
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let mut binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
-        let mut binding4 = vec![None, None, Some("0.0".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let mut l_binding = vec![Some("true".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("true".to_string()), None, Some("-0.27".to_string())];
+        let mut l_binding4 = vec![None, None, Some("0.0".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
 
-        let expected_vec = vec![true, false];
-        let res = check_result(
+        let l_expected_vec = vec![true, false];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec, CheckType::Equal)?;
 
-        let res2 = check_result(
+        let l_res2 = check_result(
             (2, 1),
-            table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        check_option((2, 2), res2, false)?;
+        check_option((2, 2), l_res2, false)?;
 
         Ok(())
     }
@@ -5589,59 +5470,60 @@ mod tests {
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("false".to_string()),
             Some("true".to_string()),
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![
+        let mut l_binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![
             Some("true".to_string()),
             Some("true".to_string()),
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
-        let expected_vec_1 = vec![false];
-        let entry1 = "entry1".to_string();
-        let entry3 = "entry3".to_string();
-        let subset_entries = vec![&entry1, &entry3];
+        let l_expected_vec_1 = vec![false];
+        let l_entry1 = "entry1".to_string();
+        let l_entry3 = "entry3".to_string();
+        let l_subset_entries = vec![&l_entry1, &l_entry3];
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(Some(subset_entries), &"key1".to_string()),
+            l_table.get_unique_boolean_values_for_key(Some(l_subset_entries), &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
 
         Ok(())
     }
 
     #[test]
-    fn get_unique_boolean_values_for_key_empty() -> Result<(), String> {
+    fn get_unique_boolean_values_for_key_empty_2() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Bool(false)),
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
             true,
-        )?.unwrap();
-        check_option((1, 2), res, false)?;
+        )?
+        .unwrap();
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5653,53 +5535,53 @@ mod tests {
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("false".to_string()),
             Some("true".to_string()),
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![
+        let mut l_binding2 = vec![Some("false".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![
             Some("true".to_string()),
             Some("true".to_string()),
             Some("-0.27".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("true".to_string()),
             Some("false".to_string()),
             Some("0.0".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
         // Check that only unique values are returned (duplicate `false` and `true` are filtered)
-        let expected_vec_1 = vec![false, true];
-        let expected_vec_2 = vec![true, false];
-        let res = check_result(
+        let l_expected_vec_1 = vec![false, true];
+        let l_expected_vec_2 = vec![true, false];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
-        let res = check_result(
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
+        let l_res = check_result(
             (2, 1),
-            table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec_2, CheckType::Equal)?;
 
         Ok(())
     }
@@ -5711,26 +5593,26 @@ mod tests {
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![None, None, Some("2.23".to_string())];
-        let mut binding2 = vec![None, None, Some("1.46".to_string())];
-        let mut binding3 = vec![None, None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![None, None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![None, None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![None, None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5742,36 +5624,36 @@ mod tests {
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_unique_integer_values_for_key(None, &"key3".to_string()),
+            l_table.get_unique_integer_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_integer_values_for_key(None, &"key8".to_string()),
+            l_table.get_unique_integer_values_for_key(None, &"key8".to_string()),
             false,
         )?;
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_unique_integer_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_integer_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5783,15 +5665,15 @@ mod tests {
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::String("0".to_string())),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_unsigned_integer_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_unsigned_integer_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5803,52 +5685,52 @@ mod tests {
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::String("0".to_string())),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
             Some("Hello".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2".to_string()),
             Some("5".to_string()),
             Some("World".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3".to_string()),
             Some("6".to_string()),
             Some("AI".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1".to_string()),
             Some("5".to_string()),
             Some("Assistant".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let entry1 = "entry1".to_string();
-        let entry4 = "entry4".to_string();
-        let entry5 = "entry5".to_string();
-        let subset = Some(vec![&entry1, &entry4, &entry5]);
+        let l_entry1 = "entry1".to_string();
+        let l_entry4 = "entry4".to_string();
+        let l_entry5 = "entry5".to_string();
+        let l_subset = Some(vec![&l_entry1, &l_entry4, &l_entry5]);
 
-        let expected_vec_1 = vec![1, 3];
-        let res = check_result(
+        let l_expected_vec_1 = vec![1, 3];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_unsigned_integer_values_for_key(subset, &"key1".to_string()),
+            l_table.get_unique_unsigned_integer_values_for_key(l_subset, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
         Ok(())
     }
 
@@ -5859,103 +5741,116 @@ mod tests {
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_unique_unsigned_integer_values_for_key(None, &"key3".to_string()),
+            l_table.get_unique_unsigned_integer_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_unsigned_integer_values_for_key(None, &"key8".to_string()),
+            l_table.get_unique_unsigned_integer_values_for_key(None, &"key8".to_string()),
             false,
         )?;
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_unique_unsigned_integer_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_unsigned_integer_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         Ok(())
     }
 
     #[test]
-    fn get_unique_unsigned_integer_values_for_key_empty() -> Result<(), String> {
+    fn get_unique_unsigned_integer_values_for_key_empty_2() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result((1, 1), table.get_unique_unsigned_integer_values_for_key(None, &"key1".to_string()), true)?.unwrap();
-        check_option((1, 2), res, false)?;
+        let l_res = check_result(
+            (1, 1),
+            l_table.get_unique_unsigned_integer_values_for_key(None, &"key1".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
 
     #[test]
-    fn get_unique_unsigned_integer_values_for_key_subset() -> Result<(), String> {
+    fn get_unique_unsigned_integer_values_for_key_subset_2() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2".to_string()),
             Some("5".to_string()),
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3".to_string()),
             Some("6".to_string()),
             Some("-0.27".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1".to_string()),
             Some("5".to_string()),
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let entry1 = "entry1".to_string();
-        let entry4 = "entry4".to_string();
-        let entry5 = "entry5".to_string();
-        let subset_entries = vec![&entry1, &entry4, &entry5];
+        let l_entry1 = "entry1".to_string();
+        let l_entry4 = "entry4".to_string();
+        let l_entry5 = "entry5".to_string();
+        let l_subset_entries = vec![&l_entry1, &l_entry4, &l_entry5];
 
-        let expected_vec_1 = vec![1, 3];
-        let res = check_result((1, 1), table.get_unique_unsigned_integer_values_for_key(Some(subset_entries), &"key1".to_string()), true)?.unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_expected_vec_1 = vec![1, 3];
+        let l_res = check_result(
+            (1, 1),
+            l_table.get_unique_unsigned_integer_values_for_key(
+                Some(l_subset_entries),
+                &"key1".to_string(),
+            ),
+            true,
+        )?
+        .unwrap();
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
 
         Ok(())
     }
@@ -5967,15 +5862,15 @@ mod tests {
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_integer_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_integer_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -5987,52 +5882,52 @@ mod tests {
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2".to_string()),
             Some("5".to_string()),
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3".to_string()),
             Some("6".to_string()),
             Some("-0.27".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1".to_string()),
             Some("5".to_string()),
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let entry1 = "entry1".to_string();
-        let entry4 = "entry4".to_string();
-        let entry5 = "entry5".to_string();
-        let subset_entries = vec![&entry1, &entry4, &entry5];
+        let l_entry1 = "entry1".to_string();
+        let l_entry4 = "entry4".to_string();
+        let l_entry5 = "entry5".to_string();
+        let l_subset_entries = vec![&l_entry1, &l_entry4, &l_entry5];
 
-        let expected_vec_1 = vec![1, 3];
-        let res = check_result(
+        let l_expected_vec_1 = vec![1, 3];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_integer_values_for_key(Some(subset_entries), &"key1".to_string()),
+            l_table.get_unique_integer_values_for_key(Some(l_subset_entries), &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
 
         Ok(())
     }
@@ -6044,56 +5939,56 @@ mod tests {
             ("key2".to_string(), DbType::UnsignedInt(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2".to_string()),
             Some("5".to_string()),
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3".to_string()),
             Some("6".to_string()),
             Some("-0.27".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1".to_string()),
             Some("5".to_string()),
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let expected_vec_1 = vec![1, 2, 3];
-        let expected_vec_2 = vec![4, 5, 6];
-        let res = check_result(
+        let l_expected_vec_1 = vec![1, 2, 3];
+        let l_expected_vec_2 = vec![4, 5, 6];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_integer_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_integer_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
-        let res = check_result(
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
+        let l_res = check_result(
             (2, 1),
-            table.get_unique_unsigned_integer_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_unsigned_integer_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec_2, CheckType::Equal)?;
         Ok(())
     }
 
@@ -6104,111 +5999,111 @@ mod tests {
             ("key2".to_string(), DbType::Bool(false)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![None, None, Some("2.23".to_string())];
-        let mut binding2 = vec![None, None, Some("1.46".to_string())];
-        let mut binding3 = vec![None, None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![None, None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![None, None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![None, None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_boolean_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        check_option((2, 2), res, false)?;
+        check_option((2, 2), l_res, false)?;
 
         Ok(())
     }
 
     #[test]
-    fn get_key_values_int_error() -> Result<(), String> {
+    fn get_key_values_int_error_2() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_unsigned_integer_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_unsigned_integer_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
 
     #[test]
-    fn get_unique_unsigned_integer_values_for_key_subset() -> Result<(), String> {
+    fn get_unique_unsigned_integer_values_for_key_subset_3() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::UnsignedInt(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2".to_string()),
             Some("5".to_string()),
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3".to_string()),
             Some("6".to_string()),
             Some("-0.27".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1".to_string()),
             Some("5".to_string()),
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let entry1 = "entry1".to_string();
-        let entry4 = "entry4".to_string();
-        let entry5 = "entry5".to_string();
-        let subset = Some(vec![&entry1, &entry4, &entry5]);
+        let l_entry1 = "entry1".to_string();
+        let l_entry4 = "entry4".to_string();
+        let l_entry5 = "entry5".to_string();
+        let l_subset = Some(vec![&l_entry1, &l_entry4, &l_entry5]);
 
-        let expected_vec_1 = vec![1, 3];
-        let res = check_result(
+        let l_expected_vec_1 = vec![1, 3];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_unsigned_integer_values_for_key(subset, &"key1".to_string()),
+            l_table.get_unique_unsigned_integer_values_for_key(l_subset, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
 
         Ok(())
     }
@@ -6220,47 +6115,47 @@ mod tests {
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2".to_string()),
             Some("5".to_string()),
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3".to_string()),
             Some("6".to_string()),
             Some("-0.27".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1".to_string()),
             Some("5".to_string()),
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let expected_vec_1 = vec![1, 2, 3];
-        let res = check_result(
+        let l_expected_vec_1 = vec![1, 2, 3];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_unsigned_integer_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_unsigned_integer_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
         Ok(())
     }
 
@@ -6271,15 +6166,15 @@ mod tests {
             ("key2".to_string(), DbType::String("".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_string_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_string_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -6291,52 +6186,52 @@ mod tests {
             ("key2".to_string(), DbType::String("".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2".to_string()),
             Some("5".to_string()),
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3".to_string()),
             Some("6".to_string()),
             Some("-0.27".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1".to_string()),
             Some("5".to_string()),
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let entry1 = "entry1".to_string();
-        let entry4 = "entry4".to_string();
-        let entry5 = "entry5".to_string();
-        let subset = Some(vec![&entry1, &entry4, &entry5]);
+        let l_entry1 = "entry1".to_string();
+        let l_entry4 = "entry4".to_string();
+        let l_entry5 = "entry5".to_string();
+        let l_subset = Some(vec![&l_entry1, &l_entry4, &l_entry5]);
 
-        let expected_vec_1 = vec!["1".to_string(), "3".to_string()];
-        let res = check_result(
+        let l_expected_vec_1 = vec!["1".to_string(), "3".to_string()];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_string_values_for_key(subset, &"key1".to_string()),
+            l_table.get_unique_string_values_for_key(l_subset, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
 
         Ok(())
     }
@@ -6348,36 +6243,36 @@ mod tests {
             ("key2".to_string(), DbType::String("0".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
-        let mut binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
-        let mut binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1".to_string()), None, Some("2.23".to_string())];
+        let mut l_binding2 = vec![Some("2".to_string()), None, Some("1.46".to_string())];
+        let mut l_binding3 = vec![Some("3".to_string()), None, Some("-0.27".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_unique_string_values_for_key(None, &"key3".to_string()),
+            l_table.get_unique_string_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_string_values_for_key(None, &"key8".to_string()),
+            l_table.get_unique_string_values_for_key(None, &"key8".to_string()),
             false,
         )?;
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_unique_string_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_string_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         Ok(())
     }
@@ -6389,56 +6284,56 @@ mod tests {
             ("key2".to_string(), DbType::String("".to_string())),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1".to_string()),
             Some("4".to_string()),
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2".to_string()),
             Some("5".to_string()),
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3".to_string()),
             Some("6".to_string()),
             Some("-0.27".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1".to_string()),
             Some("5".to_string()),
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let expected_vec_1 = vec!["1".to_string(), "2".to_string(), "3".to_string()];
-        let expected_vec_2 = vec!["4".to_string(), "5".to_string(), "6".to_string()];
-        let res = check_result(
+        let l_expected_vec_1 = vec!["1".to_string(), "2".to_string(), "3".to_string()];
+        let l_expected_vec_2 = vec!["4".to_string(), "5".to_string(), "6".to_string()];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_string_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_string_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
-        let res = check_result(
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
+        let l_res = check_result(
             (2, 1),
-            table.get_unique_string_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_string_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec_2, CheckType::Equal)?;
         Ok(())
     }
 
@@ -6449,92 +6344,108 @@ mod tests {
             ("key2".to_string(), DbType::Float(0.0)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![Some("1.1".to_string()), None, Some("Hello".to_string())];
-        let mut binding2 = vec![Some("2.2".to_string()), None, Some("World".to_string())];
-        let mut binding3 = vec![Some("3.3".to_string()), None, Some("AI".to_string())];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![Some("1.1".to_string()), None, Some("Hello".to_string())];
+        let mut l_binding2 = vec![Some("2.2".to_string()), None, Some("World".to_string())];
+        let mut l_binding3 = vec![Some("3.3".to_string()), None, Some("AI".to_string())];
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_unique_float_values_for_key(None, &"key3".to_string()),
+            l_table.get_unique_float_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_float_values_for_key(None, &"key8".to_string()),
+            l_table.get_unique_float_values_for_key(None, &"key8".to_string()),
             false,
         )?;
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_unique_float_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_float_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         Ok(())
     }
 
     #[test]
-    fn get_unique_integer_values_for_key_subset() -> Result<(), String> {
+    fn get_unique_integer_values_for_key_subset_2() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::String("0".to_string())),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let mut values1 = vec![Some("1".to_string()), Some("4".to_string()), Some("a".to_string())];
-        let mut values2 = vec![Some("2".to_string()), Some("5".to_string()), Some("b".to_string())];
-        let mut values3 = vec![Some("3".to_string()), Some("6".to_string()), Some("c".to_string())];
-        let mut values4 = vec![Some("1".to_string()), Some("5".to_string()), Some("d".to_string())];
+        let mut l_values1 = vec![
+            Some("1".to_string()),
+            Some("4".to_string()),
+            Some("a".to_string()),
+        ];
+        let mut l_values2 = vec![
+            Some("2".to_string()),
+            Some("5".to_string()),
+            Some("b".to_string()),
+        ];
+        let mut l_values3 = vec![
+            Some("3".to_string()),
+            Some("6".to_string()),
+            Some("c".to_string()),
+        ];
+        let mut l_values4 = vec![
+            Some("1".to_string()),
+            Some("5".to_string()),
+            Some("d".to_string()),
+        ];
 
-        table.add_entry(&"entry1".to_string(), Some(&mut values1))?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), Some(&mut values2))?;
-        table.add_entry(&"entry4".to_string(), Some(&mut values3))?;
-        table.add_entry(&"entry5".to_string(), Some(&mut values4))?;
+        l_table.add_entry(&"entry1".to_string(), Some(&mut l_values1))?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), Some(&mut l_values2))?;
+        l_table.add_entry(&"entry4".to_string(), Some(&mut l_values3))?;
+        l_table.add_entry(&"entry5".to_string(), Some(&mut l_values4))?;
 
-        let e1 = "entry1".to_string();
-        let e5 = "entry5".to_string();
-        let subset1 = vec![&e1, &e5];
+        let l_e1 = "entry1".to_string();
+        let l_e5 = "entry5".to_string();
+        let l_subset1 = vec![&l_e1, &l_e5];
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_integer_values_for_key(Some(subset1), &"key1".to_string()),
+            l_table.get_unique_integer_values_for_key(Some(l_subset1), &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &vec![1], CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &vec![1], CheckType::Equal)?;
 
         Ok(())
     }
 
     #[test]
-    fn get_unique_integer_values_for_key_empty() -> Result<(), String> {
+    fn get_unique_integer_values_for_key_empty_2() -> Result<(), String> {
         let keys = vec![
             ("key1".to_string(), DbType::Integer(0)),
             ("key2".to_string(), DbType::Integer(0)),
             ("key3".to_string(), DbType::String("0".to_string())),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_integer_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_integer_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -6546,15 +6457,15 @@ mod tests {
             ("key2".to_string(), DbType::Float(0.0)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_float_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_float_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -6566,57 +6477,57 @@ mod tests {
             ("key2".to_string(), DbType::Float(0.0)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1.0".to_string()),
             Some("4.1".to_string()),
             Some("Hello".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2.2".to_string()),
             Some("5.3".to_string()),
             Some("World".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3.3".to_string()),
             Some("6.4".to_string()),
             Some("AI".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1.0".to_string()),
             Some("5.5".to_string()),
             Some("Assistant".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let expected_vec_1 = vec![1.0, 2.2, 3.3];
-        let res = check_result(
+        let l_expected_vec_1 = vec![1.0, 2.2, 3.3];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_float_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_float_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
 
-        let expected_vec_2 = vec![4.1, 5.3, 6.4, 5.5];
-        let res = check_result(
+        let l_expected_vec_2 = vec![4.1, 5.3, 6.4, 5.5];
+        let l_res = check_result(
             (2, 1),
-            table.get_unique_float_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_float_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec_2, CheckType::Equal)?;
 
         Ok(())
     }
@@ -6628,52 +6539,52 @@ mod tests {
             ("key2".to_string(), DbType::Float(0.0)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1.0".to_string()),
             Some("4.1".to_string()),
             Some("Hello".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2.2".to_string()),
             Some("5.3".to_string()),
             Some("World".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3.3".to_string()),
             Some("6.4".to_string()),
             Some("AI".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1.0".to_string()),
             Some("5.5".to_string()),
             Some("Assistant".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let entry1 = "entry1".to_string();
-        let entry4 = "entry4".to_string();
-        let entry5 = "entry5".to_string();
-        let subset = Some(vec![&entry1, &entry4, &entry5]);
+        let l_entry1 = "entry1".to_string();
+        let l_entry4 = "entry4".to_string();
+        let l_entry5 = "entry5".to_string();
+        let l_subset = Some(vec![&l_entry1, &l_entry4, &l_entry5]);
 
-        let expected_vec_1 = vec![1.0, 3.3];
-        let res = check_result(
+        let l_expected_vec_1 = vec![1.0, 3.3];
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_float_values_for_key(subset, &"key1".to_string()),
+            l_table.get_unique_float_values_for_key(l_subset, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
 
         Ok(())
     }
@@ -6691,15 +6602,15 @@ mod tests {
             ),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let table = DbTable::new("Table".to_string(), Some(keys));
+        let l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_date_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_date_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((1, 2), res, false)?;
+        check_option((1, 2), l_res, false)?;
 
         Ok(())
     }
@@ -6717,55 +6628,55 @@ mod tests {
             ),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("01/12/2021".to_string()),
             Some("01/01/2022".to_string()),
             Some("Hello".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("02/12/2021".to_string()),
             Some("02/01/2022".to_string()),
             Some("World".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("03/12/2021".to_string()),
             Some("03/01/2022".to_string()),
             Some("AI".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("01/12/2021".to_string()),
             Some("03/01/2022".to_string()),
             Some("Assistant".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let entry1 = "entry1".to_string();
-        let entry4 = "entry4".to_string();
-        let entry5 = "entry5".to_string();
-        let subset = Some(vec![&entry1, &entry4, &entry5]);
+        let l_entry1 = "entry1".to_string();
+        let l_entry4 = "entry4".to_string();
+        let l_entry5 = "entry5".to_string();
+        let l_subset = Some(vec![&l_entry1, &l_entry4, &l_entry5]);
 
-        let expected_vec_1 = vec![
+        let l_expected_vec_1 = vec![
             NaiveDate::from_ymd_opt(2021, 12, 1).unwrap(),
             NaiveDate::from_ymd_opt(2021, 12, 3).unwrap(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_date_values_for_key(subset, &"key1".to_string()),
+            l_table.get_unique_date_values_for_key(l_subset, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
 
         Ok(())
     }
@@ -6783,48 +6694,48 @@ mod tests {
             ),
             ("key3".to_string(), DbType::Float(0.0)),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("01/12/2021".to_string()),
             None,
             Some("2.23".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("02/12/2021".to_string()),
             None,
             Some("1.46".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("03/12/2021".to_string()),
             None,
             Some("-0.27".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
 
         check_result(
             (1, 1),
-            table.get_unique_date_values_for_key(None, &"key3".to_string()),
+            l_table.get_unique_date_values_for_key(None, &"key3".to_string()),
             false,
         )?;
         check_result(
             (2, 1),
-            table.get_unique_date_values_for_key(None, &"key8".to_string()),
+            l_table.get_unique_date_values_for_key(None, &"key8".to_string()),
             false,
         )?;
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_unique_date_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_date_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         Ok(())
     }
@@ -6842,83 +6753,83 @@ mod tests {
             ),
             ("key3".to_string(), DbType::String("Test".to_string())),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
 
-        // Check with empty table
-        let res = check_result(
+        // Check with empty l_table
+        let l_res = check_result(
             (0, 1),
-            table.get_unique_date_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_date_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((0, 2), res, false)?;
+        check_option((0, 2), l_res, false)?;
 
-        let mut binding = vec![
+        let mut l_binding = vec![
             Some("01/12/2021".to_string()),
             Some("01/01/2022".to_string()),
             Some("Hello".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("02/12/2021".to_string()),
             Some("02/01/2022".to_string()),
             Some("World".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("03/12/2021".to_string()),
             Some("03/01/2022".to_string()),
             Some("AI".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("02/12/2021".to_string()),
             Some("03/01/2022".to_string()),
             Some("AI".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), new_entry2)?;
-        table.add_entry(&"entry3".to_string(), new_entry3)?;
-        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry4)?;
 
-        let expected_vec_1 = vec![
+        let l_expected_vec_1 = vec![
             NaiveDate::from_ymd_opt(2021, 12, 1).unwrap(),
             NaiveDate::from_ymd_opt(2021, 12, 2).unwrap(),
             NaiveDate::from_ymd_opt(2021, 12, 3).unwrap(),
         ];
 
-        let res = check_result(
+        let l_res = check_result(
             (1, 1),
-            table.get_unique_date_values_for_key(None, &"key1".to_string()),
+            l_table.get_unique_date_values_for_key(None, &"key1".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((1, 2), res, true)?.unwrap();
-        check_value((1, 3), &opt, &expected_vec_1, CheckType::Equal)?;
+        let l_opt = check_option((1, 2), l_res, true)?.unwrap();
+        check_value((1, 3), &l_opt, &l_expected_vec_1, CheckType::Equal)?;
 
-        let expected_vec_2 = vec![
+        let l_expected_vec_2 = vec![
             NaiveDate::from_ymd_opt(2022, 1, 1).unwrap(),
             NaiveDate::from_ymd_opt(2022, 1, 2).unwrap(),
             NaiveDate::from_ymd_opt(2022, 1, 3).unwrap(),
         ];
-        let res = check_result(
+        let l_res = check_result(
             (2, 1),
-            table.get_unique_date_values_for_key(None, &"key2".to_string()),
+            l_table.get_unique_date_values_for_key(None, &"key2".to_string()),
             true,
         )?
         .unwrap();
-        let opt = check_option((2, 2), res, true)?.unwrap();
-        check_value((2, 3), &opt, &expected_vec_2, CheckType::Equal)?;
+        let l_opt = check_option((2, 2), l_res, true)?.unwrap();
+        check_value((2, 3), &l_opt, &l_expected_vec_2, CheckType::Equal)?;
 
-        let res = check_result(
+        let l_res = check_result(
             (3, 1),
-            table.get_unique_date_values_for_key(Some(vec![]), &"key1".to_string()),
+            l_table.get_unique_date_values_for_key(Some(vec![]), &"key1".to_string()),
             true,
         )?
         .unwrap();
-        check_option((3, 2), res, false)?;
+        check_option((3, 2), l_res, false)?;
 
         Ok(())
     }
@@ -6930,68 +6841,68 @@ mod tests {
             ("key2".to_string(), DbType::Float(0.0)),
             ("key3".to_string(), DbType::String("0.0".to_string())),
         ];
-        let mut table = DbTable::new("Table".to_string(), Some(keys));
-        let mut binding = vec![
+        let mut l_table = DbTable::new("Table".to_string(), Some(keys));
+        let mut l_binding = vec![
             Some("1.0".to_string()),
             Some("4.1".to_string()),
             Some("Hello".to_string()),
         ];
-        let mut binding2 = vec![
+        let mut l_binding2 = vec![
             Some("2.2".to_string()),
             Some("5.3".to_string()),
             Some("World".to_string()),
         ];
-        let mut binding3 = vec![
+        let mut l_binding3 = vec![
             Some("3.3".to_string()),
             Some("6.4".to_string()),
             Some("AI".to_string()),
         ];
-        let mut binding4 = vec![
+        let mut l_binding4 = vec![
             Some("1.0".to_string()),
             Some("5.5".to_string()),
             Some("Assistant".to_string()),
         ];
-        let new_entry = Some(&mut binding);
-        let new_entry2 = Some(&mut binding2);
-        let new_entry3 = Some(&mut binding3);
-        let new_entry4 = Some(&mut binding4);
+        let l_new_entry = Some(&mut l_binding);
+        let l_new_entry2 = Some(&mut l_binding2);
+        let l_new_entry3 = Some(&mut l_binding3);
+        let l_new_entry4 = Some(&mut l_binding4);
 
-        table.add_entry(&"entry1".to_string(), new_entry)?;
-        table.add_entry(&"entry2".to_string(), None)?;
-        table.add_entry(&"entry3".to_string(), new_entry2)?;
-        table.add_entry(&"entry4".to_string(), new_entry3)?;
-        table.add_entry(&"entry5".to_string(), new_entry4)?;
+        l_table.add_entry(&"entry1".to_string(), l_new_entry)?;
+        l_table.add_entry(&"entry2".to_string(), None)?;
+        l_table.add_entry(&"entry3".to_string(), l_new_entry2)?;
+        l_table.add_entry(&"entry4".to_string(), l_new_entry3)?;
+        l_table.add_entry(&"entry5".to_string(), l_new_entry4)?;
 
-        let entry1 = &"entry1".to_string();
-        let entry2 = &"entry2".to_string();
-        let entry3 = &"entry3".to_string();
-        let entry4 = &"entry4".to_string();
-        let entry5 = &"entry5".to_string();
+        let l_entry1 = &"entry1".to_string();
+        let l_entry2 = &"entry2".to_string();
+        let l_entry3 = &"entry3".to_string();
+        let l_entry4 = &"entry4".to_string();
+        let l_entry5 = &"entry5".to_string();
 
-        let expected_vec = vec![entry1, entry2, entry3, entry4, entry5];
-        let entries_subset = table
+        let l_expected_vec = vec![l_entry1, l_entry2, l_entry3, l_entry4, l_entry5];
+        let l_entries_subset = l_table
             .get_entries_subset(None)
             .iter()
             .map(|entry| entry.name())
             .collect::<Vec<&String>>();
-        check_value((1, 1), &entries_subset, &expected_vec, CheckType::Equal)?;
+        check_value((1, 1), &l_entries_subset, &l_expected_vec, CheckType::Equal)?;
 
-        let expected_vec = vec![entry1, entry4, entry5];
-        let subset = vec![entry1, entry4, entry5];
-        let entries_subset = table
-            .get_entries_subset(Some(subset))
+        let l_expected_vec = vec![l_entry1, l_entry4, l_entry5];
+        let l_subset = vec![l_entry1, l_entry4, l_entry5];
+        let l_entries_subset = l_table
+            .get_entries_subset(Some(l_subset))
             .iter()
             .map(|entry| entry.name())
             .collect::<Vec<&String>>();
-        check_value((2, 1), &entries_subset, &expected_vec, CheckType::Equal)?;
+        check_value((2, 1), &l_entries_subset, &l_expected_vec, CheckType::Equal)?;
 
-        let expected_vec = vec![];
-        let subset = vec![];
-        let entries_subset = table
-            .get_entries_subset(Some(subset))
+        let l_expected_vec = vec![];
+        let l_subset = vec![];
+        let l_entries_subset = l_table
+            .get_entries_subset(Some(l_subset))
             .iter()
             .map(|entry| entry.name())
             .collect::<Vec<&String>>();
-        check_value((3, 1), &entries_subset, &expected_vec, CheckType::Equal)
+        check_value((3, 1), &l_entries_subset, &l_expected_vec, CheckType::Equal)
     }
 }
