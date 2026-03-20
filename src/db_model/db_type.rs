@@ -158,8 +158,7 @@ mod tests {
     fn check_float_ok() -> Result<(), String> {
         let l_type_float = DbType::Float(0.0);
 
-        let l_val =
-            check_result((1, 1), l_type_float.convert(&"1.23".to_string()), true)?.unwrap();
+        let l_val = check_result((1, 1), l_type_float.convert(&"1.23".to_string()), true)?.unwrap();
         check_struct(
             (1, 2),
             &l_val,
@@ -217,8 +216,7 @@ mod tests {
     fn check_uint_ok() -> Result<(), String> {
         let l_type_uint = DbType::UnsignedInt(0);
 
-        let l_val =
-            check_result((1, 1), l_type_uint.convert(&"27".to_string()), true)?.unwrap();
+        let l_val = check_result((1, 1), l_type_uint.convert(&"27".to_string()), true)?.unwrap();
         check_struct(
             (1, 2),
             &l_val,
@@ -277,16 +275,14 @@ mod tests {
     fn check_bool_ok() -> Result<(), String> {
         let l_type_bool = DbType::default_from_string(&"Bool".to_string())?;
 
-        let l_val =
-            check_result((1, 1), l_type_bool.convert(&"true".to_string()), true)?.unwrap();
+        let l_val = check_result((1, 1), l_type_bool.convert(&"true".to_string()), true)?.unwrap();
         check_struct(
             (1, 2),
             &l_val,
             &DbType::Bool(true),
             rusttests::CheckType::Equal,
         )?;
-        let l_val =
-            check_result((2, 1), l_type_bool.convert(&"false".to_string()), true)?.unwrap();
+        let l_val = check_result((2, 1), l_type_bool.convert(&"false".to_string()), true)?.unwrap();
         check_struct(
             (2, 2),
             &l_val,
@@ -313,47 +309,187 @@ mod tests {
 
     #[test]
     fn check_default_from_string_ok() -> Result<(), String> {
-        let l_val = check_result((1, 1), DbType::default_from_string(&"integer".to_string()), true)?.unwrap();
-        check_struct((1, 2), &l_val, &DbType::Integer(0), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (1, 1),
+            DbType::default_from_string(&"integer".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (1, 2),
+            &l_val,
+            &DbType::Integer(0),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((1, 3), DbType::default_from_string(&"Integer".to_string()), true)?.unwrap();
-        check_struct((1, 4), &l_val, &DbType::Integer(0), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (1, 3),
+            DbType::default_from_string(&"Integer".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (1, 4),
+            &l_val,
+            &DbType::Integer(0),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((2, 1), DbType::default_from_string(&"unsignedinteger".to_string()), true)?.unwrap();
-        check_struct((2, 2), &l_val, &DbType::UnsignedInt(0), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (2, 1),
+            DbType::default_from_string(&"unsignedinteger".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (2, 2),
+            &l_val,
+            &DbType::UnsignedInt(0),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((2, 3), DbType::default_from_string(&"UnsignedInt".to_string()), true)?.unwrap();
-        check_struct((2, 4), &l_val, &DbType::UnsignedInt(0), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (2, 3),
+            DbType::default_from_string(&"UnsignedInt".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (2, 4),
+            &l_val,
+            &DbType::UnsignedInt(0),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((2, 5), DbType::default_from_string(&"unsignedint".to_string()), true)?.unwrap();
-        check_struct((2, 6), &l_val, &DbType::UnsignedInt(0), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (2, 5),
+            DbType::default_from_string(&"unsignedint".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (2, 6),
+            &l_val,
+            &DbType::UnsignedInt(0),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((3, 1), DbType::default_from_string(&"float".to_string()), true)?.unwrap();
-        check_struct((3, 2), &l_val, &DbType::Float(0.0), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (3, 1),
+            DbType::default_from_string(&"float".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (3, 2),
+            &l_val,
+            &DbType::Float(0.0),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((3, 3), DbType::default_from_string(&"Float".to_string()), true)?.unwrap();
-        check_struct((3, 4), &l_val, &DbType::Float(0.0), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (3, 3),
+            DbType::default_from_string(&"Float".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (3, 4),
+            &l_val,
+            &DbType::Float(0.0),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((4, 1), DbType::default_from_string(&"boolean".to_string()), true)?.unwrap();
-        check_struct((4, 2), &l_val, &DbType::Bool(false), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (4, 1),
+            DbType::default_from_string(&"boolean".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (4, 2),
+            &l_val,
+            &DbType::Bool(false),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((4, 3), DbType::default_from_string(&"Bool".to_string()), true)?.unwrap();
-        check_struct((4, 4), &l_val, &DbType::Bool(false), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (4, 3),
+            DbType::default_from_string(&"Bool".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (4, 4),
+            &l_val,
+            &DbType::Bool(false),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((4, 5), DbType::default_from_string(&"bool".to_string()), true)?.unwrap();
-        check_struct((4, 6), &l_val, &DbType::Bool(false), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (4, 5),
+            DbType::default_from_string(&"bool".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (4, 6),
+            &l_val,
+            &DbType::Bool(false),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((5, 1), DbType::default_from_string(&"string".to_string()), true)?.unwrap();
-        check_struct((5, 2), &l_val, &DbType::String("".to_string()), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (5, 1),
+            DbType::default_from_string(&"string".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (5, 2),
+            &l_val,
+            &DbType::String("".to_string()),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((5, 3), DbType::default_from_string(&"String".to_string()), true)?.unwrap();
-        check_struct((5, 4), &l_val, &DbType::String("".to_string()), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (5, 3),
+            DbType::default_from_string(&"String".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (5, 4),
+            &l_val,
+            &DbType::String("".to_string()),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((6, 1), DbType::default_from_string(&"date".to_string()), true)?.unwrap();
-        check_struct((6, 2), &l_val, &DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (6, 1),
+            DbType::default_from_string(&"date".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (6, 2),
+            &l_val,
+            &DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_val = check_result((6, 3), DbType::default_from_string(&"Date".to_string()), true)?.unwrap();
-        check_struct((6, 4), &l_val, &DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()), rusttests::CheckType::Equal)?;
+        let l_val = check_result(
+            (6, 3),
+            DbType::default_from_string(&"Date".to_string()),
+            true,
+        )?
+        .unwrap();
+        check_struct(
+            (6, 4),
+            &l_val,
+            &DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()),
+            rusttests::CheckType::Equal,
+        )?;
 
         Ok(())
     }
@@ -364,22 +500,18 @@ mod tests {
         check_result((1, 1), l_res.clone(), false)?;
         check_struct(
             (1, 2),
-            &l_res.unwrap_err(),
+            &l_res.clone().unwrap_err(),
             &"Unknown database type : Unknown".to_string(),
             rusttests::CheckType::Equal,
         )?;
         check_struct(
             (1, 2),
-            &l_res.unwrap_err(),
+            &l_res.clone().unwrap_err(),
             &"Unknown database type : Unknown".to_string(),
             rusttests::CheckType::Equal,
         )?;
 
-        check_result(
-            (2, 1),
-            DbType::default_from_string(&"".to_string()),
-            false,
-        )?;
+        check_result((2, 1), DbType::default_from_string(&"".to_string()), false)?;
         Ok(())
     }
 
@@ -390,7 +522,11 @@ mod tests {
         check_struct((1, 2), &l_res.unwrap(), &(), rusttests::CheckType::Equal)?;
 
         let l_type_uint = DbType::UnsignedInt(0);
-        let l_res = check_result((2, 1), l_type_uint.check_type(&DbType::UnsignedInt(5)), true)?;
+        let l_res = check_result(
+            (2, 1),
+            l_type_uint.check_type(&DbType::UnsignedInt(5)),
+            true,
+        )?;
         check_struct((2, 2), &l_res.unwrap(), &(), rusttests::CheckType::Equal)?;
 
         let l_type_float = DbType::Float(0.0);
@@ -398,11 +534,19 @@ mod tests {
         check_struct((3, 2), &l_res.unwrap(), &(), rusttests::CheckType::Equal)?;
 
         let l_type_string = DbType::String("".to_string());
-        let l_res = check_result((4, 1), l_type_string.check_type(&DbType::String("abc".to_string())), true)?;
+        let l_res = check_result(
+            (4, 1),
+            l_type_string.check_type(&DbType::String("abc".to_string())),
+            true,
+        )?;
         check_struct((4, 2), &l_res.unwrap(), &(), rusttests::CheckType::Equal)?;
 
         let l_type_date = DbType::Date(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap());
-        let l_res = check_result((5, 1), l_type_date.check_type(&DbType::Date(NaiveDate::from_ymd_opt(2000, 1, 1).unwrap())), true)?;
+        let l_res = check_result(
+            (5, 1),
+            l_type_date.check_type(&DbType::Date(NaiveDate::from_ymd_opt(2000, 1, 1).unwrap())),
+            true,
+        )?;
         check_struct((5, 2), &l_res.unwrap(), &(), rusttests::CheckType::Equal)?;
 
         let l_type_bool = DbType::Bool(false);
@@ -410,7 +554,11 @@ mod tests {
         check_struct((6, 2), &l_res.unwrap(), &(), rusttests::CheckType::Equal)?;
 
         let l_type_int = DbType::Integer(0);
-        let l_res = check_result((7, 1), l_type_int.check_type(&DbType::String("abc".to_string())), true)?;
+        let l_res = check_result(
+            (7, 1),
+            l_type_int.check_type(&DbType::String("abc".to_string())),
+            true,
+        )?;
         check_struct((7, 2), &l_res.unwrap(), &(), rusttests::CheckType::Equal)?;
 
         Ok(())
@@ -421,12 +569,22 @@ mod tests {
         let l_type_int = DbType::Integer(0);
         let l_res = l_type_int.check_type(&DbType::Float(5.0));
         check_result((1, 1), l_res.clone(), false)?;
-        check_struct((1, 2), &l_res.unwrap_err(), &"Database type incompatibility".to_string(), rusttests::CheckType::Equal)?;
+        check_struct(
+            (1, 2),
+            &l_res.unwrap_err(),
+            &"Database type incompatibility".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
         let l_type_bool = DbType::Bool(false);
         let l_res = l_type_bool.check_type(&DbType::Integer(5));
         check_result((2, 1), l_res.clone(), false)?;
-        check_struct((2, 2), &l_res.unwrap_err(), &"Database type incompatibility".to_string(), rusttests::CheckType::Equal)?;
+        check_struct(
+            (2, 2),
+            &l_res.unwrap_err(),
+            &"Database type incompatibility".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
         Ok(())
     }
@@ -434,25 +592,60 @@ mod tests {
     #[test]
     fn check_display() -> Result<(), String> {
         let l_type_int = DbType::Integer(42);
-        check_struct((1, 1), &l_type_int.to_string(), &"42".to_string(), rusttests::CheckType::Equal)?;
+        check_struct(
+            (1, 1),
+            &l_type_int.to_string(),
+            &"42".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
         let l_type_uint = DbType::UnsignedInt(100);
-        check_struct((2, 1), &l_type_uint.to_string(), &"100".to_string(), rusttests::CheckType::Equal)?;
+        check_struct(
+            (2, 1),
+            &l_type_uint.to_string(),
+            &"100".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
-        let l_type_float = DbType::Float(3.14);
-        check_struct((3, 1), &l_type_float.to_string(), &"3.14".to_string(), rusttests::CheckType::Equal)?;
+        let l_type_float = DbType::Float(3.31);
+        check_struct(
+            (3, 1),
+            &l_type_float.to_string(),
+            &"3.31".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
         let l_type_string = DbType::String("hello".to_string());
-        check_struct((4, 1), &l_type_string.to_string(), &"hello".to_string(), rusttests::CheckType::Equal)?;
+        check_struct(
+            (4, 1),
+            &l_type_string.to_string(),
+            &"hello".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
         let l_type_date = DbType::Date(NaiveDate::from_ymd_opt(2023, 10, 25).unwrap());
-        check_struct((5, 1), &l_type_date.to_string(), &"25/10/2023".to_string(), rusttests::CheckType::Equal)?;
+        check_struct(
+            (5, 1),
+            &l_type_date.to_string(),
+            &"25/10/2023".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
         let l_type_bool = DbType::Bool(true);
-        check_struct((6, 1), &l_type_bool.to_string(), &"true".to_string(), rusttests::CheckType::Equal)?;
+        check_struct(
+            (6, 1),
+            &l_type_bool.to_string(),
+            &"true".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
         let l_type_bool_f = DbType::Bool(false);
-        check_struct((7, 1), &l_type_bool_f.to_string(), &"false".to_string(), rusttests::CheckType::Equal)?;
+        check_struct(
+            (7, 1),
+            &l_type_bool_f.to_string(),
+            &"false".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
 
         Ok(())
     }

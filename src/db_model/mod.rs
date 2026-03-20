@@ -209,7 +209,12 @@ mod tests {
             &"ModelName".to_string(),
             rusttests::CheckType::Equal,
         )?;
-        check_value((1, 2), &l_model.tables.len(), &0, rusttests::CheckType::Equal)?;
+        check_value(
+            (1, 2),
+            &l_model.tables.len(),
+            &0,
+            rusttests::CheckType::Equal,
+        )?;
 
         Ok(())
     }
