@@ -4397,6 +4397,137 @@ mod tests {
         Ok(())
     }
 
+
+    #[test]
+    fn get_entries_matching_integer_negative_and_zero() -> Result<(), String> {
+        let keys = vec![
+            ("key1".to_string(), DbType::Integer(0)),
+            ("key2".to_string(), DbType::String(" ".to_string())),
+            ("key3".to_string(), DbType::Float(0.0)),
+        ];
+        let mut table = DbTable::new("Table".to_string(), Some(keys));
+
+        let mut binding1 = vec![Some("-5".to_string()), None, Some("2.23".to_string())];
+        let mut binding2 = vec![Some("0".to_string()), None, Some("1.46".to_string())];
+        let mut binding3 = vec![Some("5".to_string()), None, Some("-0.27".to_string())];
+        let mut binding4 = vec![Some("-8".to_string()), None, Some("-0.27".to_string())];
+        let mut binding5 = vec![Some("-1".to_string()), None, Some("-0.27".to_string())];
+        let mut binding6 = vec![Some("2".to_string()), None, Some("-0.27".to_string())];
+        let new_entry1 = Some(&mut binding1);
+        let new_entry2 = Some(&mut binding2);
+        let new_entry3 = Some(&mut binding3);
+        let new_entry4 = Some(&mut binding4);
+        let new_entry5 = Some(&mut binding5);
+        let new_entry6 = Some(&mut binding6);
+
+        table.add_entry(&"entry1".to_string(), new_entry1)?;
+        table.add_entry(&"entry2".to_string(), new_entry2)?;
+        table.add_entry(&"entry3".to_string(), new_entry3)?;
+        table.add_entry(&"entry4".to_string(), new_entry4)?;
+        table.add_entry(&"entry5".to_string(), new_entry5)?;
+        table.add_entry(&"entry6".to_string(), new_entry6)?;
+
+        // Equality with negative
+        let expected_vec = vec!["entry1".to_string()];
+        let res = check_result(
+            (1, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                -5,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((1, 2), res, true)?.unwrap();
+        check_value((1, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Equality with zero
+        let expected_vec = vec!["entry2".to_string()];
+        let res = check_result(
+            (2, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Equal,
+                0,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((2, 2), res, true)?.unwrap();
+        check_value((2, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // IsLess than zero
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry4".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (3, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::IsLess,
+                0,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((3, 2), res, true)?.unwrap();
+        check_value((3, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // IsMore than negative
+        let expected_vec = vec![
+            "entry2".to_string(),
+            "entry3".to_string(),
+            "entry5".to_string(),
+            "entry6".to_string(),
+        ];
+        let res = check_result(
+            (4, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::IsMore,
+                -5,
+                None,
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((4, 2), res, true)?.unwrap();
+        check_value((4, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        // Between negative and zero
+        let expected_vec = vec![
+            "entry1".to_string(),
+            "entry2".to_string(),
+            "entry5".to_string(),
+        ];
+        let res = check_result(
+            (5, 1),
+            table.get_matching_entries_integer(
+                None,
+                &"key1".to_string(),
+                MatchingCriteria::Between,
+                -5,
+                Some(0),
+            ),
+            true,
+        )?
+        .unwrap();
+        let opt = check_option((5, 2), res, true)?.unwrap();
+        check_value((5, 3), &opt, &expected_vec, CheckType::Equal)?;
+
+        Ok(())
+    }
+
     #[test]
     fn get_entries_matching_uint_error() -> Result<(), String> {
         let keys = vec![
