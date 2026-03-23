@@ -45,7 +45,11 @@ impl SmolDb {
     ///
     pub fn load(p_db_file: PathBuf) -> Result<SmolDb, String> {
         let l_json = fs::read_to_string(&p_db_file).map_err(|p_e| {
-            Self::log_and_create_load_err_msg(format!("{}: {}", p_db_file.to_str().unwrap(), p_e))
+            Self::log_and_create_load_err_msg(format!(
+                "{}: {}",
+                p_db_file.to_str().unwrap_or("Unknown database file"),
+                p_e
+            ))
         })?;
 
         let l_model = serde_json::from_str::<DbModel>(&l_json)
