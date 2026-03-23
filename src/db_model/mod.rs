@@ -269,6 +269,27 @@ mod tests {
     }
 
     #[test]
+    fn new_table_duplicate_name_error() -> Result<(), String> {
+        let mut l_model = DbModel::new("ModelName".to_string());
+
+        l_model.create_table("NewTable", None)?;
+
+        let l_result = l_model.create_table("NewTable", None);
+        if let Err(l_msg) = l_result {
+            check_value(
+                (1, 1),
+                &l_msg,
+                &"Cannot create table : name NewTable already exists in database ModelName".to_string(),
+                rusttests::CheckType::Equal,
+            )?;
+        } else {
+            return Err("Expected an error but got Ok".to_string());
+        }
+
+        Ok(())
+    }
+
+    #[test]
     fn db_version() -> Result<(), String> {
         let mut l_model = DbModel::new("ModelName".to_string());
 
