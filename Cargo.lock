@@ -163,8 +163,8 @@ dependencies = [
 
 [[package]]
 name = "rustlog"
-version = "1.2.1"
-source = "git+https://github.com/nicls67/rustlog.git?tag=1.2.1#8d316ce91b5245532ef2c9211e1de39d4d9245ef"
+version = "1.2.2"
+source = "git+https://github.com/nicls67/rustlog.git?tag=1.2.2#961387271fd0d0e0c92b6d2eafa948338bf8f1ac"
 dependencies = [
  "chrono",
  "package_infos",
@@ -227,7 +227,7 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "smoldb"
-version = "1.2.2"
+version = "1.2.3"
 dependencies = [
  "chrono",
  "package_infos",

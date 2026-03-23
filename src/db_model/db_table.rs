@@ -811,25 +811,6 @@ impl DbTable {
             return Ok(None);
         }
 
-        // Check input compatibility
-        if p_criteria == MatchingCriteria::Between {
-            if p_date2.is_none() {
-                let l_msg =
-                    "Second reference date not defined for Between date comparison".to_string();
-                write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
-                return Err(l_msg);
-            }
-            if let Some(l_date) = p_date2 {
-                let l_delta = l_date - p_date1;
-                if l_delta.num_days() <= 0 {
-                    let l_msg =
-                        "Second reference date is not after first reference date".to_string();
-                    write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
-                    return Err(l_msg);
-                }
-            }
-        }
-
         // Check selected key has a date type
         let l_key = self.find_key(p_key_name)?;
         match l_key.1 {
@@ -860,9 +841,29 @@ impl DbTable {
                                 }
                             }
                             MatchingCriteria::Between => {
-                                let l_delta2 = (*l_entry_date - p_date2.unwrap()).num_days();
-                                if l_delta >= 0 && l_delta2 <= 0 {
-                                    l_output.push(l_entry.name().clone());
+                                // Check input compatibility
+                                if let Some(l_date2) = p_date2 {
+                                    let l_delta_inputs = l_date2 - p_date1;
+                                    if l_delta_inputs.num_days() <= 0 {
+                                        let l_msg =
+                                            "Second reference date is not after first reference date".to_string();
+                                        write_log(
+                                            LogSeverity::Error,
+                                            &l_msg,
+                                            env!("CARGO_PKG_NAME"),
+                                        );
+                                        return Err(l_msg);
+                                    }
+
+                                    let l_delta2 = (*l_entry_date - l_date2).num_days();
+                                    if l_delta >= 0 && l_delta2 <= 0 {
+                                        l_output.push(l_entry.name().clone());
+                                    }
+                                } else {
+                                    let l_msg =
+                                        "Second reference date not defined for Between date comparison".to_string();
+                                    write_log(LogSeverity::Error, &l_msg, env!("CARGO_PKG_NAME"));
+                                    return Err(l_msg);
                                 }
                             }
                         }
@@ -974,8 +975,11 @@ impl DbTable {
             MatchingCriteria::Equal => l_delta == 0,
             MatchingCriteria::Different => l_delta != 0,
             MatchingCriteria::Between => {
-                let l_delta2 = p_entry_value - p_int2.unwrap();
-                l_delta >= 0 && l_delta2 <= 0
+                if let Some(l_value) = p_int2 {
+                    l_delta >= 0 && (p_entry_value - l_value) <= 0
+                } else {
+                    false
+                }
             }
         }
     }
@@ -1045,7 +1049,11 @@ impl DbTable {
             MatchingCriteria::Equal => p_entry_value == p_int1,
             MatchingCriteria::Different => p_entry_value != p_int1,
             MatchingCriteria::Between => {
-                p_entry_value >= p_int1 && p_entry_value <= p_int2.unwrap()
+                if let Some(l_value) = p_int2 {
+                    p_entry_value >= p_int1 && p_entry_value <= l_value
+                } else {
+                    false
+                }
             }
         }
     }
@@ -4273,8 +4281,6 @@ mod tests {
 
         Ok(())
     }
-
-
 
     #[test]
     fn get_entries_matching_integer_negative_and_zero() -> Result<(), String> {
