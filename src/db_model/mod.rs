@@ -220,6 +220,68 @@ mod tests {
     }
 
     #[test]
+    fn new_model_empty_name() -> Result<(), String> {
+        let l_model = DbModel::new("".to_string());
+
+        check_value(
+            (1, 1),
+            &l_model.name,
+            &"".to_string(),
+            rusttests::CheckType::Equal,
+        )?;
+        check_value(
+            (1, 2),
+            &l_model.tables.len(),
+            &0,
+            rusttests::CheckType::Equal,
+        )?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn new_model_long_name() -> Result<(), String> {
+        let l_long_name = "a".repeat(100_000);
+        let l_model = DbModel::new(l_long_name.clone());
+
+        check_value(
+            (1, 1),
+            &l_model.name,
+            &l_long_name,
+            rusttests::CheckType::Equal,
+        )?;
+        check_value(
+            (1, 2),
+            &l_model.tables.len(),
+            &0,
+            rusttests::CheckType::Equal,
+        )?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn new_model_strange_inputs() -> Result<(), String> {
+        let l_strange_name = "🚀👨‍👩‍👧‍👦\n\t\r\\\"'".to_string();
+        let l_model = DbModel::new(l_strange_name.clone());
+
+        check_value(
+            (1, 1),
+            &l_model.name,
+            &l_strange_name,
+            rusttests::CheckType::Equal,
+        )?;
+        check_value(
+            (1, 2),
+            &l_model.tables.len(),
+            &0,
+            rusttests::CheckType::Equal,
+        )?;
+
+        Ok(())
+    }
+
+    #[test]
     fn new_table_nominal() -> Result<(), String> {
         let mut l_model = DbModel::new("ModelName".to_string());
 
