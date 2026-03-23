@@ -47,7 +47,7 @@ impl SmolDb {
         let l_json = fs::read_to_string(&p_db_file).map_err(|p_e| {
             Self::log_and_create_load_err_msg(format!(
                 "{}: {}",
-                p_db_file.to_str().unwrap_or("Unkown database file"),
+                p_db_file.to_str().unwrap_or("Unknown database file"),
                 p_e
             ))
         })?;
